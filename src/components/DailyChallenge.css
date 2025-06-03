@@ -1,76 +1,112 @@
 
-/* DailyChallenge Component Styles */
+/* ========================================
+   DAILY CHALLENGE COMPONENT STYLES
+   ========================================
+   
+   This file styles the daily challenge section including:
+   - Challenge card with emoji and description
+   - Complete/incomplete button states
+   - Progress indicators
+   - Timer display
+   
+   Color scheme: Dark grays with purple accents
+   ======================================== */
+
+/* Main container for the entire challenge section */
 .daily-challenge-container {
   margin-bottom: 2rem;
 }
 
+/* Header section with title and subtitle */
 .daily-challenge-header {
   text-align: center;
   margin-bottom: 2rem;
 }
 
+/* Main "Daily Challenge" title */
 .daily-challenge-title {
-  font-size: 1.5rem;
+  font-size: 1.5rem; /* Change title size here */
   font-weight: 600;
   color: white;
   margin-bottom: 0.5rem;
 }
 
+/* Subtitle under the main title */
 .daily-challenge-subtitle {
-  color: #9ca3af;
+  color: #9ca3af; /* Gray color for subtitle */
 }
 
+/* Challenge card container */
 .daily-challenge-card {
-  background-color: #1f2937;
-  border-color: #374151;
+  background-color: #1f2937; /* Dark gray background */
+  border-color: #374151; /* Darker gray border */
+  border-radius: 0.75rem; /* Rounded corners */
   margin-bottom: 1.5rem;
 }
 
+/* Content inside the challenge card */
 .daily-challenge-content {
   padding: 1.5rem;
   text-align: center;
 }
 
+/* Large emoji at the top of challenge */
 .daily-challenge-emoji {
-  font-size: 3rem;
+  font-size: 3rem; /* Make emoji bigger/smaller here */
   margin-bottom: 1rem;
 }
 
+/* Challenge title text */
 .daily-challenge-text {
-  font-size: 1.125rem;
+  font-size: 1.125rem; /* Change challenge text size here */
   font-weight: 500;
   color: white;
   margin-bottom: 0.5rem;
 }
 
+/* Challenge description text */
 .daily-challenge-description {
-  color: #9ca3af;
+  color: #9ca3af; /* Gray color for description */
   margin-bottom: 1.5rem;
 }
 
+/* Challenge action button - INCOMPLETE state */
 .daily-challenge-button {
   width: 100%;
-  background-color: #7c3aed;
+  background-color: #2F1930; /* Your custom purple color */
+  color: white;
+  border: none;
+  border-radius: 9999px; /* Fully rounded edges */
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 
+/* Button hover state */
 .daily-challenge-button:hover {
-  background-color: #6d28d9;
+  background-color: #451f3d; /* Slightly lighter on hover */
 }
 
+/* Challenge button - COMPLETE state */
 .daily-challenge-complete {
-  background-color: #059669;
+  background-color: #059669; /* Green background when complete */
+  border-radius: 9999px; /* Fully rounded edges */
 }
 
+/* Complete button hover state */
 .daily-challenge-complete:hover {
-  background-color: #047857;
+  background-color: #047857; /* Darker green on hover */
 }
 
+/* Progress indicator container */
 .daily-challenge-progress {
   margin-top: 1rem;
 }
 
+/* Timer text at the bottom */
 .daily-challenge-timer {
   text-align: center;
-  color: #9ca3af;
-  font-size: 0.875rem;
+  color: #9ca3af; /* Gray color for timer */
+  font-size: 0.875rem; /* Change timer text size here */
 }

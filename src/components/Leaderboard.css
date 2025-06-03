@@ -1,117 +1,167 @@
 
-/* Leaderboard Component Styles */
+/* ========================================
+   LEADERBOARD COMPONENT STYLES
+   ========================================
+   
+   This file styles the leaderboard component including:
+   - Header with gradient background
+   - Individual leaderboard items
+   - Rank badges and colors
+   - User avatars and information
+   - Special styling for current user
+   
+   Design: Clean list with colorful rank badges
+   ======================================== */
+
+/* Main leaderboard card */
 .leaderboard-card {
   border: none;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); /* Drop shadow */
+  border-radius: 0.75rem; /* Rounded corners */
 }
 
+/* Leaderboard header section */
 .leaderboard-header {
-  background: linear-gradient(to right, #8b5cf6, #ec4899);
+  background: linear-gradient(to right, #8b5cf6, #ec4899); /* Purple to pink gradient */
   color: white;
-  border-radius: 0.5rem 0.5rem 0 0;
+  border-radius: 0.5rem 0.5rem 0 0; /* Rounded top corners only */
+  padding: 1rem;
 }
 
+/* Header title with icon */
 .leaderboard-title {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.5rem; /* Space between icon and text */
+  font-size: 1.125rem;
+  font-weight: 600;
 }
 
+/* Main content area (no padding for list items) */
 .leaderboard-content {
   padding: 0;
 }
 
+/* Individual leaderboard item */
 .leaderboard-item {
   padding: 1rem;
-  border-bottom: 1px solid #f3f4f6;
-  transition: background-color 0.2s;
+  border-bottom: 1px solid #f3f4f6; /* Light gray border */
+  transition: background-color 0.2s ease;
 }
 
+/* Remove border from last item */
 .leaderboard-item:last-child {
   border-bottom: none;
 }
 
+/* Item hover effect */
 .leaderboard-item:hover {
-  background-color: #f9fafb;
+  background-color: #f9fafb; /* Light gray on hover */
 }
 
+/* Special styling for current user row */
 .leaderboard-item-you {
-  background-color: #eff6ff;
+  background-color: #eff6ff; /* Light blue background */
 }
 
+/* Item content layout */
 .leaderboard-item-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
+/* Left side of item (rank + avatar + info) */
 .leaderboard-item-left {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.75rem; /* Space between elements */
 }
 
+/* Rank badge circle */
 .leaderboard-rank-badge {
-  width: 2rem;
+  width: 2rem; /* Change badge size here */
   height: 2rem;
-  border-radius: 50%;
+  border-radius: 50%; /* Perfect circle */
   display: flex;
   align-items: center;
   justify-content: center;
+  font-weight: bold;
+  font-size: 0.875rem;
+  color: white;
 }
 
+/* Gold rank (1st place) */
 .leaderboard-rank-gold {
-  background: linear-gradient(to right, #fbbf24, #f59e0b);
+  background: linear-gradient(to right, #fbbf24, #f59e0b); /* Gold gradient */
 }
 
+/* Silver rank (2nd place) */
 .leaderboard-rank-silver {
-  background: linear-gradient(to right, #d1d5db, #9ca3af);
+  background: linear-gradient(to right, #d1d5db, #9ca3af); /* Silver gradient */
 }
 
+/* Bronze rank (3rd place) */
 .leaderboard-rank-bronze {
-  background: linear-gradient(to right, #fbbf24, #d97706);
+  background: linear-gradient(to right, #fbbf24, #d97706); /* Bronze gradient */
 }
 
+/* Default rank (4th place and below) */
 .leaderboard-rank-default {
-  background: linear-gradient(to right, #60a5fa, #3b82f6);
+  background: linear-gradient(to right, #60a5fa, #3b82f6); /* Blue gradient */
 }
 
+/* User avatar circle */
 .leaderboard-avatar {
-  width: 2.5rem;
+  width: 2.5rem; /* Change avatar size here */
   height: 2.5rem;
-  border-radius: 50%;
-  background: linear-gradient(to bottom right, #60a5fa, #8b5cf6);
+  border-radius: 50%; /* Perfect circle */
+  background: linear-gradient(to bottom right, #60a5fa, #8b5cf6); /* Blue to purple gradient */
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.125rem;
+  font-size: 1.125rem; /* Avatar text size */
+  font-weight: 600;
+  color: white;
 }
 
+/* User information container */
 .leaderboard-user-info {
-  /* No specific styles needed, children handle their own styles */
+  /* No specific styles - children handle their own */
 }
 
+/* Username text */
 .leaderboard-username {
   font-weight: 600;
-  color: #111827;
+  color: #111827; /* Dark gray */
+  font-size: 0.875rem;
 }
 
+/* Username for current user (special color) */
 .leaderboard-username-you {
-  color: #2563eb;
+  color: #2563eb; /* Blue color for "you" */
 }
 
+/* Stats section (streak info) */
 .leaderboard-stats {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.5rem; /* Space between elements */
   font-size: 0.875rem;
-  color: #6b7280;
+  color: #6b7280; /* Gray color */
 }
 
+/* "You" badge for current user */
 .leaderboard-you-badge {
-  background-color: #3b82f6;
+  background-color: #3b82f6; /* Blue background */
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
 }
 
+/* You badge hover state */
 .leaderboard-you-badge:hover {
-  background-color: #3b82f6;
+  background-color: #3b82f6; /* Same color (no change on hover) */
 }

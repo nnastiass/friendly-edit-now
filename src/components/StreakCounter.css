@@ -1,16 +1,36 @@
 
-/* StreakCounter Component Styles */
+/* ========================================
+   STREAK COUNTER COMPONENT STYLES
+   ========================================
+   
+   This file contains all styling for the StreakCounter component.
+   The component displays the user's current streak with fire emoji
+   and motivational messages.
+   
+   Main sections:
+   - Card container and layout
+   - Emoji and streak display
+   - Stats and labels
+   - Messages and text
+   ======================================== */
+
+/* Main card container */
 .streak-counter-card {
+  /* Gradient background from orange to pink */
   background: linear-gradient(to right, #fb923c, #ec4899);
   color: white;
   border: none;
+  /* Rounded corners */
+  border-radius: 0.75rem;
 }
 
+/* Content wrapper inside the card */
 .streak-counter-content {
   padding: 1.5rem;
   text-align: center;
 }
 
+/* Main streak display container */
 .streak-counter-main {
   display: flex;
   align-items: center;
@@ -19,27 +39,32 @@
   margin-bottom: 0.75rem;
 }
 
+/* Emoji display (fire, rocket, star, etc.) */
 .streak-counter-emoji {
-  font-size: 1.875rem;
+  font-size: 1.875rem; /* Make emoji larger/smaller here */
 }
 
+/* Container for streak number and flame icon */
 .streak-counter-stats {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
+/* The actual streak number */
 .streak-counter-number {
-  font-size: 1.5rem;
+  font-size: 1.5rem; /* Change number size here */
   font-weight: bold;
 }
 
+/* "Day Streak" label text */
 .streak-counter-label {
-  font-size: 0.875rem;
-  opacity: 0.9;
+  font-size: 0.875rem; /* Change label size here */
+  opacity: 0.9; /* Slightly transparent */
 }
 
+/* Motivational message at the bottom */
 .streak-counter-message {
-  color: #fed7aa;
-  font-size: 0.875rem;
+  color: #fed7aa; /* Light orange color */
+  font-size: 0.875rem; /* Change message size here */
 }

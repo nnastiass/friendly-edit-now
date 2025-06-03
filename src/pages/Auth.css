@@ -1,5 +1,18 @@
 
-/* Auth Page Styles */
+/* ========================================
+   AUTHENTICATION PAGE STYLES
+   ========================================
+   
+   This file styles the login/signup page including:
+   - Mobile-first design with phone frame
+   - Form inputs and labels
+   - Submit buttons
+   - Toggle between login/signup
+   
+   Design: Black background with custom inputs and buttons
+   ======================================== */
+
+/* Full screen container */
 .auth-container {
   min-height: 100vh;
   background-color: black;
@@ -9,15 +22,17 @@
   padding: 1rem;
 }
 
+/* Mobile phone frame container */
 .auth-mobile-frame {
   width: 100%;
-  max-width: 24rem;
+  max-width: 24rem; /* Phone width */
   margin: 0 auto;
   background-color: black;
   color: white;
-  aspect-ratio: 9/16;
+  aspect-ratio: 9/16; /* Phone aspect ratio */
 }
 
+/* Main layout container */
 .auth-layout {
   height: 100%;
   display: flex;
@@ -26,72 +41,114 @@
   padding: 0 1.5rem;
 }
 
+/* Header section with titles */
 .auth-header {
   text-align: center;
   margin-bottom: 2rem;
 }
 
+/* App title "SocialStreak" */
 .auth-app-title {
-  font-size: 1.875rem;
+  font-size: 1.875rem; /* Change app title size here */
   font-weight: bold;
   margin-bottom: 0.5rem;
 }
 
+/* Page title "Welcome back" / "Create account" */
 .auth-page-title {
-  font-size: 1.25rem;
+  font-size: 1.25rem; /* Change page title size here */
   font-weight: 600;
 }
 
+/* Description text under page title */
 .auth-description {
-  color: #9ca3af;
+  color: #9ca3af; /* Gray color for description */
   margin-top: 0.5rem;
 }
 
+/* Form container */
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.5rem; /* Space between form fields */
 }
 
+/* Individual form field container */
 .auth-field {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.5rem; /* Space between label and input */
 }
 
+/* Form labels */
 .auth-label {
   color: white;
+  font-weight: 500;
 }
 
+/* Form inputs - YOUR CUSTOM STYLING */
 .auth-input {
-  background-color: #1f2937;
-  border-color: #374151;
-  color: white;
+  background-color: black; /* Black background as requested */
+  border: 2px solid white; /* White border as requested */
+  border-radius: 9999px; /* Fully rounded edges as requested */
+  color: white; /* White text as requested */
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  transition: border-color 0.2s ease;
 }
 
+/* Input focus state */
+.auth-input:focus {
+  outline: none;
+  border-color: #a855f7; /* Purple border on focus */
+}
+
+/* Input placeholder text */
+.auth-input::placeholder {
+  color: #9ca3af; /* Gray placeholder text */
+}
+
+/* Submit button - YOUR CUSTOM STYLING */
 .auth-submit-button {
   width: 100%;
-  background-color: #7c3aed;
+  background-color: #2F1930; /* Your custom purple color */
   color: white;
+  border: none;
+  border-radius: 9999px; /* Fully rounded edges as requested */
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 
+/* Submit button hover state */
 .auth-submit-button:hover {
-  background-color: #6d28d9;
+  background-color: #451f3d; /* Slightly lighter on hover */
 }
 
+/* Submit button disabled state */
+.auth-submit-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Toggle section container */
 .auth-toggle-container {
   text-align: center;
   margin-top: 1.5rem;
 }
 
+/* Toggle button (switch between login/signup) */
 .auth-toggle-button {
-  color: #a855f7;
+  color: #a855f7; /* Purple color */
   text-decoration: underline;
   background: none;
   border: none;
   cursor: pointer;
+  font-size: 0.875rem;
 }
 
+/* Toggle button hover state */
 .auth-toggle-button:hover {
-  color: #c084fc;
+  color: #c084fc; /* Lighter purple on hover */
 }
