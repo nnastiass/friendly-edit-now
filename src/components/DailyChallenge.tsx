@@ -4,6 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import StreakCounter from './StreakCounter';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import './DailyChallenge.css';
 
 interface DailyChallengeProps {
@@ -49,13 +52,18 @@ const challenges = [
 ];
 
 const DailyChallenge: React.FC<DailyChallengeProps> = ({ onComplete }) => {
+  const { user } = useAuth();
   const [todaysChallenge, setTodaysChallenge] = useState(challenges[0]);
   const [isCompleted, setIsCompleted] = useState(false);
   const [progress, setProgress] = useState(0);
   const [timeLeft, setTimeLeft] = useState('');
-  const [currentStreak, setCurrentStreak] = useState(7);
+  const [currentStreak, setCurrentStreak] = useState(0);
 
   useEffect(() => {
+    if (user) {
+      fetchUserStreak();
+    }
+    
     // Get today's challenge based on date
     const today = new Date();
     const challengeIndex = today.getDate() % challenges.length;
@@ -86,9 +94,45 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ onComplete }) => {
     const interval = setInterval(updateTimeLeft, 60000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [user]);
 
-  const handleCompleteChallenge = () => {
+  const fetchUserStreak = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('streak')
+        .eq('id', user.id)
+        .single();
+
+      if (error) throw error;
+
+      setCurrentStreak(data?.streak || 0);
+    } catch (error) {
+      console.error('Error fetching user streak:', error);
+    }
+  };
+
+  const updateStreak = async (newStreak: number) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ streak: newStreak })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      setCurrentStreak(newStreak);
+    } catch (error) {
+      console.error('Error updating streak:', error);
+      toast.error('Failed to update streak');
+    }
+  };
+
+  const handleCompleteChallenge = async () => {
     if (isCompleted) return;
 
     setIsCompleted(true);
@@ -106,6 +150,12 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ onComplete }) => {
     // Store completion in localStorage
     const today = new Date();
     localStorage.setItem(`challenge-${today.toDateString()}`, 'completed');
+
+    // Update streak in database
+    const newStreak = currentStreak + 1;
+    await updateStreak(newStreak);
+
+    toast.success(`Challenge completed! Streak: ${newStreak} days`);
 
     if (onComplete) {
       onComplete(todaysChallenge.points);

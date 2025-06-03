@@ -40,7 +40,7 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
       const { data, error } = await supabase
         .from('profiles')
         .select('id, username, full_name, avatar_url')
-        .or(`username.ilike.%${searchTerm}%,full_name.ilike.%${searchTerm}%`)
+        .ilike('full_name', `%${searchTerm}%`)
         .neq('id', user.id)
         .limit(10);
 
@@ -182,7 +182,7 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && searchUsers()}
-            placeholder="Search by username or name..."
+            placeholder="Search by username..."
             className="pl-10 bg-gray-800 border-gray-700 text-white"
           />
         </div>
@@ -209,11 +209,8 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
                   </Avatar>
                   <div>
                     <p className="font-medium text-white">
-                      {searchedUser.full_name || 'No name set'}
+                      @{searchedUser.full_name || 'Unknown'}
                     </p>
-                    {searchedUser.username && (
-                      <p className="text-sm text-purple-400">@{searchedUser.username}</p>
-                    )}
                   </div>
                 </div>
                 {renderActionButton(searchedUser)}

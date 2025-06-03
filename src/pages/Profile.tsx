@@ -19,16 +19,28 @@ interface Profile {
   username: string | null;
   full_name: string | null;
   avatar_url: string | null;
+  streak: number | null;
+}
+
+interface Friend {
+  id: string;
+  friend_id: string;
+  friend_profile: {
+    id: string;
+    full_name: string | null;
+    avatar_url: string | null;
+    streak: number | null;
+  } | null;
 }
 
 const Profile = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [friends, setFriends] = useState<Friend[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
     username: '',
-    full_name: '',
   });
   const [loading, setLoading] = useState(false);
   const [api, setApi] = useState<CarouselApi>();
@@ -38,6 +50,7 @@ const Profile = () => {
   useEffect(() => {
     if (user) {
       fetchProfile();
+      fetchFriends();
     }
   }, [user]);
 
@@ -69,10 +82,36 @@ const Profile = () => {
       setProfile(data);
       if (data) {
         setEditForm({
-          username: data.username || '',
-          full_name: data.full_name || '',
+          username: data.full_name || '',
         });
       }
+    }
+  };
+
+  const fetchFriends = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('friends')
+        .select(`
+          id,
+          friend_id,
+          friend_profile:profiles!friends_friend_id_fkey(
+            id,
+            full_name,
+            avatar_url,
+            streak
+          )
+        `)
+        .eq('user_id', user.id)
+        .limit(6);
+
+      if (error) throw error;
+
+      setFriends(data as Friend[] || []);
+    } catch (error) {
+      console.error('Error fetching friends:', error);
     }
   };
 
@@ -83,8 +122,7 @@ const Profile = () => {
     const { error } = await supabase
       .from('profiles')
       .update({
-        username: editForm.username || null,
-        full_name: editForm.full_name || null,
+        full_name: editForm.username || null,
         updated_at: new Date().toISOString(),
       })
       .eq('id', user.id);
@@ -182,9 +220,9 @@ const Profile = () => {
                           </Avatar>
                           <div>
                             <h3 className="text-lg font-semibold text-white">
-                              {profile?.full_name || 'No display name set'}
+                              @{profile?.full_name || 'username'}
                             </h3>
-                            <p className="text-gray-400">{user?.email}</p>
+                            <p className="text-purple-400">🔥 {profile?.streak || 0} day streak</p>
                           </div>
                         </div>
 
@@ -215,16 +253,6 @@ const Profile = () => {
                                   placeholder="Choose a username"
                                 />
                               </div>
-                              <div className="space-y-2">
-                                <Label htmlFor="full_name" className="text-white">Display Name</Label>
-                                <Input
-                                  id="full_name"
-                                  value={editForm.full_name}
-                                  onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
-                                  className="bg-gray-800 border-gray-700 text-white"
-                                  placeholder="Enter your display name"
-                                />
-                              </div>
                               <Button
                                 onClick={handleUpdateProfile}
                                 disabled={loading}
@@ -237,15 +265,36 @@ const Profile = () => {
                             <div className="space-y-3">
                               <div>
                                 <Label className="text-gray-400">Username</Label>
-                                <p className="text-white">{profile?.username || 'Not set'}</p>
-                              </div>
-                              <div>
-                                <Label className="text-gray-400">Display Name</Label>
-                                <p className="text-white">{profile?.full_name || 'Not set'}</p>
+                                <p className="text-white">@{profile?.full_name || 'Not set'}</p>
                               </div>
                             </div>
                           )}
                         </div>
+
+                        {/* Friends Section */}
+                        {friends.length > 0 && (
+                          <div className="space-y-4">
+                            <h4 className="text-lg font-medium text-white">Friends</h4>
+                            <div className="grid grid-cols-3 gap-4">
+                              {friends.map((friend) => (
+                                <div key={friend.id} className="text-center">
+                                  <Avatar className="h-12 w-12 mx-auto mb-2">
+                                    <AvatarImage src={friend.friend_profile?.avatar_url || ''} />
+                                    <AvatarFallback className="bg-purple-600 text-white text-xs">
+                                      {getInitials(friend.friend_profile?.full_name)}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <p className="text-xs text-white truncate">
+                                    @{friend.friend_profile?.full_name || 'Unknown'}
+                                  </p>
+                                  <p className="text-xs text-purple-400">
+                                    🔥 {friend.friend_profile?.streak || 0}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

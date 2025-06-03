@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -17,7 +18,8 @@ interface Friend {
     username: string | null;
     full_name: string | null;
     avatar_url: string | null;
-  };
+    streak: number | null;
+  } | null;
 }
 
 const FriendsList: React.FC = () => {
@@ -45,7 +47,8 @@ const FriendsList: React.FC = () => {
             id,
             username,
             full_name,
-            avatar_url
+            avatar_url,
+            streak
           )
         `)
         .eq('user_id', user.id)
@@ -53,7 +56,7 @@ const FriendsList: React.FC = () => {
 
       if (error) throw error;
 
-      setFriends(data || []);
+      setFriends(data as Friend[] || []);
     } catch (error) {
       console.error('Error fetching friends:', error);
       toast.error('Failed to load friends');
@@ -122,11 +125,11 @@ const FriendsList: React.FC = () => {
               </Avatar>
               <div className="friends-list-user-details">
                 <p className="friends-list-name">
-                  {friend.friend_profile?.full_name || 'No name set'}
+                  @{friend.friend_profile?.full_name || 'Unknown'}
                 </p>
-                {friend.friend_profile?.username && (
-                  <p className="friends-list-username">@{friend.friend_profile.username}</p>
-                )}
+                <p className="friends-list-streak">
+                  🔥 {friend.friend_profile?.streak || 0} day streak
+                </p>
               </div>
             </div>
             <Button

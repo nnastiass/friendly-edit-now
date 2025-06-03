@@ -3,139 +3,145 @@
    FRIENDS LIST COMPONENT STYLES
    ========================================
    
-   This file styles the friends list component including:
-   - Main card container
-   - Empty state when no friends
-   - Individual friend items
-   - Friend avatars and information
-   - Remove friend buttons
+   This file contains all styling for the FriendsList component.
+   The component displays the user's friends with their avatars,
+   usernames, streaks, and options to remove them.
    
-   Design: Dark theme with gray cards
+   Main sections:
+   - Loading state
+   - Empty state
+   - Friends list card
+   - Individual friend items
+   - Avatar and user details
+   - Action buttons
    ======================================== */
-
-/* Main friends list card */
-.friends-list-card {
-  background-color: #1f2937; /* Dark gray background */
-  border-color: #374151; /* Darker gray border */
-  border-radius: 0.75rem; /* Rounded corners */
-}
-
-/* Header section (uses default CardHeader styles) */
-.friends-list-header {
-  /* Inherits from shadcn CardHeader component */
-}
-
-/* Header title with icon */
-.friends-list-title {
-  color: white;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem; /* Space between icon and text */
-  font-size: 1.125rem;
-  font-weight: 600;
-}
-
-/* Main content area */
-.friends-list-content {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem; /* Space between friend items */
-}
 
 /* Loading state text */
 .friends-list-loading {
   text-align: center;
-  color: #9ca3af; /* Gray color */
-  padding: 1rem;
+  color: #9ca3af; /* Gray text */
 }
 
-/* Empty state card */
+/* Empty state card when no friends */
 .friends-list-empty {
-  background-color: #1f2937; /* Dark gray background */
-  border-color: #374151; /* Darker gray border */
-  border-radius: 0.5rem;
+  background-color: #374151; /* Gray-800 background */
+  border-color: #4b5563; /* Gray-700 border */
 }
 
-/* Empty state content */
 .friends-list-empty-content {
   padding: 1.5rem;
   text-align: center;
 }
 
-/* Empty state icon */
 .friends-list-empty-icon {
-  height: 3rem; /* Change empty icon size here */
+  height: 3rem;
   width: 3rem;
-  color: #9ca3af; /* Gray color */
-  margin: 0 auto 0.5rem;
+  color: #9ca3af; /* Gray-400 */
+  margin: 0 auto 0.5rem auto;
 }
 
-/* Empty state text */
 .friends-list-empty-text {
-  color: #9ca3af; /* Gray color */
-  font-size: 0.875rem;
+  color: #9ca3af; /* Gray-400 */
 }
 
-/* Individual friend item */
+/* Main friends list card */
+.friends-list-card {
+  background-color: #374151; /* Gray-800 background */
+  border-color: #4b5563; /* Gray-700 border */
+}
+
+/* Card header with title */
+.friends-list-header {
+  /* Uses default CardHeader styling */
+}
+
+.friends-list-title {
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Card content area */
+.friends-list-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Individual friend item container */
 .friends-list-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem;
-  background-color: #374151; /* Darker gray background */
-  border-radius: 0.5rem; /* Rounded corners */
+  background-color: #4b5563; /* Gray-700 background */
+  border-radius: 0.5rem;
 }
 
-/* Left side of friend item (avatar + info) */
+/* Friend info section (avatar + details) */
 .friends-list-item-info {
   display: flex;
   align-items: center;
-  gap: 0.75rem; /* Space between avatar and text */
+  gap: 0.75rem;
 }
 
 /* Friend avatar */
 .friends-list-avatar {
-  height: 2.5rem; /* Change avatar size here */
+  height: 2.5rem;
   width: 2.5rem;
 }
 
-/* Avatar fallback (when no image) */
 .friends-list-avatar-fallback {
-  background-color: #7c3aed; /* Purple background */
+  background-color: #7c3aed; /* Purple-600 */
   color: white;
 }
 
 /* User details container */
 .friends-list-user-details {
-  /* No specific styles needed - children handle their own */
+  /* Container for name and streak */
 }
 
-/* Friend's display name */
+/* Friend name/username */
 .friends-list-name {
   font-weight: 500;
   color: white;
-  font-size: 0.875rem;
+  margin: 0;
 }
 
-/* Friend's username */
-.friends-list-username {
+/* Friend streak display */
+.friends-list-streak {
   font-size: 0.875rem;
-  color: #a855f7; /* Purple color */
+  color: #a78bfa; /* Purple-400 */
+  margin: 0;
 }
 
 /* Remove friend button */
 .friends-list-remove-button {
-  border-color: #dc2626; /* Red border */
-  color: #f87171; /* Light red text */
-  background: transparent;
-  border-radius: 0.375rem;
-  padding: 0.5rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  border-color: #dc2626; /* Red-600 border */
+  color: #f87171; /* Red-400 text */
 }
 
-/* Remove button hover state */
 .friends-list-remove-button:hover {
-  background-color: #dc2626; /* Red background on hover */
+  background-color: #dc2626; /* Red-600 background on hover */
   color: white; /* White text on hover */
 }
+
+/* ========================================
+   CUSTOMIZATION TIPS:
+   
+   1. Colors: Change the background colors by modifying 
+      the background-color properties in the CSS classes
+   
+   2. Spacing: Adjust gap, padding, and margin values 
+      to change the spacing between elements
+   
+   3. Avatars: Modify .friends-list-avatar height/width 
+      to change avatar size
+   
+   4. Typography: Change font-size and font-weight 
+      properties to adjust text appearance
+   
+   5. Hover Effects: Modify the :hover pseudo-classes 
+      to change button interactions
+   ======================================== */

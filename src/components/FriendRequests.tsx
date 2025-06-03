@@ -19,7 +19,7 @@ interface FriendRequest {
     username: string | null;
     full_name: string | null;
     avatar_url: string | null;
-  };
+  } | null;
 }
 
 const FriendRequests: React.FC = () => {
@@ -58,7 +58,7 @@ const FriendRequests: React.FC = () => {
 
       if (error) throw error;
 
-      setRequests(data || []);
+      setRequests(data as FriendRequest[] || []);
     } catch (error) {
       console.error('Error fetching friend requests:', error);
       toast.error('Failed to load friend requests');
@@ -157,11 +157,8 @@ const FriendRequests: React.FC = () => {
               </Avatar>
               <div>
                 <p className="font-medium text-white">
-                  {request.sender_profile?.full_name || 'No name set'}
+                  @{request.sender_profile?.full_name || 'Unknown'}
                 </p>
-                {request.sender_profile?.username && (
-                  <p className="text-sm text-purple-400">@{request.sender_profile.username}</p>
-                )}
               </div>
             </div>
             <div className="flex space-x-2">
