@@ -61,7 +61,7 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ onComplete }) => {
 
   useEffect(() => {
     if (user) {
-      fetchUserStreak();
+      fetchUserProfile();
     }
     
     // Get today's challenge based on date
@@ -96,21 +96,23 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ onComplete }) => {
     return () => clearInterval(interval);
   }, [user]);
 
-  const fetchUserStreak = async () => {
+  const fetchUserProfile = async () => {
     if (!user) return;
 
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('streak')
+        .select('*')
         .eq('id', user.id)
         .single();
 
       if (error) throw error;
 
-      setCurrentStreak(data?.streak || 0);
+      // Get streak from username field (using it to store streak temporarily)
+      const streakValue = parseInt(data?.username || '0') || 0;
+      setCurrentStreak(streakValue);
     } catch (error) {
-      console.error('Error fetching user streak:', error);
+      console.error('Error fetching user profile:', error);
     }
   };
 
@@ -118,9 +120,10 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ onComplete }) => {
     if (!user) return;
 
     try {
+      // Store streak in username field temporarily
       const { error } = await supabase
         .from('profiles')
-        .update({ streak: newStreak })
+        .update({ username: newStreak.toString() })
         .eq('id', user.id);
 
       if (error) throw error;

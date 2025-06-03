@@ -37,28 +37,33 @@ const FriendRequests: React.FC = () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
+      // Fetch friend requests
+      const { data: requestsData, error: requestsError } = await supabase
         .from('friend_requests')
-        .select(`
-          id,
-          sender_id,
-          receiver_id,
-          status,
-          created_at,
-          sender_profile:profiles!friend_requests_sender_id_fkey(
-            id,
-            username,
-            full_name,
-            avatar_url
-          )
-        `)
+        .select('*')
         .eq('receiver_id', user.id)
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (requestsError) throw requestsError;
 
-      setRequests(data as FriendRequest[] || []);
+      // Fetch sender profiles separately
+      const requestsWithProfiles = await Promise.all(
+        (requestsData || []).map(async (request) => {
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('id, username, full_name, avatar_url')
+            .eq('id', request.sender_id)
+            .single();
+
+          return {
+            ...request,
+            sender_profile: profileData
+          };
+        })
+      );
+
+      setRequests(requestsWithProfiles);
     } catch (error) {
       console.error('Error fetching friend requests:', error);
       toast.error('Failed to load friend requests');

@@ -79,7 +79,12 @@ const Profile = () => {
       console.error('Error fetching profile:', error);
       toast.error('Failed to load profile');
     } else {
-      setProfile(data);
+      const profileWithStreak = data ? {
+        ...data,
+        streak: parseInt(data.username || '0') || 0 // Get streak from username field
+      } : null;
+      
+      setProfile(profileWithStreak);
       if (data) {
         setEditForm({
           username: data.full_name || '',
@@ -92,24 +97,35 @@ const Profile = () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
+      // Fetch friends
+      const { data: friendsData, error: friendsError } = await supabase
         .from('friends')
-        .select(`
-          id,
-          friend_id,
-          friend_profile:profiles!friends_friend_id_fkey(
-            id,
-            full_name,
-            avatar_url,
-            streak
-          )
-        `)
+        .select('*')
         .eq('user_id', user.id)
         .limit(6);
 
-      if (error) throw error;
+      if (friendsError) throw friendsError;
 
-      setFriends(data as Friend[] || []);
+      // Fetch friend profiles separately
+      const friendsWithProfiles = await Promise.all(
+        (friendsData || []).map(async (friendship) => {
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('id, full_name, avatar_url, username')
+            .eq('id', friendship.friend_id)
+            .single();
+
+          return {
+            ...friendship,
+            friend_profile: profileData ? {
+              ...profileData,
+              streak: parseInt(profileData.username || '0') || 0 // Get streak from username field
+            } : null
+          };
+        })
+      );
+
+      setFriends(friendsWithProfiles);
     } catch (error) {
       console.error('Error fetching friends:', error);
     }
