@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -102,15 +101,13 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ onComplete }) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('streak')
         .eq('id', user.id)
         .single();
 
       if (error) throw error;
 
-      // Get streak from username field (using it to store streak temporarily)
-      const streakValue = parseInt(data?.username || '0') || 0;
-      setCurrentStreak(streakValue);
+      setCurrentStreak(data?.streak || 0);
     } catch (error) {
       console.error('Error fetching user profile:', error);
     }
@@ -120,10 +117,9 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ onComplete }) => {
     if (!user) return;
 
     try {
-      // Store streak in username field temporarily
       const { error } = await supabase
         .from('profiles')
-        .update({ username: newStreak.toString() })
+        .update({ streak: newStreak })
         .eq('id', user.id);
 
       if (error) throw error;

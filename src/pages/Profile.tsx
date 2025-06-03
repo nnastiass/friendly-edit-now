@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -79,12 +78,7 @@ const Profile = () => {
       console.error('Error fetching profile:', error);
       toast.error('Failed to load profile');
     } else {
-      const profileWithStreak = data ? {
-        ...data,
-        streak: parseInt(data.username || '0') || 0 // Get streak from username field
-      } : null;
-      
-      setProfile(profileWithStreak);
+      setProfile(data);
       if (data) {
         setEditForm({
           username: data.full_name || '',
@@ -111,16 +105,13 @@ const Profile = () => {
         (friendsData || []).map(async (friendship) => {
           const { data: profileData } = await supabase
             .from('profiles')
-            .select('id, full_name, avatar_url, username')
+            .select('id, full_name, avatar_url, streak')
             .eq('id', friendship.friend_id)
             .single();
 
           return {
             ...friendship,
-            friend_profile: profileData ? {
-              ...profileData,
-              streak: parseInt(profileData.username || '0') || 0 // Get streak from username field
-            } : null
+            friend_profile: profileData
           };
         })
       );

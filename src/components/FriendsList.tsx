@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -51,16 +50,13 @@ const FriendsList: React.FC = () => {
         (friendsData || []).map(async (friendship) => {
           const { data: profileData } = await supabase
             .from('profiles')
-            .select('id, username, full_name, avatar_url')
+            .select('id, username, full_name, avatar_url, streak')
             .eq('id', friendship.friend_id)
             .single();
 
           return {
             ...friendship,
-            friend_profile: profileData ? {
-              ...profileData,
-              streak: parseInt(profileData.username || '0') || 0 // Get streak from username field
-            } : null
+            friend_profile: profileData
           };
         })
       );
