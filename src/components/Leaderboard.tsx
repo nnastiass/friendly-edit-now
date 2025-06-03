@@ -1,9 +1,9 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Trophy, Medal, Award, Users } from 'lucide-react';
+import './Leaderboard.css';
 
 const friends = [
   { id: 1, name: 'Alex Chen', streak: 15, points: 1250, avatar: '👨‍💻', rank: 1 },
@@ -23,35 +23,33 @@ const Leaderboard = () => {
     }
   };
 
-  const getRankBadge = (rank: number) => {
+  const getRankBadgeClass = (rank: number) => {
     switch (rank) {
-      case 1: return 'bg-gradient-to-r from-yellow-400 to-yellow-600';
-      case 2: return 'bg-gradient-to-r from-gray-300 to-gray-500';
-      case 3: return 'bg-gradient-to-r from-amber-400 to-amber-600';
-      default: return 'bg-gradient-to-r from-blue-400 to-blue-600';
+      case 1: return 'leaderboard-rank-gold';
+      case 2: return 'leaderboard-rank-silver';
+      case 3: return 'leaderboard-rank-bronze';
+      default: return 'leaderboard-rank-default';
     }
   };
 
   return (
-    <Card className="border-0 shadow-lg">
-      <CardHeader className="bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-t-lg">
-        <CardTitle className="flex items-center space-x-2">
+    <Card className="leaderboard-card">
+      <CardHeader className="leaderboard-header">
+        <CardTitle className="leaderboard-title">
           <Users className="h-5 w-5" />
           <span>Friend Leaderboard</span>
         </CardTitle>
       </CardHeader>
       
-      <CardContent className="p-0">
+      <CardContent className="leaderboard-content">
         {friends.map((friend, index) => (
           <div 
             key={friend.id} 
-            className={`p-4 border-b border-gray-100 last:border-b-0 ${
-              friend.name === 'You' ? 'bg-blue-50' : 'hover:bg-gray-50'
-            } transition-colors`}
+            className={`leaderboard-item ${friend.name === 'You' ? 'leaderboard-item-you' : ''}`}
           >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className={`w-8 h-8 rounded-full ${getRankBadge(friend.rank)} flex items-center justify-center`}>
+            <div className="leaderboard-item-content">
+              <div className="leaderboard-item-left">
+                <div className={`leaderboard-rank-badge ${getRankBadgeClass(friend.rank)}`}>
                   {friend.rank <= 3 ? (
                     getRankIcon(friend.rank)
                   ) : (
@@ -59,15 +57,15 @@ const Leaderboard = () => {
                   )}
                 </div>
                 
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-lg">
+                <div className="leaderboard-avatar">
                   {friend.avatar}
                 </div>
                 
-                <div>
-                  <p className={`font-semibold ${friend.name === 'You' ? 'text-blue-600' : 'text-gray-900'}`}>
+                <div className="leaderboard-user-info">
+                  <p className={`leaderboard-username ${friend.name === 'You' ? 'leaderboard-username-you' : ''}`}>
                     {friend.name}
                   </p>
-                  <div className="flex items-center space-x-2 text-sm text-gray-500">
+                  <div className="leaderboard-stats">
                     <span>🔥 {friend.streak} days</span>
                     <span>•</span>
                     <span>{friend.points} pts</span>
@@ -76,7 +74,7 @@ const Leaderboard = () => {
               </div>
 
               {friend.name === 'You' && (
-                <Badge className="bg-blue-500 hover:bg-blue-500">
+                <Badge className="leaderboard-you-badge">
                   You
                 </Badge>
               )}

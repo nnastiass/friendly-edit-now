@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -7,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Users, UserMinus } from 'lucide-react';
+import './FriendsList.css';
 
 interface Friend {
   id: string;
@@ -88,44 +88,44 @@ const FriendsList: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="text-center text-gray-400">Loading friends...</div>;
+    return <div className="friends-list-loading">Loading friends...</div>;
   }
 
   if (friends.length === 0) {
     return (
-      <Card className="bg-gray-800 border-gray-700">
-        <CardContent className="p-6 text-center">
-          <Users className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-          <p className="text-gray-400">No friends yet</p>
+      <Card className="friends-list-empty">
+        <CardContent className="friends-list-empty-content">
+          <Users className="friends-list-empty-icon" />
+          <p className="friends-list-empty-text">No friends yet</p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="bg-gray-800 border-gray-700">
-      <CardHeader>
-        <CardTitle className="text-white flex items-center space-x-2">
+    <Card className="friends-list-card">
+      <CardHeader className="friends-list-header">
+        <CardTitle className="friends-list-title">
           <Users className="h-5 w-5" />
           <span>Friends ({friends.length})</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="friends-list-content">
         {friends.map((friend) => (
-          <div key={friend.id} className="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
-            <div className="flex items-center space-x-3">
-              <Avatar className="h-10 w-10">
+          <div key={friend.id} className="friends-list-item">
+            <div className="friends-list-item-info">
+              <Avatar className="friends-list-avatar">
                 <AvatarImage src={friend.friend_profile?.avatar_url || ''} />
-                <AvatarFallback className="bg-purple-600 text-white">
+                <AvatarFallback className="friends-list-avatar-fallback">
                   {getInitials(friend.friend_profile?.full_name)}
                 </AvatarFallback>
               </Avatar>
-              <div>
-                <p className="font-medium text-white">
+              <div className="friends-list-user-details">
+                <p className="friends-list-name">
                   {friend.friend_profile?.full_name || 'No name set'}
                 </p>
                 {friend.friend_profile?.username && (
-                  <p className="text-sm text-purple-400">@{friend.friend_profile.username}</p>
+                  <p className="friends-list-username">@{friend.friend_profile.username}</p>
                 )}
               </div>
             </div>
@@ -133,7 +133,7 @@ const FriendsList: React.FC = () => {
               size="sm"
               variant="outline"
               onClick={() => removeFriend(friend.id, friend.friend_id)}
-              className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white"
+              className="friends-list-remove-button"
             >
               <UserMinus className="h-4 w-4" />
             </Button>

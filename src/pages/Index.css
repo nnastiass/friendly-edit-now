@@ -1,0 +1,133 @@
+
+/* Index Page Styles */
+.index-container {
+  min-height: 100vh;
+  background-color: black;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.index-mobile-frame {
+  width: 100%;
+  max-width: 24rem;
+  margin: 0 auto;
+  background-color: black;
+  color: white;
+  aspect-ratio: 9/16;
+}
+
+.index-layout {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.index-main-content {
+  flex: 1;
+  padding: 2rem 1.5rem;
+}
+
+.index-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.index-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 0.5rem;
+}
+
+.index-bottom-nav {
+  background-color: black;
+  border-top: 1px solid #1f2937;
+  padding: 1rem 1.5rem;
+}
+
+.index-nav-container {
+  display: flex;
+  justify-content: center;
+  gap: 4rem;
+}
+
+.index-nav-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: white;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.index-nav-button-inactive {
+  color: #6b7280;
+  transition: color 0.2s;
+}
+
+.index-nav-button-inactive:hover {
+  color: white;
+}
+
+.index-nav-icon {
+  height: 1.5rem;
+  width: 1.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.index-loading {
+  min-height: 100vh;
+  background-color: black;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.index-loading-frame {
+  width: 100%;
+  max-width: 24rem;
+  margin: 0 auto;
+  aspect-ratio: 9/16;
+}
+
+.index-loading-content {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.index-loading-inner {
+  text-align: center;
+  color: white;
+}
+
+.index-loading-spinner {
+  animation: spin 1s linear infinite;
+  border-radius: 50%;
+  height: 4rem;
+  width: 4rem;
+  border: 4px solid white;
+  border-top-color: transparent;
+  margin: 0 auto 1rem;
+}
+
+.index-loading-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.index-loading-text {
+  color: #9ca3af;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

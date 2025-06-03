@@ -2,6 +2,7 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Flame } from 'lucide-react';
+import './StreakCounter.css';
 
 interface StreakCounterProps {
   streak: number;
@@ -25,20 +26,20 @@ const StreakCounter: React.FC<StreakCounterProps> = ({ streak }) => {
   };
 
   return (
-    <Card className="bg-gradient-to-r from-orange-400 to-pink-500 text-white border-0">
-      <CardContent className="p-6 text-center">
-        <div className="flex items-center justify-center space-x-3 mb-3">
-          <div className="text-3xl">{getStreakEmoji(streak)}</div>
+    <Card className="streak-counter-card">
+      <CardContent className="streak-counter-content">
+        <div className="streak-counter-main">
+          <div className="streak-counter-emoji">{getStreakEmoji(streak)}</div>
           <div>
-            <div className="flex items-center space-x-2">
+            <div className="streak-counter-stats">
               <Flame className="h-5 w-5" />
-              <span className="text-2xl font-bold">{streak}</span>
+              <span className="streak-counter-number">{streak}</span>
             </div>
-            <p className="text-sm opacity-90">Day Streak</p>
+            <p className="streak-counter-label">Day Streak</p>
           </div>
         </div>
         
-        <p className="text-orange-100 text-sm">
+        <p className="streak-counter-message">
           {getStreakMessage(streak)}
         </p>
       </CardContent>

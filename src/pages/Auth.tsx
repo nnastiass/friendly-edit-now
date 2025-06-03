@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
+import './Auth.css';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -60,57 +61,57 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-4">
-      <div className="w-full max-w-sm mx-auto bg-black text-white" style={{ aspectRatio: '9/16' }}>
-        <div className="h-full flex flex-col justify-center px-6">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold mb-2">SocialStreak</h1>
-            <h2 className="text-xl font-semibold">
+    <div className="auth-container">
+      <div className="auth-mobile-frame">
+        <div className="auth-layout">
+          <div className="auth-header">
+            <h1 className="auth-app-title">SocialStreak</h1>
+            <h2 className="auth-page-title">
               {isLogin ? 'Welcome back' : 'Create account'}
             </h2>
-            <p className="text-gray-400 mt-2">
+            <p className="auth-description">
               {isLogin ? 'Sign in to continue your streak' : 'Join the community and start your journey'}
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="auth-form">
             {!isLogin && (
-              <div className="space-y-2">
-                <Label htmlFor="username" className="text-white">Username</Label>
+              <div className="auth-field">
+                <Label htmlFor="username" className="auth-label">Username</Label>
                 <Input
                   id="username"
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required={!isLogin}
-                  className="bg-gray-800 border-gray-700 text-white"
+                  className="auth-input"
                   placeholder="Choose a username"
                 />
               </div>
             )}
 
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-white">Email</Label>
+            <div className="auth-field">
+              <Label htmlFor="email" className="auth-label">Email</Label>
               <Input
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="bg-gray-800 border-gray-700 text-white"
+                className="auth-input"
                 placeholder="Enter your email"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-white">Password</Label>
+            <div className="auth-field">
+              <Label htmlFor="password" className="auth-label">Password</Label>
               <Input
                 id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="bg-gray-800 border-gray-700 text-white"
+                className="auth-input"
                 placeholder="Enter your password"
               />
             </div>
@@ -118,16 +119,16 @@ const Auth = () => {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+              className="auth-submit-button"
             >
               {loading ? 'Loading...' : (isLogin ? 'Sign In' : 'Create Account')}
             </Button>
           </form>
 
-          <div className="text-center mt-6">
+          <div className="auth-toggle-container">
             <button
               onClick={() => setIsLogin(!isLogin)}
-              className="text-purple-400 hover:text-purple-300 underline"
+              className="auth-toggle-button"
             >
               {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
             </button>

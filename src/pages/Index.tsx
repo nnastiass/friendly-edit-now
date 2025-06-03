@@ -5,6 +5,7 @@ import { Home, User } from 'lucide-react';
 import DailyChallenge from '@/components/DailyChallenge';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import './Index.css';
 
 const Index = () => {
   const [currentStreak, setCurrentStreak] = useState(7);
@@ -27,13 +28,13 @@ const Index = () => {
 
   if (authLoading || isLoading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center p-4">
-        <div className="w-full max-w-sm mx-auto" style={{ aspectRatio: '9/16' }}>
-          <div className="h-full flex items-center justify-center">
-            <div className="text-center text-white">
-              <div className="animate-spin rounded-full h-16 w-16 border-4 border-white border-t-transparent mx-auto mb-4"></div>
-              <h2 className="text-2xl font-bold mb-2">SocialStreak</h2>
-              <p className="text-gray-400">Loading your daily challenge...</p>
+      <div className="index-loading">
+        <div className="index-loading-frame">
+          <div className="index-loading-content">
+            <div className="index-loading-inner">
+              <div className="index-loading-spinner"></div>
+              <h2 className="index-loading-title">SocialStreak</h2>
+              <p className="index-loading-text">Loading your daily challenge...</p>
             </div>
           </div>
         </div>
@@ -46,14 +47,14 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-4">
-      <div className="w-full max-w-sm mx-auto bg-black text-white" style={{ aspectRatio: '9/16' }}>
-        <div className="h-full flex flex-col">
+    <div className="index-container">
+      <div className="index-mobile-frame">
+        <div className="index-layout">
           {/* Main Content */}
-          <div className="flex-1 px-6 py-8">
+          <div className="index-main-content">
             {/* Header */}
-            <div className="text-center mb-8">
-              <h1 className="text-xl font-semibold text-white mb-2">Daily Challenge</h1>
+            <div className="index-header">
+              <h1 className="index-title">Daily Challenge</h1>
             </div>
 
             {/* Daily Challenge */}
@@ -66,16 +67,16 @@ const Index = () => {
           </div>
 
           {/* Bottom Navigation */}
-          <div className="bg-black border-t border-gray-800 px-6 py-4">
-            <div className="flex justify-center space-x-16">
-              <button className="flex flex-col items-center text-white">
-                <Home className="h-6 w-6 mb-1" />
+          <div className="index-bottom-nav">
+            <div className="index-nav-container">
+              <button className="index-nav-button">
+                <Home className="index-nav-icon" />
               </button>
               <button 
-                className="flex flex-col items-center text-gray-500 hover:text-white transition-colors"
+                className="index-nav-button index-nav-button-inactive"
                 onClick={() => navigate('/profile')}
               >
-                <User className="h-6 w-6 mb-1" />
+                <User className="index-nav-icon" />
               </button>
             </div>
           </div>

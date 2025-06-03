@@ -1,0 +1,45 @@
+
+/* StreakCounter Component Styles */
+.streak-counter-card {
+  background: linear-gradient(to right, #fb923c, #ec4899);
+  color: white;
+  border: none;
+}
+
+.streak-counter-content {
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.streak-counter-main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.streak-counter-emoji {
+  font-size: 1.875rem;
+}
+
+.streak-counter-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.streak-counter-number {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.streak-counter-label {
+  font-size: 0.875rem;
+  opacity: 0.9;
+}
+
+.streak-counter-message {
+  color: #fed7aa;
+  font-size: 0.875rem;
+}

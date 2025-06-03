@@ -1,0 +1,98 @@
+
+/* FriendsList Component Styles */
+.friends-list-card {
+  background-color: #1f2937;
+  border-color: #374151;
+}
+
+.friends-list-header {
+  /* Uses default CardHeader styles */
+}
+
+.friends-list-title {
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.friends-list-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.friends-list-loading {
+  text-align: center;
+  color: #9ca3af;
+}
+
+.friends-list-empty {
+  background-color: #1f2937;
+  border-color: #374151;
+}
+
+.friends-list-empty-content {
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.friends-list-empty-icon {
+  height: 3rem;
+  width: 3rem;
+  color: #9ca3af;
+  margin: 0 auto 0.5rem;
+}
+
+.friends-list-empty-text {
+  color: #9ca3af;
+}
+
+.friends-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem;
+  background-color: #374151;
+  border-radius: 0.5rem;
+}
+
+.friends-list-item-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.friends-list-avatar {
+  height: 2.5rem;
+  width: 2.5rem;
+}
+
+.friends-list-avatar-fallback {
+  background-color: #7c3aed;
+  color: white;
+}
+
+.friends-list-user-details {
+  /* No specific styles needed */
+}
+
+.friends-list-name {
+  font-weight: 500;
+  color: white;
+}
+
+.friends-list-username {
+  font-size: 0.875rem;
+  color: #a855f7;
+}
+
+.friends-list-remove-button {
+  border-color: #dc2626;
+  color: #f87171;
+}
+
+.friends-list-remove-button:hover {
+  background-color: #dc2626;
+  color: white;
+}

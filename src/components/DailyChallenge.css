@@ -1,0 +1,76 @@
+
+/* DailyChallenge Component Styles */
+.daily-challenge-container {
+  margin-bottom: 2rem;
+}
+
+.daily-challenge-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.daily-challenge-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 0.5rem;
+}
+
+.daily-challenge-subtitle {
+  color: #9ca3af;
+}
+
+.daily-challenge-card {
+  background-color: #1f2937;
+  border-color: #374151;
+  margin-bottom: 1.5rem;
+}
+
+.daily-challenge-content {
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.daily-challenge-emoji {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.daily-challenge-text {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: white;
+  margin-bottom: 0.5rem;
+}
+
+.daily-challenge-description {
+  color: #9ca3af;
+  margin-bottom: 1.5rem;
+}
+
+.daily-challenge-button {
+  width: 100%;
+  background-color: #7c3aed;
+}
+
+.daily-challenge-button:hover {
+  background-color: #6d28d9;
+}
+
+.daily-challenge-complete {
+  background-color: #059669;
+}
+
+.daily-challenge-complete:hover {
+  background-color: #047857;
+}
+
+.daily-challenge-progress {
+  margin-top: 1rem;
+}
+
+.daily-challenge-timer {
+  text-align: center;
+  color: #9ca3af;
+  font-size: 0.875rem;
+}

@@ -1,0 +1,117 @@
+
+/* Leaderboard Component Styles */
+.leaderboard-card {
+  border: none;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.leaderboard-header {
+  background: linear-gradient(to right, #8b5cf6, #ec4899);
+  color: white;
+  border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.leaderboard-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.leaderboard-content {
+  padding: 0;
+}
+
+.leaderboard-item {
+  padding: 1rem;
+  border-bottom: 1px solid #f3f4f6;
+  transition: background-color 0.2s;
+}
+
+.leaderboard-item:last-child {
+  border-bottom: none;
+}
+
+.leaderboard-item:hover {
+  background-color: #f9fafb;
+}
+
+.leaderboard-item-you {
+  background-color: #eff6ff;
+}
+
+.leaderboard-item-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.leaderboard-item-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.leaderboard-rank-badge {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.leaderboard-rank-gold {
+  background: linear-gradient(to right, #fbbf24, #f59e0b);
+}
+
+.leaderboard-rank-silver {
+  background: linear-gradient(to right, #d1d5db, #9ca3af);
+}
+
+.leaderboard-rank-bronze {
+  background: linear-gradient(to right, #fbbf24, #d97706);
+}
+
+.leaderboard-rank-default {
+  background: linear-gradient(to right, #60a5fa, #3b82f6);
+}
+
+.leaderboard-avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: linear-gradient(to bottom right, #60a5fa, #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.125rem;
+}
+
+.leaderboard-user-info {
+  /* No specific styles needed, children handle their own styles */
+}
+
+.leaderboard-username {
+  font-weight: 600;
+  color: #111827;
+}
+
+.leaderboard-username-you {
+  color: #2563eb;
+}
+
+.leaderboard-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.leaderboard-you-badge {
+  background-color: #3b82f6;
+}
+
+.leaderboard-you-badge:hover {
+  background-color: #3b82f6;
+}

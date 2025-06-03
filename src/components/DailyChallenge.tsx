@@ -1,208 +1,152 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
+import { Card, CardContent } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import StreakCounter from './StreakCounter';
+import './DailyChallenge.css';
+
+interface DailyChallengeProps {
+  onComplete?: (points: number) => void;
+}
 
 const challenges = [
   {
     id: 1,
-    title: "Ask someone out",
-    description: "Start a conversation with someone new",
-    points: 50,
+    emoji: '📱',
+    title: 'Share your breakfast',
+    description: 'Post a photo of what you had for breakfast today',
+    points: 10,
   },
   {
     id: 2,
-    title: "Join a group activity",
-    description: "Participate in a social event",
-    points: 75,
+    emoji: '🌅',
+    title: 'Morning walk',
+    description: 'Take a 10-minute walk and share your route',
+    points: 15,
   },
   {
     id: 3,
-    title: "Call a friend",
-    description: "Reach out to someone you haven't spoken to",
-    points: 60,
+    emoji: '📚',
+    title: 'Read for 15 minutes',
+    description: 'Read something interesting and share a quote',
+    points: 12,
   },
   {
     id: 4,
-    title: "Help a neighbor",
-    description: "Offer assistance to someone nearby",
-    points: 100,
+    emoji: '💧',
+    title: 'Drink 8 glasses of water',
+    description: 'Stay hydrated throughout the day',
+    points: 8,
   },
   {
     id: 5,
-    title: "Compliment a stranger",
-    description: "Give someone a genuine compliment",
-    points: 40,
+    emoji: '🎨',
+    title: 'Create something',
+    description: 'Draw, write, or make something creative',
+    points: 20,
   },
-  {
-    id: 6,
-    title: "Share a meal",
-    description: "Invite someone to eat together",
-    points: 80,
-  },
-  {
-    id: 7,
-    title: "Send a thank you message",
-    description: "Express gratitude to someone important",
-    points: 45,
-  }
 ];
 
-interface DailyChallengeProps {
-  onComplete: (points: number) => void;
-}
-
 const DailyChallenge: React.FC<DailyChallengeProps> = ({ onComplete }) => {
+  const [todaysChallenge, setTodaysChallenge] = useState(challenges[0]);
   const [isCompleted, setIsCompleted] = useState(false);
-  const [todaysChallenge, setTodaysChallenge] = useState(() => {
-    // Get challenge based on today's date for consistency
-    const today = new Date().toDateString();
-    const savedDate = localStorage.getItem('challengeDate');
-    const savedChallenge = localStorage.getItem('todaysChallenge');
-    
-    if (savedDate === today && savedChallenge) {
-      return JSON.parse(savedChallenge);
-    } else {
-      // Generate new challenge for today
-      const daysSinceEpoch = Math.floor(Date.now() / (1000 * 60 * 60 * 24));
-      const challenge = challenges[daysSinceEpoch % challenges.length];
-      localStorage.setItem('challengeDate', today);
-      localStorage.setItem('todaysChallenge', JSON.stringify(challenge));
-      return challenge;
-    }
-  });
-  
-  const [timeLeft, setTimeLeft] = useState({
-    hours: 0,
-    minutes: 0,
-    seconds: 0
-  });
-
-  const calculateTimeUntilMidnight = () => {
-    const now = new Date();
-    const midnight = new Date();
-    midnight.setHours(24, 0, 0, 0); // Next midnight
-    
-    const diff = midnight.getTime() - now.getTime();
-    
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-    
-    return { hours, minutes, seconds };
-  };
+  const [progress, setProgress] = useState(0);
+  const [timeLeft, setTimeLeft] = useState('');
+  const [currentStreak, setCurrentStreak] = useState(7);
 
   useEffect(() => {
-    // Check if challenge was completed today
-    const today = new Date().toDateString();
-    const completedDate = localStorage.getItem('challengeCompletedDate');
-    if (completedDate === today) {
+    // Get today's challenge based on date
+    const today = new Date();
+    const challengeIndex = today.getDate() % challenges.length;
+    setTodaysChallenge(challenges[challengeIndex]);
+
+    // Check if challenge was already completed today
+    const completedToday = localStorage.getItem(`challenge-${today.toDateString()}`);
+    if (completedToday) {
       setIsCompleted(true);
+      setProgress(100);
     }
 
-    // Set initial time
-    setTimeLeft(calculateTimeUntilMidnight());
-
-    // Update timer every second
-    const timer = setInterval(() => {
-      const newTime = calculateTimeUntilMidnight();
-      setTimeLeft(newTime);
+    // Calculate time left until midnight
+    const updateTimeLeft = () => {
+      const now = new Date();
+      const tomorrow = new Date(now);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
       
-      // Check if it's a new day (timer reached 0)
-      if (newTime.hours === 23 && newTime.minutes === 59 && newTime.seconds === 59) {
-        // Reset for new day
-        resetChallenge();
-      }
-    }, 1000);
+      const diff = tomorrow.getTime() - now.getTime();
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      
+      setTimeLeft(`${hours}h ${minutes}m until next challenge`);
+    };
 
-    return () => clearInterval(timer);
+    updateTimeLeft();
+    const interval = setInterval(updateTimeLeft, 60000);
+
+    return () => clearInterval(interval);
   }, []);
 
-  const resetChallenge = () => {
-    const today = new Date().toDateString();
-    const daysSinceEpoch = Math.floor(Date.now() / (1000 * 60 * 60 * 24));
-    const newChallenge = challenges[daysSinceEpoch % challenges.length];
-    
-    setTodaysChallenge(newChallenge);
-    setIsCompleted(false);
-    
-    localStorage.setItem('challengeDate', today);
-    localStorage.setItem('todaysChallenge', JSON.stringify(newChallenge));
-    localStorage.removeItem('challengeCompletedDate');
-    
-    toast.success('New challenge available!');
-  };
+  const handleCompleteChallenge = () => {
+    if (isCompleted) return;
 
-  const handleComplete = () => {
-    const today = new Date().toDateString();
     setIsCompleted(true);
-    onComplete(todaysChallenge.points);
-    localStorage.setItem('challengeCompletedDate', today);
-    toast.success(`🎉 Challenge completed! +${todaysChallenge.points} points`);
-  };
+    
+    // Animate progress
+    let currentProgress = 0;
+    const interval = setInterval(() => {
+      currentProgress += 5;
+      setProgress(currentProgress);
+      if (currentProgress >= 100) {
+        clearInterval(interval);
+      }
+    }, 50);
 
-  const handleDevReset = () => {
-    // Generate a random new challenge instead of using date-based
-    const randomIndex = Math.floor(Math.random() * challenges.length);
-    const newChallenge = challenges[randomIndex];
-    const today = new Date().toDateString();
-    
-    setTodaysChallenge(newChallenge);
-    setIsCompleted(false);
-    
-    localStorage.setItem('challengeDate', today);
-    localStorage.setItem('todaysChallenge', JSON.stringify(newChallenge));
-    localStorage.removeItem('challengeCompletedDate');
-    
-    toast.success('New challenge generated for development!');
+    // Store completion in localStorage
+    const today = new Date();
+    localStorage.setItem(`challenge-${today.toDateString()}`, 'completed');
+
+    if (onComplete) {
+      onComplete(todaysChallenge.points);
+    }
   };
 
   return (
-    <div className="flex flex-col items-center text-center space-y-8">
-      {/* Challenge Title */}
-      <h2 className="text-3xl font-semibold text-white">
-        {todaysChallenge.title}
-      </h2>
-
-      {/* Countdown Timer */}
-      <div className="flex space-x-4">
-        <div className="bg-gray-700 rounded-xl px-6 py-4 min-w-[80px]">
-          <div className="text-2xl font-bold text-white">
-            {String(timeLeft.hours).padStart(2, '0')}
-          </div>
-          <div className="text-sm text-gray-300">Hours</div>
-        </div>
-        <div className="bg-gray-700 rounded-xl px-6 py-4 min-w-[80px]">
-          <div className="text-2xl font-bold text-white">
-            {String(timeLeft.minutes).padStart(2, '0')}
-          </div>
-          <div className="text-sm text-gray-300">Minutes</div>
-        </div>
-        <div className="bg-gray-700 rounded-xl px-6 py-4 min-w-[80px]">
-          <div className="text-2xl font-bold text-white">
-            {String(timeLeft.seconds).padStart(2, '0')}
-          </div>
-          <div className="text-sm text-gray-300">Seconds</div>
-        </div>
+    <div className="daily-challenge-container">
+      <StreakCounter streak={currentStreak} />
+      
+      <div className="daily-challenge-header">
+        <h2 className="daily-challenge-title">Today's Challenge</h2>
+        <p className="daily-challenge-subtitle">Complete to maintain your streak!</p>
       </div>
 
-      {/* Complete Button */}
-      <Button 
-        onClick={handleComplete}
-        disabled={isCompleted}
-        className="w-full max-w-sm bg-purple-600 hover:bg-purple-700 text-white font-semibold py-4 rounded-full text-lg disabled:bg-green-600 disabled:opacity-80"
-      >
-        {isCompleted ? 'Completed!' : 'Mark as Complete'}
-      </Button>
+      <Card className="daily-challenge-card">
+        <CardContent className="daily-challenge-content">
+          <div className="daily-challenge-emoji">{todaysChallenge.emoji}</div>
+          
+          <h3 className="daily-challenge-text">{todaysChallenge.title}</h3>
+          <p className="daily-challenge-description">{todaysChallenge.description}</p>
+          
+          <Button
+            onClick={handleCompleteChallenge}
+            disabled={isCompleted}
+            className={`daily-challenge-button ${isCompleted ? 'daily-challenge-complete' : ''}`}
+          >
+            {isCompleted ? `Completed! +${todaysChallenge.points} points` : 'Complete Challenge'}
+          </Button>
 
-      {/* Dev Reset Button */}
-      <Button 
-        onClick={handleDevReset}
-        variant="outline"
-        className="w-full max-w-sm border-gray-600 text-gray-400 hover:bg-gray-700 hover:text-white"
-      >
-        🔧 Dev: New Challenge
-      </Button>
+          {isCompleted && (
+            <div className="daily-challenge-progress">
+              <Progress value={progress} className="w-full" />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <div className="daily-challenge-timer">
+        {timeLeft}
+      </div>
     </div>
   );
 };

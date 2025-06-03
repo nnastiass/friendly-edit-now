@@ -1,0 +1,97 @@
+
+/* Auth Page Styles */
+.auth-container {
+  min-height: 100vh;
+  background-color: black;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.auth-mobile-frame {
+  width: 100%;
+  max-width: 24rem;
+  margin: 0 auto;
+  background-color: black;
+  color: white;
+  aspect-ratio: 9/16;
+}
+
+.auth-layout {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 1.5rem;
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.auth-app-title {
+  font-size: 1.875rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.auth-page-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.auth-description {
+  color: #9ca3af;
+  margin-top: 0.5rem;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.auth-label {
+  color: white;
+}
+
+.auth-input {
+  background-color: #1f2937;
+  border-color: #374151;
+  color: white;
+}
+
+.auth-submit-button {
+  width: 100%;
+  background-color: #7c3aed;
+  color: white;
+}
+
+.auth-submit-button:hover {
+  background-color: #6d28d9;
+}
+
+.auth-toggle-container {
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+.auth-toggle-button {
+  color: #a855f7;
+  text-decoration: underline;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.auth-toggle-button:hover {
+  color: #c084fc;
+}
