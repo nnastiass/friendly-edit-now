@@ -9,13 +9,7 @@ interface StreakCounterProps {
 }
 
 const StreakCounter: React.FC<StreakCounterProps> = ({ streak }) => {
-  const getStreakEmoji = (streak: number) => {
-    if (streak >= 30) return '🔥';
-    if (streak >= 14) return '🚀';
-    if (streak >= 7) return '⭐';
-    if (streak >= 3) return '💪';
-    return '🌱';
-  };
+
 
   const getStreakMessage = (streak: number) => {
     if (streak >= 30) return 'Legendary streak!';
@@ -29,7 +23,7 @@ const StreakCounter: React.FC<StreakCounterProps> = ({ streak }) => {
     <Card className="streak-counter-card">
       <CardContent className="streak-counter-content">
         <div className="streak-counter-main">
-          <div className="streak-counter-emoji">{getStreakEmoji(streak)}</div>
+
           <div>
             <div className="streak-counter-stats">
               <Flame className="h-5 w-5" />

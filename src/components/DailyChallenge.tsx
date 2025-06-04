@@ -16,35 +16,30 @@ interface DailyChallengeProps {
 const challenges = [
   {
     id: 1,
-    emoji: '📱',
     title: 'Share your breakfast',
     description: 'Post a photo of what you had for breakfast today',
     points: 10,
   },
   {
     id: 2,
-    emoji: '🌅',
     title: 'Morning walk',
     description: 'Take a 10-minute walk and share your route',
     points: 15,
   },
   {
     id: 3,
-    emoji: '📚',
     title: 'Read for 15 minutes',
     description: 'Read something interesting and share a quote',
     points: 12,
   },
   {
     id: 4,
-    emoji: '💧',
     title: 'Drink 8 glasses of water',
     description: 'Stay hydrated throughout the day',
     points: 8,
   },
   {
     id: 5,
-    emoji: '🎨',
     title: 'Create something',
     description: 'Draw, write, or make something creative',
     points: 20,
@@ -79,19 +74,22 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ onComplete }) => {
     // Calculate time left until midnight
     const updateTimeLeft = () => {
       const now = new Date();
-      const tomorrow = new Date(now);
-      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrow = new Date();
+      tomorrow.setDate(now.getDate() + 1);
       tomorrow.setHours(0, 0, 0, 0);
-      
+
       const diff = tomorrow.getTime() - now.getTime();
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      
-      setTimeLeft(`${hours}h ${minutes}m until next challenge`);
+      const hours = String(Math.floor(diff / (1000 * 60 * 60))).padStart(2, '0');
+      const minutes = String(Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))).padStart(2, '0');
+      const seconds = String(Math.floor((diff % (1000 * 60)) / 1000)).padStart(2, '0');
+
+      setTimeLeft({ hours, minutes, seconds });
     };
 
+
     updateTimeLeft();
-    const interval = setInterval(updateTimeLeft, 60000);
+    const interval = setInterval(updateTimeLeft, 1000); // update every second
+
 
     return () => clearInterval(interval);
   }, [user]);
@@ -180,27 +178,24 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ onComplete }) => {
 
   return (
     <div className="daily-challenge-container">
-      <StreakCounter streak={currentStreak} />
-      
-      <div className="daily-challenge-header">
-        <h2 className="daily-challenge-title">Today's Challenge</h2>
-        <p className="daily-challenge-subtitle">Complete to maintain your streak!</p>
-      </div>
+
+      {/* 1. Daily Challenge Card */}
 
       <Card className="daily-challenge-card">
         <CardContent className="daily-challenge-content">
           <div className="daily-challenge-emoji">{todaysChallenge.emoji}</div>
-          
+
           <h3 className="daily-challenge-text">{todaysChallenge.title}</h3>
           <p className="daily-challenge-description">{todaysChallenge.description}</p>
-          
+
           <Button
             onClick={handleCompleteChallenge}
             disabled={isCompleted}
-            className={`daily-challenge-button ${isCompleted ? 'daily-challenge-complete' : ''}`}
+            className={`daily-challenge-button px-10 py-7 ${isCompleted ? 'daily-challenge-complete' : ''}`}
           >
             {isCompleted ? `Completed! +${todaysChallenge.points} points` : 'Complete Challenge'}
           </Button>
+
 
           {isCompleted && (
             <div className="daily-challenge-progress">
@@ -210,9 +205,28 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ onComplete }) => {
         </CardContent>
       </Card>
 
-      <div className="daily-challenge-timer">
-        {timeLeft}
+      {/* 2. Timer */}
+      <div className="daily-challenge-timer-boxes flex justify-center gap-4 mt-6">
+        {['Hours', 'Minutes', 'Seconds'].map((label, i) => {
+          const value = i === 0 ? timeLeft.hours : i === 1 ? timeLeft.minutes : timeLeft.seconds;
+          return (
+            <div key={label} className="flex flex-col items-center">
+              <div
+                style={{ borderWidth: '3px' }}
+                className="bg-black text-white rounded-xl px-6 py-4 text-2xl font-bold border-white border-solid"
+              >
+                {value}
+              </div>
+
+
+              <span className="text-sm text-gray-400 mt-1">{label}</span>
+            </div>
+          );
+        })}
       </div>
+
+      {/* 3. Streak */}
+      <StreakCounter streak={currentStreak} />
 
       {/* Dev Button */}
       <div className="flex justify-center mt-4">
@@ -228,6 +242,7 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ onComplete }) => {
       </div>
     </div>
   );
+
 };
 
 export default DailyChallenge;

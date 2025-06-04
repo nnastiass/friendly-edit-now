@@ -75,6 +75,8 @@ const FriendsList: React.FC = () => {
     }
   };
 
+
+
   const removeFriend = async (friendshipId: string, friendId: string) => {
     if (!user) return;
 
@@ -86,13 +88,7 @@ const FriendsList: React.FC = () => {
 
       if (error) throw error;
 
-      toast.success('Friend removed');
-      setFriends(prev => prev.filter(friend => friend.id !== friendshipId));
-    } catch (error) {
-      console.error('Error removing friend:', error);
-      toast.error('Failed to remove friend');
-    }
-  };
+
 
   const getInitials = (username: string | null, fullName: string | null) => {
     const name = username || fullName;

@@ -1,31 +1,24 @@
-
 /* ========================================
    DAILY CHALLENGE COMPONENT STYLES
-   ========================================
-   
-   This file styles the daily challenge section including:
-   - Challenge card with emoji and description
-   - Complete/incomplete button states
-   - Progress indicators
-   - Timer display
-   
-   Color scheme: Dark grays with purple accents
    ======================================== */
 
 /* Main container for the entire challenge section */
 .daily-challenge-container {
   margin-bottom: 2rem;
+  background-color: black; /* Black background */
+  color: white; /* Default white text */
 }
 
 /* Header section with title and subtitle */
 .daily-challenge-header {
   text-align: center;
   margin-bottom: 2rem;
+  color: white;
 }
 
 /* Main "Daily Challenge" title */
 .daily-challenge-title {
-  font-size: 1.5rem; /* Change title size here */
+  font-size: 1.5rem;
   font-weight: 600;
   color: white;
   margin-bottom: 0.5rem;
@@ -33,32 +26,36 @@
 
 /* Subtitle under the main title */
 .daily-challenge-subtitle {
-  color: #9ca3af; /* Gray color for subtitle */
+  color: #9ca3af;
 }
 
 /* Challenge card container */
 .daily-challenge-card {
-  background-color: #1f2937; /* Dark gray background */
-  border-color: #374151; /* Darker gray border */
-  border-radius: 0.75rem; /* Rounded corners */
+  background-color: black; /* Black background */
+  border-radius: 0.75rem;
   margin-bottom: 1.5rem;
+  color: white;
 }
 
 /* Content inside the challenge card */
 .daily-challenge-content {
   padding: 1.5rem;
   text-align: center;
+  background-color: black; /* Black background */
+
+  border-radius: 0.75rem; /* Optional: to match card radius */
 }
+
 
 /* Large emoji at the top of challenge */
 .daily-challenge-emoji {
-  font-size: 3rem; /* Make emoji bigger/smaller here */
+  font-size: 3rem;
   margin-bottom: 1rem;
 }
 
 /* Challenge title text */
 .daily-challenge-text {
-  font-size: 1.125rem; /* Change challenge text size here */
+  font-size: 2rem;
   font-weight: 500;
   color: white;
   margin-bottom: 0.5rem;
@@ -66,18 +63,18 @@
 
 /* Challenge description text */
 .daily-challenge-description {
-  color: #9ca3af; /* Gray color for description */
+  color: #9ca3af;
   margin-bottom: 1.5rem;
 }
 
 /* Challenge action button - INCOMPLETE state */
 .daily-challenge-button {
   width: 100%;
-  background-color: #2F1930; /* Your custom purple color */
+  background-color: #2F1930;
   color: white;
   border: none;
-  border-radius: 9999px; /* Fully rounded edges */
-  padding: 0.75rem 1.5rem;
+  border-radius: 9999px;
+
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s ease;
@@ -85,18 +82,18 @@
 
 /* Button hover state */
 .daily-challenge-button:hover {
-  background-color: #451f3d; /* Slightly lighter on hover */
+  background-color: #451f3d;
 }
 
 /* Challenge button - COMPLETE state */
 .daily-challenge-complete {
-  background-color: #059669; /* Green background when complete */
-  border-radius: 9999px; /* Fully rounded edges */
+  background-color: #059669;
+  border-radius: 9999px;
 }
 
 /* Complete button hover state */
 .daily-challenge-complete:hover {
-  background-color: #047857; /* Darker green on hover */
+  background-color: #047857;
 }
 
 /* Progress indicator container */
@@ -104,9 +101,41 @@
   margin-top: 1rem;
 }
 
-/* Timer text at the bottom */
-.daily-challenge-timer {
-  text-align: center;
-  color: #9ca3af; /* Gray color for timer */
-  font-size: 0.875rem; /* Change timer text size here */
+/* Timer boxes container */
+.daily-challenge-timer-boxes {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
 }
+
+/* Individual timer box */
+.daily-challenge-timer-box {
+  background-color: #000; /* Black background */
+  color: white;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-align: center;
+
+}
+
+/* === Streak counter container === */
+.streak-counter {
+  background-color: #000; /* Black background */
+  color: white;
+  border: 2px solid white; /* White border */
+  border-radius: 0.75rem;
+  padding: 1rem;
+  margin-top: 1.5rem;
+
+  text-align: center;
+}
+
+
+
+
+
+

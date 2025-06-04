@@ -19,7 +19,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
+
 }
 
 /* Mobile phone frame container */
@@ -41,8 +41,10 @@
 
 /* Main content area (scrollable) */
 .index-main-content {
+
   flex: 1; /* Takes remaining space */
   padding: 2rem 1.5rem;
+  background-color: black;
 }
 
 /* Header section */
@@ -168,3 +170,5 @@
     transform: rotate(360deg);
   }
 }
+
+

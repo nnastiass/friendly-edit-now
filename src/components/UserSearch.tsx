@@ -33,25 +33,40 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
 
   const searchUsers = async () => {
     if (!searchTerm.trim() || !user) return;
-    
+
+    const normalizedSearch = `%${searchTerm.trim().toLowerCase()}%`;
     setLoading(true);
+
     try {
-      // Search by both username and full_name
-      const { data, error } = await supabase
+      // Search by username
+      const { data: usernameMatches, error: usernameError } = await supabase
         .from('profiles')
         .select('id, username, full_name, avatar_url')
-        .or(`username.ilike.%${searchTerm}%,full_name.ilike.%${searchTerm}%`)
-        .neq('id', user.id)
-        .limit(10);
+        .ilike('username', normalizedSearch)
+        .neq('id', user.id);
 
-      if (error) throw error;
+      if (usernameError) throw usernameError;
 
-      console.log('Search results:', data);
-      setSearchResults(data || []);
-      
-      // Check friend/request status for each user
-      if (data) {
-        await checkFriendStatuses(data.map(u => u.id));
+      // Search by full_name
+      const { data: fullNameMatches, error: fullNameError } = await supabase
+        .from('profiles')
+        .select('id, username, full_name, avatar_url')
+        .ilike('full_name', normalizedSearch)
+        .neq('id', user.id);
+
+      if (fullNameError) throw fullNameError;
+
+      // Merge and deduplicate results
+      const combined = [...(usernameMatches || []), ...(fullNameMatches || [])];
+      const uniqueUsers = Array.from(
+        new Map(combined.map((u) => [u.id, u])).values()
+      );
+
+      console.log('Search results:', uniqueUsers);
+      setSearchResults(uniqueUsers);
+
+      if (uniqueUsers.length) {
+        await checkFriendStatuses(uniqueUsers.map((u) => u.id));
       }
     } catch (error) {
       console.error('Error searching users:', error);
@@ -60,6 +75,7 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
       setLoading(false);
     }
   };
+
 
   const checkFriendStatuses = async (userIds: string[]) => {
     if (!user) return;
