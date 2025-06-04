@@ -177,8 +177,10 @@ const fetchFriends = async () => {
   }
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-4">
-      <div className="w-full max-w-sm mx-auto bg-black text-white" style={{ aspectRatio: '9/16' }}>
+    <div className="w-screen h-[100dvh] bg-black text-white flex flex-col overflow-hidden">
+
+      <div className="flex-1 flex flex-col overflow-hidden">
+
         <div className="h-full flex flex-col">
           <Carousel setApi={setApi} className="flex-1">
             <CarouselContent className="h-full">
@@ -363,35 +365,43 @@ const fetchFriends = async () => {
             </CarouselContent>
           </Carousel>
 
-          {/* Bottom Navigation */}
-          <div className="bg-black border-t border-gray-800 px-6 py-4">
-            <div className="flex justify-center space-x-16">
-              <button
-                className="flex flex-col items-center text-gray-500 hover:text-white transition-colors"
-                onClick={() => handleNavigationClick(0)}
-              >
-                <Home className="h-6 w-6 mb-1" />
-              </button>
-              <button
-                className="flex flex-col items-center text-white"
-              >
-                <User className="h-6 w-6 mb-1" />
-              </button>
+          <div className="w-full max-w-sm mx-auto bg-black text-white h-[100dvh] flex flex-col">
+            {/* Main content that scrolls */}
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <Carousel setApi={setApi} className="flex-1">
+                {/* CarouselContent + Items */}
+              </Carousel>
+            </div>
+
+            {/* Bottom Navigation */}
+            <div className="bg-black border-t border-gray-800 px-6 py-4">
+              <div className="flex justify-center space-x-16">
+                <button
+                  className="flex flex-col items-center text-gray-500 hover:text-white transition-colors"
+                  onClick={() => handleNavigationClick(0)}
+                >
+                  <Home className="h-6 w-6 mb-1" />
+                </button>
+                <button className="flex flex-col items-center text-white">
+                  <User className="h-6 w-6 mb-1" />
+                </button>
+              </div>
+            </div>
+
+            {/* Carousel Navigation Dots */}
+            <div className="flex justify-center space-x-2 py-2">
+              {[0, 1, 2, 3].map((index) => (
+                <button
+                  key={index}
+                  onClick={() => api?.scrollTo(index)}
+                  className={`w-2 h-2 rounded-full transition-colors ${
+                    current === index ? 'bg-purple-500' : 'bg-gray-600'
+                  }`}
+                />
+              ))}
             </div>
           </div>
 
-          {/* Carousel Navigation Dots */}
-          <div className="flex justify-center space-x-2 py-2">
-            {[0, 1, 2, 3].map((index) => (
-              <button
-                key={index}
-                onClick={() => api?.scrollTo(index)}
-                className={`w-2 h-2 rounded-full transition-colors ${
-                  current === index ? 'bg-purple-500' : 'bg-gray-600'
-                }`}
-              />
-            ))}
-          </div>
         </div>
       </div>
     </div>
