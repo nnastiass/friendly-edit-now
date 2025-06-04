@@ -36,15 +36,17 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
     
     setLoading(true);
     try {
+      // Search by both username and full_name
       const { data, error } = await supabase
         .from('profiles')
         .select('id, username, full_name, avatar_url')
-        .ilike('full_name', `%${searchTerm}%`)
+        .or(`username.ilike.%${searchTerm}%,full_name.ilike.%${searchTerm}%`)
         .neq('id', user.id)
         .limit(10);
 
       if (error) throw error;
 
+      console.log('Search results:', data);
       setSearchResults(data || []);
       
       // Check friend/request status for each user
@@ -172,6 +174,11 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
     }
   };
 
+  const getDisplayName = (searchedUser: SearchedUser) => {
+    // Prefer username, fallback to full_name
+    return searchedUser.username || searchedUser.full_name || 'Unknown';
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center space-x-2">
@@ -181,7 +188,7 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && searchUsers()}
-            placeholder="Search by full name..."
+            placeholder="Search by username or full name..."
             className="pl-10 bg-gray-800 border-gray-700 text-white"
           />
         </div>
@@ -203,12 +210,12 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
                   <Avatar className="h-10 w-10">
                     <AvatarImage src={searchedUser.avatar_url || ''} />
                     <AvatarFallback className="bg-purple-600 text-white">
-                      {getInitials(searchedUser.username || searchedUser.full_name)}
+                      {getInitials(getDisplayName(searchedUser))}
                     </AvatarFallback>
                   </Avatar>
                   <div>
                     <p className="font-medium text-white">
-                      @{searchedUser.username || searchedUser.full_name || 'Unknown'}
+                      @{getDisplayName(searchedUser)}
                     </p>
                   </div>
                 </div>
