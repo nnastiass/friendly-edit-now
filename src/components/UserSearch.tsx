@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -40,7 +39,7 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
       const { data, error } = await supabase
         .from('profiles')
         .select('id, username, full_name, avatar_url')
-        .ilike('username', `%${searchTerm}%`)
+        .ilike('full_name', `%${searchTerm}%`)
         .neq('id', user.id)
         .limit(10);
 
@@ -182,7 +181,7 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && searchUsers()}
-            placeholder="Search by username..."
+            placeholder="Search by full name..."
             className="pl-10 bg-gray-800 border-gray-700 text-white"
           />
         </div>

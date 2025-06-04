@@ -6,6 +6,7 @@ import StreakCounter from './StreakCounter';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { RotateCcw } from 'lucide-react';
 import './DailyChallenge.css';
 
 interface DailyChallengeProps {
@@ -161,6 +162,22 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ onComplete }) => {
     }
   };
 
+  const handleDevReset = () => {
+    // Get a new random challenge
+    const randomIndex = Math.floor(Math.random() * challenges.length);
+    setTodaysChallenge(challenges[randomIndex]);
+    
+    // Reset completion state
+    setIsCompleted(false);
+    setProgress(0);
+    
+    // Clear localStorage for today
+    const today = new Date();
+    localStorage.removeItem(`challenge-${today.toDateString()}`);
+    
+    toast.success('New challenge generated!');
+  };
+
   return (
     <div className="daily-challenge-container">
       <StreakCounter streak={currentStreak} />
@@ -195,6 +212,19 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ onComplete }) => {
 
       <div className="daily-challenge-timer">
         {timeLeft}
+      </div>
+
+      {/* Dev Button */}
+      <div className="flex justify-center mt-4">
+        <Button
+          onClick={handleDevReset}
+          variant="outline"
+          size="sm"
+          className="text-gray-400 border-gray-600 hover:bg-gray-800"
+        >
+          <RotateCcw className="h-4 w-4 mr-2" />
+          Dev: New Challenge
+        </Button>
       </div>
     </div>
   );
