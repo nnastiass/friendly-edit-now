@@ -87,44 +87,52 @@ const Profile = () => {
     }
   };
 
-  const fetchFriends = async () => {
-    if (!user) return;
+const fetchFriends = async () => {
+  if (!user) return;
 
-    try {
-      // Fetch friends
-      const { data: friendsData, error: friendsError } = await supabase
-        .from('friends')
-        .select('*')
-        .eq('user_id', user.id)
-        .limit(6);
+  try {
+    // Fetch friends
+    const { data: friendsData, error: friendsError } = await supabase
+      .from('friends')
+      .select('*')
+      .eq('user_id', user.id)
+      .limit(6);
 
-      if (friendsError) throw friendsError;
+    if (friendsError) throw friendsError;
 
-      // Fetch friend profiles separately
-      const friendsWithProfiles = await Promise.all(
-        (friendsData || []).map(async (friendship) => {
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('id, full_name, avatar_url, streak')
-            .eq('id', friendship.friend_id)
-            .single();
+    // Fetch friend profiles separately
+    const friendsWithProfiles = await Promise.all(
+      (friendsData || []).map(async (friendship) => {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url, streak')
+          .eq('id', friendship.friend_id)
+          .single();
 
-          return {
-            ...friendship,
-            friend_profile: profileData
-          };
-        })
-      );
+        return {
+          ...friendship,
+          friend_profile: profileData
+        };
+      })
+    );
 
-      setFriends(friendsWithProfiles);
-    } catch (error) {
-      console.error('Error fetching friends:', error);
-    }
-  };
+    // Sort by streak (null streaks treated as 0)
+    const sortedFriends = friendsWithProfiles.sort((a, b) => {
+      const streakA = a.friend_profile?.streak ?? 0;
+      const streakB = b.friend_profile?.streak ?? 0;
+      return streakB - streakA;
+    });
+
+    setFriends(sortedFriends);
+  } catch (error) {
+    console.error('Error fetching friends:', error);
+  }
+};
+
 
   const handleUpdateProfile = async () => {
     if (!user || !profile) return;
-    
+
     setLoading(true);
     const { error } = await supabase
       .from('profiles')
@@ -169,8 +177,10 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-4">
-      <div className="w-full max-w-sm mx-auto bg-black text-white" style={{ aspectRatio: '9/16' }}>
+    <div className="w-screen h-[100dvh] bg-black text-white flex flex-col overflow-hidden">
+
+      <div className="flex-1 flex flex-col overflow-hidden">
+
         <div className="h-full flex flex-col">
           <Carousel setApi={setApi} className="flex-1">
             <CarouselContent className="h-full">
@@ -195,7 +205,7 @@ const Profile = () => {
                     {showSettings ? (
                       <div className="p-6 space-y-6 h-full">
                         <h2 className="text-xl font-semibold text-white mb-6">Settings</h2>
-                        
+
                         <div className="space-y-4">
                           <div className="p-4 bg-gray-800 rounded-lg">
                             <h3 className="text-white font-medium mb-2">Account</h3>
@@ -208,7 +218,7 @@ const Profile = () => {
                               Sign Out
                             </Button>
                           </div>
-                          
+
                           <div className="p-4 bg-gray-800 rounded-lg">
                             <h3 className="text-white font-medium mb-2">App Information</h3>
                             <p className="text-gray-400 text-sm">Version 1.0.0</p>
@@ -355,35 +365,43 @@ const Profile = () => {
             </CarouselContent>
           </Carousel>
 
-          {/* Bottom Navigation */}
-          <div className="bg-black border-t border-gray-800 px-6 py-4">
-            <div className="flex justify-center space-x-16">
-              <button 
-                className="flex flex-col items-center text-gray-500 hover:text-white transition-colors"
-                onClick={() => handleNavigationClick(0)}
-              >
-                <Home className="h-6 w-6 mb-1" />
-              </button>
-              <button 
-                className="flex flex-col items-center text-white"
-              >
-                <User className="h-6 w-6 mb-1" />
-              </button>
+          <div className="w-full max-w-sm mx-auto bg-black text-white h-[100dvh] flex flex-col">
+            {/* Main content that scrolls */}
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <Carousel setApi={setApi} className="flex-1">
+                {/* CarouselContent + Items */}
+              </Carousel>
+            </div>
+
+            {/* Bottom Navigation */}
+            <div className="bg-black border-t border-gray-800 px-6 py-4">
+              <div className="flex justify-center space-x-16">
+                <button
+                  className="flex flex-col items-center text-gray-500 hover:text-white transition-colors"
+                  onClick={() => handleNavigationClick(0)}
+                >
+                  <Home className="h-6 w-6 mb-1" />
+                </button>
+                <button className="flex flex-col items-center text-white">
+                  <User className="h-6 w-6 mb-1" />
+                </button>
+              </div>
+            </div>
+
+            {/* Carousel Navigation Dots */}
+            <div className="flex justify-center space-x-2 py-2">
+              {[0, 1, 2, 3].map((index) => (
+                <button
+                  key={index}
+                  onClick={() => api?.scrollTo(index)}
+                  className={`w-2 h-2 rounded-full transition-colors ${
+                    current === index ? 'bg-purple-500' : 'bg-gray-600'
+                  }`}
+                />
+              ))}
             </div>
           </div>
 
-          {/* Carousel Navigation Dots */}
-          <div className="flex justify-center space-x-2 py-2">
-            {[0, 1, 2, 3].map((index) => (
-              <button
-                key={index}
-                onClick={() => api?.scrollTo(index)}
-                className={`w-2 h-2 rounded-full transition-colors ${
-                  current === index ? 'bg-purple-500' : 'bg-gray-600'
-                }`}
-              />
-            ))}
-          </div>
         </div>
       </div>
     </div>

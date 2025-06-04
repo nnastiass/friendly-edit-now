@@ -66,7 +66,7 @@ const Leaderboard = () => {
                     {friend.name}
                   </p>
                   <div className="leaderboard-stats">
-                    <span>🔥 {friend.streak} days</span>
+                    <span> pp{friend.streak} days</span>
                     <span>•</span>
                     <span>{friend.points} pts</span>
                   </div>

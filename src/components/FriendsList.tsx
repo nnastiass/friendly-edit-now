@@ -36,7 +36,6 @@ const FriendsList: React.FC = () => {
     if (!user) return;
 
     try {
-      // Fetch friends
       const { data: friendsData, error: friendsError } = await supabase
         .from('friends')
         .select('*')
@@ -45,7 +44,6 @@ const FriendsList: React.FC = () => {
 
       if (friendsError) throw friendsError;
 
-      // Fetch friend profiles separately
       const friendsWithProfiles = await Promise.all(
         (friendsData || []).map(async (friendship) => {
           const { data: profileData } = await supabase
@@ -61,7 +59,14 @@ const FriendsList: React.FC = () => {
         })
       );
 
-      setFriends(friendsWithProfiles);
+      // Sort by streak in descending order
+      const sortedFriends = friendsWithProfiles.sort((a, b) => {
+        const streakA = a.friend_profile?.streak || 0;
+        const streakB = b.friend_profile?.streak || 0;
+        return streakB - streakA;
+      });
+
+      setFriends(sortedFriends);
     } catch (error) {
       console.error('Error fetching friends:', error);
       toast.error('Failed to load friends');
@@ -70,33 +75,19 @@ const FriendsList: React.FC = () => {
     }
   };
 
-const removeFriend = async (friendshipId: string, friendId: string) => {
-  if (!user) return;
 
-  try {
-    // 1. Delete both directions of the friendship
-    const { error: friendError } = await supabase
-      .from('friends')
-      .delete()
-      .or(`and(user_id.eq.${user.id},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${user.id})`);
 
-    if (friendError) throw friendError;
+  const removeFriend = async (friendshipId: string, friendId: string) => {
+    if (!user) return;
 
-    // 2. Delete any lingering friend requests between the two users
-    const { error: requestError } = await supabase
-      .from('friend_requests')
-      .delete()
-      .or(`and(sender_id.eq.${user.id},receiver_id.eq.${friendId}),and(sender_id.eq.${friendId},receiver_id.eq.${user.id})`);
+    try {
+      const { error } = await supabase
+        .from('friends')
+        .delete()
+        .or(`and(user_id.eq.${user.id},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${user.id})`);
 
-    if (requestError) throw requestError;
+      if (error) throw error;
 
-    toast.success('Friend removed');
-    setFriends(prev => prev.filter(friend => friend.id !== friendshipId));
-  } catch (error) {
-    console.error('Error removing friend:', error);
-    toast.error('Failed to remove friend');
-  }
-};
 
 
   const getInitials = (username: string | null, fullName: string | null) => {
