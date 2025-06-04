@@ -27,7 +27,7 @@
 .streak-counter-content {
 background-color: black;
 color: white;
-border: 3px solid white;
+border: 3px solid #f6b85b;
 border-radius: 20px;
   padding: 1.5rem;
   text-align: center;
@@ -53,22 +53,26 @@ border-radius: 20px;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  color: #f6b85b;
 }
 
 /* The actual streak number */
 .streak-counter-number {
   font-size: 1.5rem; /* Change number size here */
   font-weight: bold;
+  color: #f6b85b;
 }
 
 /* "Day Streak" label text */
 .streak-counter-label {
   font-size: 0.875rem; /* Change label size here */
   opacity: 0.9; /* Slightly transparent */
+    color: #f6b85b;
 }
 
 /* Motivational message at the bottom */
 .streak-counter-message {
   color: #fed7aa; /* Light orange color */
   font-size: 0.875rem; /* Change message size here */
+  color: #d97f59;
 }

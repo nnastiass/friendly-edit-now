@@ -191,10 +191,11 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ onComplete }) => {
           <Button
             onClick={handleCompleteChallenge}
             disabled={isCompleted}
-            className={`daily-challenge-button ${isCompleted ? 'daily-challenge-complete' : ''}`}
+            className={`daily-challenge-button px-10 py-7 ${isCompleted ? 'daily-challenge-complete' : ''}`}
           >
             {isCompleted ? `Completed! +${todaysChallenge.points} points` : 'Complete Challenge'}
           </Button>
+
 
           {isCompleted && (
             <div className="daily-challenge-progress">
@@ -210,9 +211,14 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ onComplete }) => {
           const value = i === 0 ? timeLeft.hours : i === 1 ? timeLeft.minutes : timeLeft.seconds;
           return (
             <div key={label} className="flex flex-col items-center">
-              <div className="bg-[#2f2f2f] text-white rounded-xl px-6 py-4 text-2xl font-bold">
+              <div
+                style={{ borderWidth: '3px' }}
+                className="bg-black text-white rounded-xl px-6 py-4 text-2xl font-bold border-white border-solid"
+              >
                 {value}
               </div>
+
+
               <span className="text-sm text-gray-400 mt-1">{label}</span>
             </div>
           );
