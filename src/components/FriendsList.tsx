@@ -90,7 +90,8 @@ const FriendsList: React.FC = () => {
     }
   };
 
-  const getInitials = (name: string | null) => {
+  const getInitials = (username: string | null, fullName: string | null) => {
+    const name = username || fullName;
     if (!name) return 'U';
     return name.split(' ').map(n => n.charAt(0)).join('').toUpperCase();
   };
@@ -125,12 +126,12 @@ const FriendsList: React.FC = () => {
               <Avatar className="friends-list-avatar">
                 <AvatarImage src={friend.friend_profile?.avatar_url || ''} />
                 <AvatarFallback className="friends-list-avatar-fallback">
-                  {getInitials(friend.friend_profile?.full_name)}
+                  {getInitials(friend.friend_profile?.username, friend.friend_profile?.full_name)}
                 </AvatarFallback>
               </Avatar>
               <div className="friends-list-user-details">
                 <p className="friends-list-name">
-                  @{friend.friend_profile?.full_name || 'Unknown'}
+                  @{friend.friend_profile?.username || friend.friend_profile?.full_name || 'Unknown'}
                 </p>
                 <p className="friends-list-streak">
                   🔥 {friend.friend_profile?.streak || 0} day streak

@@ -40,7 +40,7 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
       const { data, error } = await supabase
         .from('profiles')
         .select('id, username, full_name, avatar_url')
-        .ilike('full_name', `%${searchTerm}%`)
+        .ilike('username', `%${searchTerm}%`)
         .neq('id', user.id)
         .limit(10);
 
@@ -204,12 +204,12 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
                   <Avatar className="h-10 w-10">
                     <AvatarImage src={searchedUser.avatar_url || ''} />
                     <AvatarFallback className="bg-purple-600 text-white">
-                      {getInitials(searchedUser.full_name)}
+                      {getInitials(searchedUser.username || searchedUser.full_name)}
                     </AvatarFallback>
                   </Avatar>
                   <div>
                     <p className="font-medium text-white">
-                      @{searchedUser.full_name || 'Unknown'}
+                      @{searchedUser.username || searchedUser.full_name || 'Unknown'}
                     </p>
                   </div>
                 </div>

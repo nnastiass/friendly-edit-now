@@ -157,12 +157,12 @@ const FriendRequests: React.FC = () => {
               <Avatar className="h-10 w-10">
                 <AvatarImage src={request.sender_profile?.avatar_url || ''} />
                 <AvatarFallback className="bg-purple-600 text-white">
-                  {getInitials(request.sender_profile?.full_name)}
+                  {getInitials(request.sender_profile?.username || request.sender_profile?.full_name)}
                 </AvatarFallback>
               </Avatar>
               <div>
                 <p className="font-medium text-white">
-                  @{request.sender_profile?.full_name || 'Unknown'}
+                  @{request.sender_profile?.username || request.sender_profile?.full_name || 'Unknown'}
                 </p>
               </div>
             </div>
