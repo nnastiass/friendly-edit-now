@@ -16,16 +16,19 @@
 
 /* Main card container */
 .streak-counter-card {
-  /* Gradient background from orange to pink */
-  background: linear-gradient(to right, #fb923c, #ec4899);
+  background-color: black; /* <-- add this */
   color: white;
   border: none;
-  /* Rounded corners */
   border-radius: 0.75rem;
 }
 
+
 /* Content wrapper inside the card */
 .streak-counter-content {
+background-color: black;
+color: white;
+border: 3px solid white;
+border-radius: 20px;
   padding: 1.5rem;
   text-align: center;
 }
@@ -37,6 +40,7 @@
   justify-content: center;
   gap: 0.75rem;
   margin-bottom: 0.75rem;
+  margin-top: 0.75rem;
 }
 
 /* Emoji display (fire, rocket, star, etc.) */

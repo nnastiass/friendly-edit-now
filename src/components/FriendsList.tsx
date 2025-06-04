@@ -70,25 +70,34 @@ const FriendsList: React.FC = () => {
     }
   };
 
-  const removeFriend = async (friendshipId: string, friendId: string) => {
-    if (!user) return;
+const removeFriend = async (friendshipId: string, friendId: string) => {
+  if (!user) return;
 
-    try {
-      // Remove both directions of the friendship
-      const { error } = await supabase
-        .from('friends')
-        .delete()
-        .or(`and(user_id.eq.${user.id},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${user.id})`);
+  try {
+    // 1. Delete both directions of the friendship
+    const { error: friendError } = await supabase
+      .from('friends')
+      .delete()
+      .or(`and(user_id.eq.${user.id},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${user.id})`);
 
-      if (error) throw error;
+    if (friendError) throw friendError;
 
-      toast.success('Friend removed');
-      setFriends(prev => prev.filter(friend => friend.id !== friendshipId));
-    } catch (error) {
-      console.error('Error removing friend:', error);
-      toast.error('Failed to remove friend');
-    }
-  };
+    // 2. Delete any lingering friend requests between the two users
+    const { error: requestError } = await supabase
+      .from('friend_requests')
+      .delete()
+      .or(`and(sender_id.eq.${user.id},receiver_id.eq.${friendId}),and(sender_id.eq.${friendId},receiver_id.eq.${user.id})`);
+
+    if (requestError) throw requestError;
+
+    toast.success('Friend removed');
+    setFriends(prev => prev.filter(friend => friend.id !== friendshipId));
+  } catch (error) {
+    console.error('Error removing friend:', error);
+    toast.error('Failed to remove friend');
+  }
+};
+
 
   const getInitials = (username: string | null, fullName: string | null) => {
     const name = username || fullName;
