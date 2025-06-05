@@ -1,81 +1,72 @@
-
 /* ========================================
    INDEX PAGE (HOME) STYLES
-   ========================================
-   
-   This file styles the main home page including:
-   - Mobile frame layout
-   - Header section
-   - Bottom navigation
-   - Loading states
-   
-   Design: Black background with mobile-first approach
    ======================================== */
+
+/* Make sure the body and html fill the screen and prevent scrolling */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
 
 /* Full screen container */
 .index-container {
-  min-height: 100vh;
+  height: 100vh;
   background-color: black;
   display: flex;
   align-items: center;
   justify-content: center;
-
 }
 
 /* Mobile phone frame container */
 .index-mobile-frame {
   width: 100%;
   max-width: 24rem; /* Phone width */
+  height: 100%;
   margin: 0 auto;
   background-color: black;
   color: white;
-  aspect-ratio: 9/16; /* Phone aspect ratio */
-}
-
-/* Main layout structure */
-.index-layout {
-  height: 100%;
   display: flex;
   flex-direction: column;
 }
 
-/* Main content area (scrollable) */
-.index-main-content {
+/* Main layout structure */
+.index-layout {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Prevent layout from expanding */
+}
 
-  flex: 1; /* Takes remaining space */
+/* Main content area (scrollable if needed, but constrained) */
+.index-main-content {
+  flex: 1;
   padding: 2rem 1.5rem;
   background-color: black;
-}
-
-/* Header section */
-.index-header {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-/* Main page title */
-.index-title {
-  font-size: 1.25rem; /* Change title size here */
-  font-weight: 600;
-  color: white;
-  margin-bottom: 0.5rem;
+  overflow-y: auto;
 }
 
 /* Bottom navigation bar */
 .index-bottom-nav {
+  height: 4rem;
+  flex-shrink: 0;
   background-color: black;
-  border-top: 1px solid #1f2937; /* Gray border */
-  padding: 1rem 1.5rem;
+  border-top: 1px solid #1f2937;
+  padding: 0 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Navigation buttons container */
 .index-nav-container {
   display: flex;
   justify-content: center;
-  gap: 4rem; /* Space between nav buttons */
+  gap: 4rem;
 }
 
-/* Individual navigation button */
+/* Navigation button styles */
 .index-nav-button {
   display: flex;
   flex-direction: column;
@@ -87,20 +78,17 @@
   padding: 0.5rem;
 }
 
-/* Inactive navigation button */
 .index-nav-button-inactive {
-  color: #6b7280; /* Gray color for inactive */
+  color: #6b7280;
   transition: color 0.2s ease;
 }
 
-/* Inactive button hover state */
 .index-nav-button-inactive:hover {
   color: white;
 }
 
-/* Navigation icons */
 .index-nav-icon {
-  height: 1.5rem; /* Change icon size here */
+  height: 1.5rem;
   width: 1.5rem;
   margin-bottom: 0.25rem;
 }
@@ -109,9 +97,8 @@
    LOADING STATES
    ======================================== */
 
-/* Loading screen container */
 .index-loading {
-  min-height: 100vh;
+  height: 100vh;
   background-color: black;
   display: flex;
   align-items: center;
@@ -119,15 +106,13 @@
   padding: 1rem;
 }
 
-/* Loading frame (same as mobile frame) */
 .index-loading-frame {
   width: 100%;
   max-width: 24rem;
+  height: 100%;
   margin: 0 auto;
-  aspect-ratio: 9/16;
 }
 
-/* Loading content wrapper */
 .index-loading-content {
   height: 100%;
   display: flex;
@@ -135,40 +120,38 @@
   justify-content: center;
 }
 
-/* Inner loading content */
 .index-loading-inner {
   text-align: center;
   color: white;
 }
 
-/* Loading spinner animation */
 .index-loading-spinner {
   animation: spin 1s linear infinite;
   border-radius: 50%;
-  height: 4rem; /* Change spinner size here */
+  height: 4rem;
   width: 4rem;
   border: 4px solid white;
   border-top-color: transparent;
   margin: 0 auto 1rem;
 }
 
-/* Loading title */
 .index-loading-title {
-  font-size: 1.5rem; /* Change loading title size here */
+  font-size: 1.5rem;
   font-weight: bold;
   margin-bottom: 0.5rem;
 }
 
-/* Loading description text */
 .index-loading-text {
-  color: #9ca3af; /* Gray color */
+  color: #9ca3af;
 }
 
-/* Spinner rotation animation */
+.index-title{
+text-align: center;
+font-weight: bold;
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
   }
 }
-
-

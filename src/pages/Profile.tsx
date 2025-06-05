@@ -237,7 +237,7 @@ const fetchFriends = async () => {
                           </Avatar>
                           <div>
                             <h3 className="text-lg font-semibold text-white">
-                              @{profile?.full_name || 'username'}
+                              {profile?.full_name || 'username'}
                             </h3>
                             <p className="text-purple-400">🔥 {profile?.streak || 0} day streak</p>
                           </div>

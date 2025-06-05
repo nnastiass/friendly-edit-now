@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Search, UserPlus, Check, X } from 'lucide-react';
+import { Search, UserPlus, Check } from 'lucide-react';
 
 interface UserSearchProps {
   onClose?: () => void;
@@ -30,6 +30,7 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
   const [searchResults, setSearchResults] = useState<SearchedUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [requestStatuses, setRequestStatuses] = useState<Record<string, FriendRequestStatus>>({});
+  const [hasSearched, setHasSearched] = useState(false); // ✅ Track if search has been attempted
 
   const searchUsers = async () => {
     if (!searchTerm.trim() || !user) return;
@@ -62,8 +63,8 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
         new Map(combined.map((u) => [u.id, u])).values()
       );
 
-      console.log('Search results:', uniqueUsers);
       setSearchResults(uniqueUsers);
+      setHasSearched(true); // ✅ Mark search as attempted
 
       if (uniqueUsers.length) {
         await checkFriendStatuses(uniqueUsers.map((u) => u.id));
@@ -76,19 +77,16 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
     }
   };
 
-
   const checkFriendStatuses = async (userIds: string[]) => {
     if (!user) return;
 
     try {
-      // Check existing friendships
       const { data: friends } = await supabase
         .from('friends')
         .select('friend_id')
         .eq('user_id', user.id)
         .in('friend_id', userIds);
 
-      // Check sent requests
       const { data: sentRequests } = await supabase
         .from('friend_requests')
         .select('receiver_id')
@@ -96,7 +94,6 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
         .eq('status', 'pending')
         .in('receiver_id', userIds);
 
-      // Check received requests
       const { data: receivedRequests } = await supabase
         .from('friend_requests')
         .select('sender_id')
@@ -105,7 +102,7 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
         .in('sender_id', userIds);
 
       const statuses: Record<string, FriendRequestStatus> = {};
-      
+
       userIds.forEach(userId => {
         if (friends?.some(f => f.friend_id === userId)) {
           statuses[userId] = { userId, status: 'friends' };
@@ -179,7 +176,7 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
         );
       default:
         return (
-          <Button 
+          <Button
             onClick={() => sendFriendRequest(searchedUser.id)}
             className="bg-purple-600 hover:bg-purple-700"
           >
@@ -191,7 +188,6 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
   };
 
   const getDisplayName = (searchedUser: SearchedUser) => {
-    // Prefer username, fallback to full_name
     return searchedUser.username || searchedUser.full_name || 'Unknown';
   };
 
@@ -208,8 +204,8 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
             className="pl-10 bg-gray-800 border-gray-700 text-white"
           />
         </div>
-        <Button 
-          onClick={searchUsers} 
+        <Button
+          onClick={searchUsers}
           disabled={loading || !searchTerm.trim()}
           className="bg-purple-600 hover:bg-purple-700"
         >
@@ -240,8 +236,8 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
             </CardContent>
           </Card>
         ))}
-        
-        {searchResults.length === 0 && searchTerm && !loading && (
+
+        {hasSearched && searchResults.length === 0 && !loading && (
           <p className="text-center text-gray-400 py-4">No users found</p>
         )}
       </div>
