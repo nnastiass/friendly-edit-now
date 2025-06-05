@@ -59,7 +59,6 @@ const FriendsList: React.FC = () => {
         })
       );
 
-      // Sort by streak in descending order
       const sortedFriends = friendsWithProfiles.sort((a, b) => {
         const streakA = a.friend_profile?.streak || 0;
         const streakB = b.friend_profile?.streak || 0;
@@ -75,8 +74,6 @@ const FriendsList: React.FC = () => {
     }
   };
 
-
-
   const removeFriend = async (friendshipId: string, friendId: string) => {
     if (!user) return;
 
@@ -88,7 +85,13 @@ const FriendsList: React.FC = () => {
 
       if (error) throw error;
 
-
+      setFriends(prev => prev.filter(friend => friend.id !== friendshipId));
+      toast.success('Friend removed');
+    } catch (error) {
+      console.error('Failed to remove friend:', error);
+      toast.error('Could not remove friend');
+    }
+  };
 
   const getInitials = (username: string | null, fullName: string | null) => {
     const name = username || fullName;
