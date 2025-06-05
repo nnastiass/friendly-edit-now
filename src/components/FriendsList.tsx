@@ -36,7 +36,6 @@ const FriendsList: React.FC = () => {
     if (!user) return;
 
     try {
-      // Fetch friends
       const { data: friendsData, error: friendsError } = await supabase
         .from('friends')
         .select('*')
@@ -45,7 +44,6 @@ const FriendsList: React.FC = () => {
 
       if (friendsError) throw friendsError;
 
-      // Fetch friend profiles separately
       const friendsWithProfiles = await Promise.all(
         (friendsData || []).map(async (friendship) => {
           const { data: profileData } = await supabase
@@ -61,7 +59,13 @@ const FriendsList: React.FC = () => {
         })
       );
 
-      setFriends(friendsWithProfiles);
+      const sortedFriends = friendsWithProfiles.sort((a, b) => {
+        const streakA = a.friend_profile?.streak || 0;
+        const streakB = b.friend_profile?.streak || 0;
+        return streakB - streakA;
+      });
+
+      setFriends(sortedFriends);
     } catch (error) {
       console.error('Error fetching friends:', error);
       toast.error('Failed to load friends');
@@ -70,34 +74,24 @@ const FriendsList: React.FC = () => {
     }
   };
 
-const removeFriend = async (friendshipId: string, friendId: string) => {
-  if (!user) return;
+  const removeFriend = async (friendshipId: string, friendId: string) => {
+    if (!user) return;
 
-  try {
-    // 1. Delete both directions of the friendship
-    const { error: friendError } = await supabase
-      .from('friends')
-      .delete()
-      .or(`and(user_id.eq.${user.id},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${user.id})`);
+    try {
+      const { error } = await supabase
+        .from('friends')
+        .delete()
+        .or(`and(user_id.eq.${user.id},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${user.id})`);
 
-    if (friendError) throw friendError;
+      if (error) throw error;
 
-    // 2. Delete any lingering friend requests between the two users
-    const { error: requestError } = await supabase
-      .from('friend_requests')
-      .delete()
-      .or(`and(sender_id.eq.${user.id},receiver_id.eq.${friendId}),and(sender_id.eq.${friendId},receiver_id.eq.${user.id})`);
-
-    if (requestError) throw requestError;
-
-    toast.success('Friend removed');
-    setFriends(prev => prev.filter(friend => friend.id !== friendshipId));
-  } catch (error) {
-    console.error('Error removing friend:', error);
-    toast.error('Failed to remove friend');
-  }
-};
-
+      setFriends(prev => prev.filter(friend => friend.id !== friendshipId));
+      toast.success('Friend removed');
+    } catch (error) {
+      console.error('Failed to remove friend:', error);
+      toast.error('Could not remove friend');
+    }
+  };
 
   const getInitials = (username: string | null, fullName: string | null) => {
     const name = username || fullName;
@@ -121,7 +115,9 @@ const removeFriend = async (friendshipId: string, friendId: string) => {
   }
 
   return (
-    <Card className="friends-list-card">
+    <Card className="bg-black friends-list-card">
+
+
       <CardHeader className="friends-list-header">
         <CardTitle className="friends-list-title">
           <Users className="h-5 w-5" />
@@ -130,21 +126,28 @@ const removeFriend = async (friendshipId: string, friendId: string) => {
       </CardHeader>
       <CardContent className="friends-list-content">
         {friends.map((friend) => (
-          <div key={friend.id} className="friends-list-item">
+          <div
+            key={friend.id}
+              className="friends-list-item bg-black border-[4px] border-[#2f1930] rounded-[20px] p-4 flex items-center justify-between"
+            >
+
+
             <div className="friends-list-item-info">
               <Avatar className="friends-list-avatar">
                 <AvatarImage src={friend.friend_profile?.avatar_url || ''} />
-                <AvatarFallback className="friends-list-avatar-fallback">
+                <AvatarFallback className="bg-[#2f1930] text-white">
                   {getInitials(friend.friend_profile?.username, friend.friend_profile?.full_name)}
                 </AvatarFallback>
+
               </Avatar>
               <div className="friends-list-user-details">
                 <p className="friends-list-name">
                   @{friend.friend_profile?.username || friend.friend_profile?.full_name || 'Unknown'}
                 </p>
-                <p className="friends-list-streak">
+                <p className="friends-list-streak text-white">
                   🔥 {friend.friend_profile?.streak || 0} day streak
                 </p>
+
               </div>
             </div>
             <Button
