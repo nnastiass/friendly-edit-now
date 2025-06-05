@@ -115,7 +115,9 @@ const FriendsList: React.FC = () => {
   }
 
   return (
-    <Card className="friends-list-card">
+    <Card className="bg-black friends-list-card">
+
+
       <CardHeader className="friends-list-header">
         <CardTitle className="friends-list-title">
           <Users className="h-5 w-5" />
@@ -124,21 +126,28 @@ const FriendsList: React.FC = () => {
       </CardHeader>
       <CardContent className="friends-list-content">
         {friends.map((friend) => (
-          <div key={friend.id} className="friends-list-item">
+          <div
+            key={friend.id}
+              className="friends-list-item bg-black border-[4px] border-[#2f1930] rounded-[20px] p-4 flex items-center justify-between"
+            >
+
+
             <div className="friends-list-item-info">
               <Avatar className="friends-list-avatar">
                 <AvatarImage src={friend.friend_profile?.avatar_url || ''} />
-                <AvatarFallback className="friends-list-avatar-fallback">
+                <AvatarFallback className="bg-[#2f1930] text-white">
                   {getInitials(friend.friend_profile?.username, friend.friend_profile?.full_name)}
                 </AvatarFallback>
+
               </Avatar>
               <div className="friends-list-user-details">
                 <p className="friends-list-name">
                   @{friend.friend_profile?.username || friend.friend_profile?.full_name || 'Unknown'}
                 </p>
-                <p className="friends-list-streak">
+                <p className="friends-list-streak text-white">
                   🔥 {friend.friend_profile?.streak || 0} day streak
                 </p>
+
               </div>
             </div>
             <Button

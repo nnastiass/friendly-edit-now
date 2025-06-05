@@ -178,7 +178,7 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
         return (
           <Button
             onClick={() => sendFriendRequest(searchedUser.id)}
-            className="bg-purple-600 hover:bg-purple-700"
+            className="bg-white text-black hover:bg-purple-700"
           >
             <UserPlus className="h-4 w-4 mr-2" />
             Add Friend
@@ -207,7 +207,7 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
         <Button
           onClick={searchUsers}
           disabled={loading || !searchTerm.trim()}
-          className="bg-purple-600 hover:bg-purple-700"
+          className="bg-[#2f1930] hover:bg-purple-700"
         >
           {loading ? 'Searching...' : 'Search'}
         </Button>
@@ -221,7 +221,7 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
                 <div className="flex items-center space-x-3">
                   <Avatar className="h-10 w-10">
                     <AvatarImage src={searchedUser.avatar_url || ''} />
-                    <AvatarFallback className="bg-purple-600 text-white">
+                    <AvatarFallback className="bg-[#2f1930] text-white">
                       {getInitials(getDisplayName(searchedUser))}
                     </AvatarFallback>
                   </Avatar>

@@ -133,30 +133,32 @@ const FriendRequests: React.FC = () => {
 
   if (requests.length === 0) {
     return (
-      <Card className="bg-gray-800 border-gray-700">
+      <Card className="bg-black border-[4px] border-[#2f1930] rounded-[20px] text-white">
         <CardContent className="p-6 text-center">
-          <Users className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-          <p className="text-gray-400">No pending friend requests</p>
+          <Users className="h-12 w-12 text-white mx-auto mb-2" />
+          <p className="text-white">No pending friend requests</p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="bg-gray-800 border-gray-700">
+    <Card className="bg-black border-gray-700">
       <CardHeader>
         <CardTitle className="text-white flex items-center space-x-2">
           <Users className="h-5 w-5" />
-          <span>Friend Requests ({requests.length})</span>
+          <span>Pending Requests ({requests.length})</span>
+
         </CardTitle>
+
       </CardHeader>
       <CardContent className="space-y-3">
         {requests.map((request) => (
-          <div key={request.id} className="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
+          <div key={request.id} className="flex items-center justify-between p-3 bg-black border-[4px] border-[#2f1930] rounded-[20px] text-white">
             <div className="flex items-center space-x-3">
               <Avatar className="h-10 w-10">
                 <AvatarImage src={request.sender_profile?.avatar_url || ''} />
-                <AvatarFallback className="bg-purple-600 text-white">
+                <AvatarFallback className="bg-[#2f1930] text-white">
                   {getInitials(request.sender_profile?.username || request.sender_profile?.full_name)}
                 </AvatarFallback>
               </Avatar>
@@ -178,7 +180,7 @@ const FriendRequests: React.FC = () => {
                 size="sm"
                 variant="outline"
                 onClick={() => handleFriendRequest(request.id, request.sender_id, 'reject')}
-                className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white"
+                className=" text-red-400 hover:bg-red-600 hover:text-white"
               >
                 <X className="h-4 w-4" />
               </Button>
