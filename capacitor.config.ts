@@ -3,7 +3,7 @@ import { CapacitorConfig } from '@capacitor/core';
 
 const config: CapacitorConfig = {
   appId: 'com.socialstreak.app',
-  appName: 'SocialStreak',
+  appName: 'GetOut',
   webDir: 'dist',
   plugins: {
     SplashScreen: {

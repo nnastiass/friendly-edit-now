@@ -201,13 +201,14 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
             onChange={(e) => setSearchTerm(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && searchUsers()}
             placeholder="Search by username or full name..."
-            className="pl-10 bg-gray-800 border-gray-700 text-white"
+            className="pl-10 bg-black border-[4px] border-[#2f1930] text-white"
+
           />
         </div>
         <Button
           onClick={searchUsers}
           disabled={loading || !searchTerm.trim()}
-          className="bg-[#2f1930] hover:bg-purple-700"
+          className="bg-[#2f1930]"
         >
           {loading ? 'Searching...' : 'Search'}
         </Button>
@@ -215,7 +216,7 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
 
       <div className="space-y-2 max-h-96 overflow-y-auto">
         {searchResults.map((searchedUser) => (
-          <Card key={searchedUser.id} className="bg-gray-800 border-gray-700">
+          <Card key={searchedUser.id} className="">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">

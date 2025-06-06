@@ -231,7 +231,7 @@ const fetchFriends = async () => {
                         <div className="flex items-center space-x-4">
                           <Avatar className="h-16 w-16">
                             <AvatarImage src={profile?.avatar_url || ''} />
-                            <AvatarFallback className="bg-purple-600 text-white text-lg">
+                            <AvatarFallback className="bg-[#2f1930] text-white text-lg">
                               {getInitials(profile?.full_name)}
                             </AvatarFallback>
                           </Avatar>
@@ -239,7 +239,7 @@ const fetchFriends = async () => {
                             <h3 className="text-lg font-semibold text-white">
                               {profile?.full_name || 'username'}
                             </h3>
-                            <p className="text-purple-400">🔥 {profile?.streak || 0} day streak</p>
+                            <p className="text-[#d97f59]">🔥 {profile?.streak || 0} day streak</p>
                           </div>
                         </div>
 
@@ -251,7 +251,7 @@ const fetchFriends = async () => {
                               variant="ghost"
                               size="sm"
                               onClick={() => setIsEditing(!isEditing)}
-                              className="text-purple-400 hover:text-purple-300"
+                              className="bg-[#2f1930] text-white hover: bg-[#2f1930] text-white"
                             >
                               <Edit className="h-4 w-4 mr-2" />
                               {isEditing ? 'Cancel' : 'Edit'}
@@ -266,14 +266,14 @@ const fetchFriends = async () => {
                                   id="username"
                                   value={editForm.username}
                                   onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
-                                  className="bg-gray-800 border-gray-700 text-white"
+                                  className="bg-black border-[4px] border-[#2f1930] text-white"
                                   placeholder="Choose a username"
                                 />
                               </div>
                               <Button
                                 onClick={handleUpdateProfile}
                                 disabled={loading}
-                                className="w-full bg-purple-600 hover:bg-purple-700"
+                                className="w-full bg-[#2f1930] hover:bg-[#2f1930]"
                               >
                                 {loading ? 'Updating...' : 'Save Changes'}
                               </Button>
@@ -295,19 +295,21 @@ const fetchFriends = async () => {
                             <div className="grid grid-cols-3 gap-4">
                               {friends.map((friend) => (
                                 <div key={friend.id} className="text-center">
-                                  <Avatar className="h-12 w-12 mx-auto mb-2">
+                                  <Avatar className="h-16 w-16 mx-auto mb-2">
                                     <AvatarImage src={friend.friend_profile?.avatar_url || ''} />
-                                    <AvatarFallback className="bg-purple-600 text-white text-xs">
+                                    <AvatarFallback className="bg-[#2f1930] text-white text-lg">
                                       {getInitials(friend.friend_profile?.full_name)}
                                     </AvatarFallback>
                                   </Avatar>
-                                  <p className="text-xs text-white truncate">
+
+                                  <p className="text-base text-white truncate">
                                     @{friend.friend_profile?.full_name || 'Unknown'}
                                   </p>
-                                  <p className="text-xs text-purple-400">
+                                  <p className="text-base text-[#d97f59]">
                                     🔥 {friend.friend_profile?.streak || 0}
                                   </p>
                                 </div>
+
                               ))}
                             </div>
                           </div>
@@ -395,7 +397,7 @@ const fetchFriends = async () => {
                   key={index}
                   onClick={() => api?.scrollTo(index)}
                   className={`w-2 h-2 rounded-full transition-colors ${
-                    current === index ? 'bg-purple-500' : 'bg-gray-600'
+                    current === index ? 'bg-[#2f1930]' : 'bg-gray-600'
                   }`}
                 />
               ))}
