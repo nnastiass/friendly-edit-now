@@ -1,12 +1,10 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
 import './Auth.css';
 
 const Auth = () => {
@@ -15,10 +13,11 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, signUp, user } = useAuth(); // We assume these functions in the context are updated to use the API
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Redirect if user is already logged in
     if (user) {
       navigate('/');
     }
@@ -29,35 +28,31 @@ const Auth = () => {
     setLoading(true);
 
     try {
+      let error;
       if (isLogin) {
-        const { error } = await signIn(email, password);
+        // The `signIn` function in your AuthContext should handle the API call
+        ({ error } = await signIn(email, password));
         if (error) {
-          if (error.message.includes('Invalid login credentials')) {
-            toast.error('Invalid email or password');
-          } else {
-            toast.error(error.message);
-          }
+            toast.error(error.message || 'Invalid email or password');
         } else {
-          toast.success('Successfully signed in!');
-          navigate('/');
+            toast.success('Successfully signed in!');
+            navigate('/');
         }
       } else {
-        const { error } = await signUp(email, password, username);
+        // The `signUp` function in your AuthContext should handle the API call
+        ({ error } = await signUp(email, password, username));
         if (error) {
-          if (error.message.includes('User already registered')) {
-            toast.error('An account with this email already exists');
-          } else {
-            toast.error(error.message);
-          }
+            toast.error(error.message || 'Failed to create account');
         } else {
-          toast.success('Account created successfully! Please check your email to verify your account.');
+            toast.success('Account created! Please check your email for verification.');
+            setIsLogin(true); // Switch to login view after successful signup
         }
       }
-    } catch (error) {
-      toast.error('An unexpected error occurred');
+    } catch (err: any) {
+      toast.error(err.message || 'An unexpected error occurred');
+    } finally {
+        setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (

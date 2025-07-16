@@ -1,25 +1,50 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Trophy, Medal, Award, Users } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext'; // UPDATED
+import { apiClient } from '@/lib/api-client'; // UPDATED
 import './Leaderboard.css';
 
-const friends = [
-  { id: 1, name: 'Alex Chen', streak: 15, points: 1250, avatar: '👨‍💻', rank: 1 },
-  { id: 2, name: 'Sarah Kim', streak: 12, points: 980, avatar: '👩‍🎨', rank: 2 },
-  { id: 3, name: 'You', streak: 7, points: 650, avatar: '🧑‍🚀', rank: 3 },
-  { id: 4, name: 'Mike Johnson', streak: 5, points: 420, avatar: '👨‍🎓', rank: 4 },
-  { id: 5, name: 'Emma Davis', streak: 3, points: 310, avatar: '👩‍💼', rank: 5 },
-];
+// UPDATED: Interface matches the API response
+interface LeaderboardEntry {
+  id: string;
+  username: string | null;
+  full_name: string | null;
+  avatar_url: string | null; // You might want to add this to your API/DB
+  streak: number | null;
+}
 
 const Leaderboard = () => {
+  const { user } = useAuth(); // UPDATED
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]); // UPDATED
+  const [loading, setLoading] = useState(true); // UPDATED
+
+  useEffect(() => {
+    if (user) {
+      fetchLeaderboard();
+    }
+  }, [user]);
+
+  const fetchLeaderboard = async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const data = await apiClient.getLeaderboard(user.id); // UPDATED
+      setLeaderboard(data || []);
+    } catch (error) {
+      // Error handled by client
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getRankIcon = (rank: number) => {
     switch (rank) {
-      case 1: return <Trophy className="h-5 w-5 text-yellow-500" />;
-      case 2: return <Medal className="h-5 w-5 text-gray-400" />;
-      case 3: return <Award className="h-5 w-5 text-amber-600" />;
-      default: return <span className="text-gray-500 font-bold">#{rank}</span>;
+      case 1: return <Trophy className="h-5 w-5 text-yellow-400" />;
+      case 2: return <Medal className="h-5 w-5 text-gray-300" />;
+      case 3: return <Award className="h-5 w-5 text-yellow-600" />;
+      default: return null;
     }
   };
 
@@ -32,6 +57,10 @@ const Leaderboard = () => {
     }
   };
 
+  if (loading) {
+    return <div>Loading leaderboard...</div>;
+  }
+
   return (
     <Card className="leaderboard-card">
       <CardHeader className="leaderboard-header">
@@ -40,47 +69,46 @@ const Leaderboard = () => {
           <span>Friend Leaderboard</span>
         </CardTitle>
       </CardHeader>
-      
+
       <CardContent className="leaderboard-content">
-        {friends.map((friend, index) => (
-          <div 
-            key={friend.id} 
-            className={`leaderboard-item ${friend.name === 'You' ? 'leaderboard-item-you' : ''}`}
-          >
-            <div className="leaderboard-item-content">
-              <div className="leaderboard-item-left">
-                <div className={`leaderboard-rank-badge ${getRankBadgeClass(friend.rank)}`}>
-                  {friend.rank <= 3 ? (
-                    getRankIcon(friend.rank)
-                  ) : (
-                    <span className="text-white text-sm font-bold">#{friend.rank}</span>
-                  )}
-                </div>
-                
-                <div className="leaderboard-avatar">
-                  {friend.avatar}
-                </div>
-                
-                <div className="leaderboard-user-info">
-                  <p className={`leaderboard-username ${friend.name === 'You' ? 'leaderboard-username-you' : ''}`}>
-                    {friend.name}
-                  </p>
-                  <div className="leaderboard-stats">
-                    <span> pp{friend.streak} days</span>
-                    <span>•</span>
-                    <span>{friend.points} pts</span>
+        {leaderboard.map((entry, index) => {
+          const rank = index + 1;
+          const isCurrentUser = entry.id === user?.id;
+          return (
+            <div
+              key={entry.id}
+              className={`leaderboard-item ${isCurrentUser ? 'leaderboard-item-you' : ''}`}
+            >
+              <div className="leaderboard-item-content">
+                <div className="leaderboard-item-left">
+                  <div className={`leaderboard-rank-badge ${getRankBadgeClass(rank)}`}>
+                    {rank <= 3 ? getRankIcon(rank) : <span className="text-white text-sm font-bold">#{rank}</span>}
+                  </div>
+
+                  <div className="leaderboard-avatar">
+                    {/* You can use an Avatar component here if you add avatar_url */}
+                    {(entry.username || entry.full_name || 'U').charAt(0)}
+                  </div>
+
+                  <div className="leaderboard-user-info">
+                    <p className={`leaderboard-username ${isCurrentUser ? 'leaderboard-username-you' : ''}`}>
+                      {entry.username || entry.full_name}
+                    </p>
+                    <div className="leaderboard-stats">
+                      <span>🔥 {entry.streak || 0} days</span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {friend.name === 'You' && (
-                <Badge className="leaderboard-you-badge">
-                  You
-                </Badge>
-              )}
+                {isCurrentUser && (
+                  <Badge className="leaderboard-you-badge">
+                    You
+                  </Badge>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </CardContent>
     </Card>
   );

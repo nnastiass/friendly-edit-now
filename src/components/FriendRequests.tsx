@@ -1,25 +1,20 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { apiClient } from '@/lib/api-client'; // UPDATED
 import { toast } from 'sonner';
 import { Check, X, Users } from 'lucide-react';
 
+// UPDATED: Interface matches the new API response
 interface FriendRequest {
   id: string;
   sender_id: string;
-  receiver_id: string;
-  status: string;
   created_at: string;
-  sender_profile: {
-    id: string;
-    username: string | null;
-    full_name: string | null;
-    avatar_url: string | null;
-  } | null;
+  username: string | null;
+  full_name: string | null;
+  avatar_url: string | null;
 }
 
 const FriendRequests: React.FC = () => {
@@ -35,90 +30,25 @@ const FriendRequests: React.FC = () => {
 
   const fetchFriendRequests = async () => {
     if (!user) return;
-
+    setLoading(true);
     try {
-      // Fetch friend requests
-      const { data: requestsData, error: requestsError } = await supabase
-        .from('friend_requests')
-        .select('*')
-        .eq('receiver_id', user.id)
-        .eq('status', 'pending')
-        .order('created_at', { ascending: false });
-
-      if (requestsError) throw requestsError;
-
-      // Fetch sender profiles separately
-      const requestsWithProfiles = await Promise.all(
-        (requestsData || []).map(async (request) => {
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('id, username, full_name, avatar_url')
-            .eq('id', request.sender_id)
-            .single();
-
-          return {
-            ...request,
-            sender_profile: profileData
-          };
-        })
-      );
-
-      setRequests(requestsWithProfiles);
+      const requestsData = await apiClient.getFriendRequests(user.id); // UPDATED
+      setRequests(requestsData || []);
     } catch (error) {
-      console.error('Error fetching friend requests:', error);
-      toast.error('Failed to load friend requests');
+      // Error handled by client
     } finally {
       setLoading(false);
     }
   };
 
-  const handleFriendRequest = async (requestId: string, senderId: string, action: 'accept' | 'reject') => {
+  const handleFriendRequest = async (requestId: string, action: 'accepted' | 'rejected') => {
     if (!user) return;
-
     try {
-      if (action === 'accept') {
-        // Update request status
-        const { error: updateError } = await supabase
-          .from('friend_requests')
-          .update({ 
-            status: 'accepted',
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', requestId);
-
-        if (updateError) throw updateError;
-
-        // Create friendship (both directions)
-        const { error: friendError } = await supabase
-          .from('friends')
-          .insert([
-            { user_id: user.id, friend_id: senderId },
-            { user_id: senderId, friend_id: user.id }
-          ]);
-
-        if (friendError) throw friendError;
-
-        toast.success('Friend request accepted!');
-      } else {
-        // Reject request
-        const { error } = await supabase
-          .from('friend_requests')
-          .update({ 
-            status: 'rejected',
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', requestId);
-
-        if (error) throw error;
-
-        toast.success('Friend request rejected');
-      }
-
-      // Remove from list
+      await apiClient.respondToFriendRequest(requestId, action); // UPDATED
+      toast.success(`Friend request ${action}`);
       setRequests(prev => prev.filter(req => req.id !== requestId));
     } catch (error) {
-      console.error('Error handling friend request:', error);
-      toast.error('Failed to handle friend request');
+      // Error handled by client
     }
   };
 
@@ -148,30 +78,28 @@ const FriendRequests: React.FC = () => {
         <CardTitle className="text-white flex items-center space-x-2">
           <Users className="h-5 w-5" />
           <span>Pending Requests ({requests.length})</span>
-
         </CardTitle>
-
       </CardHeader>
       <CardContent className="space-y-3">
         {requests.map((request) => (
           <div key={request.id} className="flex items-center justify-between p-3 bg-black border-[4px] border-[#2f1930] rounded-[20px] text-white">
             <div className="flex items-center space-x-3">
               <Avatar className="h-10 w-10">
-                <AvatarImage src={request.sender_profile?.avatar_url || ''} />
+                <AvatarImage src={request.avatar_url || ''} />
                 <AvatarFallback className="bg-[#2f1930] text-white">
-                  {getInitials(request.sender_profile?.username || request.sender_profile?.full_name)}
+                  {getInitials(request.username || request.full_name)}
                 </AvatarFallback>
               </Avatar>
               <div>
                 <p className="font-medium text-white">
-                  @{request.sender_profile?.username || request.sender_profile?.full_name || 'Unknown'}
+                  @{request.username || request.full_name || 'Unknown'}
                 </p>
               </div>
             </div>
             <div className="flex space-x-2">
               <Button
                 size="sm"
-                onClick={() => handleFriendRequest(request.id, request.sender_id, 'accept')}
+                onClick={() => handleFriendRequest(request.id, 'accepted')}
                 className="bg-green-600 hover:bg-green-700"
               >
                 <Check className="h-4 w-4" />
@@ -179,7 +107,7 @@ const FriendRequests: React.FC = () => {
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => handleFriendRequest(request.id, request.sender_id, 'reject')}
+                onClick={() => handleFriendRequest(request.id, 'rejected')}
                 className=" text-red-400 hover:bg-red-600 hover:text-white"
               >
                 <X className="h-4 w-4" />

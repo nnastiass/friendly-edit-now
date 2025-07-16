@@ -3,22 +3,20 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { apiClient } from '@/lib/api-client'; // UPDATED
 import { toast } from 'sonner';
 import { Users, UserMinus } from 'lucide-react';
 import './FriendsList.css';
 
+// UPDATED: This interface now matches the API response
 interface Friend {
-  id: string;
+  id: string; // This is the friendship ID
   friend_id: string;
   created_at: string;
-  friend_profile: {
-    id: string;
-    username: string | null;
-    full_name: string | null;
-    avatar_url: string | null;
-    streak: number | null;
-  } | null;
+  username: string | null;
+  full_name: string | null;
+  avatar_url: string | null;
+  streak: number | null;
 }
 
 const FriendsList: React.FC = () => {
@@ -34,41 +32,12 @@ const FriendsList: React.FC = () => {
 
   const fetchFriends = async () => {
     if (!user) return;
-
+    setLoading(true);
     try {
-      const { data: friendsData, error: friendsError } = await supabase
-        .from('friends')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (friendsError) throw friendsError;
-
-      const friendsWithProfiles = await Promise.all(
-        (friendsData || []).map(async (friendship) => {
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('id, username, full_name, avatar_url, streak')
-            .eq('id', friendship.friend_id)
-            .single();
-
-          return {
-            ...friendship,
-            friend_profile: profileData
-          };
-        })
-      );
-
-      const sortedFriends = friendsWithProfiles.sort((a, b) => {
-        const streakA = a.friend_profile?.streak || 0;
-        const streakB = b.friend_profile?.streak || 0;
-        return streakB - streakA;
-      });
-
-      setFriends(sortedFriends);
+      const friendsData = await apiClient.getFriends(user.id); // UPDATED
+      setFriends(friendsData || []);
     } catch (error) {
-      console.error('Error fetching friends:', error);
-      toast.error('Failed to load friends');
+      // Error handled by client
     } finally {
       setLoading(false);
     }
@@ -76,20 +45,12 @@ const FriendsList: React.FC = () => {
 
   const removeFriend = async (friendshipId: string, friendId: string) => {
     if (!user) return;
-
     try {
-      const { error } = await supabase
-        .from('friends')
-        .delete()
-        .or(`and(user_id.eq.${user.id},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${user.id})`);
-
-      if (error) throw error;
-
+      await apiClient.removeFriend(user.id, friendId); // UPDATED
       setFriends(prev => prev.filter(friend => friend.id !== friendshipId));
       toast.success('Friend removed');
     } catch (error) {
-      console.error('Failed to remove friend:', error);
-      toast.error('Could not remove friend');
+      // Error handled by client
     }
   };
 
@@ -116,8 +77,6 @@ const FriendsList: React.FC = () => {
 
   return (
     <Card className="bg-black friends-list-card">
-
-
       <CardHeader className="friends-list-header">
         <CardTitle className="friends-list-title">
           <Users className="h-5 w-5" />
@@ -128,26 +87,22 @@ const FriendsList: React.FC = () => {
         {friends.map((friend) => (
           <div
             key={friend.id}
-              className="friends-list-item bg-black border-[4px] border-[#2f1930] rounded-[20px] p-4 flex items-center justify-between"
-            >
-
-
+            className="friends-list-item bg-black border-[4px] border-[#2f1930] rounded-[20px] p-4 flex items-center justify-between"
+          >
             <div className="friends-list-item-info">
               <Avatar className="friends-list-avatar">
-                <AvatarImage src={friend.friend_profile?.avatar_url || ''} />
+                <AvatarImage src={friend.avatar_url || ''} />
                 <AvatarFallback className="bg-[#2f1930] text-white">
-                  {getInitials(friend.friend_profile?.username, friend.friend_profile?.full_name)}
+                  {getInitials(friend.username, friend.full_name)}
                 </AvatarFallback>
-
               </Avatar>
               <div className="friends-list-user-details">
                 <p className="friends-list-name">
-                  @{friend.friend_profile?.username || friend.friend_profile?.full_name || 'Unknown'}
+                  @{friend.username || friend.full_name || 'Unknown'}
                 </p>
                 <p className="friends-list-streak text-white">
-                  🔥 {friend.friend_profile?.streak || 0} day streak
+                  🔥 {friend.streak || 0} day streak
                 </p>
-
               </div>
             </div>
             <Button

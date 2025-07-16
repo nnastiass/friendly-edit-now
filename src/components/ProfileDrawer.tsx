@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Drawer,
@@ -12,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { apiClient } from '@/lib/api-client'; // UPDATED: Import API client
 import { toast } from 'sonner';
 import { X, Edit } from 'lucide-react';
 
@@ -46,17 +45,8 @@ const ProfileDrawer: React.FC<ProfileDrawerProps> = ({ isOpen, onClose }) => {
 
   const fetchProfile = async () => {
     if (!user) return;
-
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .maybeSingle();
-
-    if (error) {
-      console.error('Error fetching profile:', error);
-      toast.error('Failed to load profile');
-    } else {
+    try {
+      const data = await apiClient.getProfile(user.id); // UPDATED
       setProfile(data);
       if (data) {
         setEditForm({
@@ -64,31 +54,28 @@ const ProfileDrawer: React.FC<ProfileDrawerProps> = ({ isOpen, onClose }) => {
           full_name: data.full_name || '',
         });
       }
+    } catch (error) {
+      // Error is already logged and toasted by the client
     }
   };
 
   const handleUpdateProfile = async () => {
     if (!user || !profile) return;
-    
+
     setLoading(true);
-    const { error } = await supabase
-      .from('profiles')
-      .update({
+    try {
+      await apiClient.updateProfile(user.id, { // UPDATED
         username: editForm.username || null,
         full_name: editForm.full_name || null,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', user.id);
-
-    if (error) {
-      toast.error('Failed to update profile');
-      console.error('Error updating profile:', error);
-    } else {
+      });
       toast.success('Profile updated successfully!');
       setIsEditing(false);
-      fetchProfile();
+      fetchProfile(); // Refresh profile data
+    } catch (error) {
+       // Error is already handled by the client
+    } finally {
+        setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleSignOut = async () => {
