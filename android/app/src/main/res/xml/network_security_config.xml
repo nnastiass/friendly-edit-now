@@ -6,7 +6,7 @@
       Production traffic to other domains will still default to requiring HTTPS.
     -->
     <domain-config cleartextTrafficPermitted="true">
-        <!-- Allow localhost for  emulators -->
+        <!-- Allow localhost for emulators (special IP) -->
         <domain includeSubdomains="true">10.0.2.2</domain>
         <!-- Allow your development machine's IP address -->
         <domain includeSubdomains="true">192.168.0.138</domain>

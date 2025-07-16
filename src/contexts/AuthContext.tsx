@@ -1,13 +1,11 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { apiClient } from '@/lib/api-client';
 
-// This will be the shape of our user object throughout the app
 interface User {
   id: string;
   email: string;
   username: string;
   full_name: string;
-  // Add other profile fields as needed
 }
 
 interface AuthContextType {
@@ -33,14 +31,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // On app start, check localStorage for a saved user session
     try {
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
         setUser(JSON.parse(storedUser));
       }
     } catch (error) {
-      console.error("Failed to parse user from localStorage", error);
       localStorage.removeItem('user');
     } finally {
       setLoading(false);
@@ -61,7 +57,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (email: string, password: string, username: string) => {
     try {
       await apiClient.signUp(email, password, username);
-      // After sign up, the user must still log in.
       return { error: null };
     } catch (error: any) {
       return { error };
@@ -73,13 +68,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('user');
   };
 
-  const value = {
-    user,
-    loading,
-    signIn,
-    signUp,
-    signOut,
-  };
+  const value = { user, loading, signIn, signUp, signOut };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
