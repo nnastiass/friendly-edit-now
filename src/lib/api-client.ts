@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 // IMPORTANT: Replace this with your computer's local IP address!
 // On Windows, open Command Prompt and type `ipconfig`.
 // On Mac/Linux, open Terminal and type `ifconfig` or `ip addr`.
-const API_BASE_URL = 'http://192.168.0.138:3000'; // USE YOUR ACTUAL IP
+const API_BASE_URL = 'http://192.168.0.140:3000'; // USE YOUR ACTUAL IP
 // ====================================================================
 
 
