@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Home, User } from 'lucide-react';
+import { Home, User, Plus } from 'lucide-react'; // Added Plus icon
 import DailyChallenge from '@/components/DailyChallenge';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -52,13 +51,8 @@ const Index = () => {
         <div className="index-layout">
           {/* Main Content */}
           <div className="index-main-content">
-            {/* Header */}
-            <div className="index-header">
-              <h1 className="index-title">GetOut</h1>
-            </div>
-
             {/* Daily Challenge */}
-            <DailyChallenge 
+            <DailyChallenge
               onComplete={(points) => {
                 setCurrentStreak(prev => prev + 1);
                 setTotalChallenges(prev => prev + 1);
@@ -69,10 +63,21 @@ const Index = () => {
           {/* Bottom Navigation */}
           <div className="index-bottom-nav">
             <div className="index-nav-container">
-              <button className="index-nav-button">
+              {/* Left Button (Future Page) */}
+              <button
+                className="index-nav-button index-nav-button-inactive"
+                onClick={() => { /* TODO: Add navigation for this button later */ }}
+              >
                 <Home className="index-nav-icon" />
               </button>
-              <button 
+
+              {/* Middle Button (Challenge Page - Active) */}
+              <button className="index-nav-button index-nav-button-active">
+                <Plus className="index-nav-icon" />
+              </button>
+
+              {/* Right Button (Profile Page) */}
+              <button
                 className="index-nav-button index-nav-button-inactive"
                 onClick={() => navigate('/profile')}
               >

@@ -322,7 +322,7 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ onComplete }) => {
   const [todaysChallenge, setTodaysChallenge] = useState(challenges[0]);
   const [isCompleted, setIsCompleted] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [timeLeft, setTimeLeft] = useState('');
+  const [timeLeft, setTimeLeft] = useState({ hours: '00', minutes: '00', seconds: '00' });
   const [currentStreak, setCurrentStreak] = useState(0);
 
   useEffect(() => {
@@ -469,8 +469,6 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ onComplete }) => {
 
       <Card className="daily-challenge-card">
         <CardContent className="daily-challenge-content">
-          <div className="daily-challenge-emoji">{todaysChallenge.emoji}</div>
-
           <h3 className="daily-challenge-text">{todaysChallenge.title}</h3>
           <p className="daily-challenge-description">{todaysChallenge.description}</p>
 
@@ -482,17 +480,11 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ onComplete }) => {
             {isCompleted ? `Completed!` : 'Complete Challenge'}
           </Button>
 
-
-          {isCompleted && (
-            <div className="daily-challenge-progress">
-              <Progress value={progress} className="w-full" />
-            </div>
-          )}
         </CardContent>
       </Card>
 
       {/* 2. Timer */}
-      <div className="daily-challenge-timer-boxes flex justify-center gap-4 mt-6">
+      <div className="daily-challenge-timer-boxes flex justify-center mt-6">
         {['Hours', 'Minutes', 'Seconds'].map((label, i) => {
           const value = i === 0 ? timeLeft.hours : i === 1 ? timeLeft.minutes : timeLeft.seconds;
           return (

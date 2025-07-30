@@ -9,6 +9,9 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
+import AddFriends from './pages/AddFriends';
+import FriendsList from './pages/FriendsList';
+import FriendRequests from './pages/FriendRequests';
 
 const queryClient = new QueryClient();
 
@@ -23,6 +26,10 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/profile" element={<Profile />} />
+            // Temporarily simplify the route to test it
+            <Route path="/add-friends" element={<AddFriends />} />
+            <Route path="/friends" element={<FriendsList />} />
+            <Route path="/friend-requests" element={<FriendRequests />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

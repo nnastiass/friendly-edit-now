@@ -8,6 +8,18 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Search, UserPlus, Check } from 'lucide-react';
 
+// --- NEW HELPER FUNCTION ---
+const pastelColors = [
+  '#FFADAD', '#FFD6A5', '#FDFFB6', '#CAFFBF', '#9BF6FF', '#A0C4FF', '#BDB2FF', '#FFC6FF'
+];
+
+const generatePastelColor = (id: string) => {
+  if (!id) return pastelColors[0];
+  const hash = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return pastelColors[hash % pastelColors.length];
+};
+
+
 interface UserSearchProps {
   onClose?: () => void;
 }
@@ -30,7 +42,7 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
   const [searchResults, setSearchResults] = useState<SearchedUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [requestStatuses, setRequestStatuses] = useState<Record<string, FriendRequestStatus>>({});
-  const [hasSearched, setHasSearched] = useState(false); // ✅ Track if search has been attempted
+  const [hasSearched, setHasSearched] = useState(false);
 
   const searchUsers = async () => {
     if (!searchTerm.trim() || !user) return;
@@ -39,7 +51,6 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
     setLoading(true);
 
     try {
-      // Search by username
       const { data: usernameMatches, error: usernameError } = await supabase
         .from('profiles')
         .select('id, username, full_name, avatar_url')
@@ -48,7 +59,6 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
 
       if (usernameError) throw usernameError;
 
-      // Search by full_name
       const { data: fullNameMatches, error: fullNameError } = await supabase
         .from('profiles')
         .select('id, username, full_name, avatar_url')
@@ -57,14 +67,13 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
 
       if (fullNameError) throw fullNameError;
 
-      // Merge and deduplicate results
       const combined = [...(usernameMatches || []), ...(fullNameMatches || [])];
       const uniqueUsers = Array.from(
         new Map(combined.map((u) => [u.id, u])).values()
       );
 
       setSearchResults(uniqueUsers);
-      setHasSearched(true); // ✅ Mark search as attempted
+      setHasSearched(true);
 
       if (uniqueUsers.length) {
         await checkFriendStatuses(uniqueUsers.map((u) => u.id));
@@ -157,20 +166,20 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
     switch (status) {
       case 'friends':
         return (
-          <Button variant="outline" disabled className="text-green-600">
+          <Button variant="outline" disabled className="friends-button">
             <Check className="h-4 w-4 mr-2" />
             Friends
           </Button>
         );
       case 'sent':
         return (
-          <Button variant="outline" disabled>
+          <Button variant="outline" disabled className="sent-button">
             Request Sent
           </Button>
         );
       case 'received':
         return (
-          <Button variant="outline" disabled>
+          <Button variant="outline" disabled className="received-button">
             Request Received
           </Button>
         );
@@ -178,57 +187,66 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
         return (
           <Button
             onClick={() => sendFriendRequest(searchedUser.id)}
-            className="bg-white text-black hover:bg-purple-700"
+            className="add-button"
           >
             <UserPlus className="h-4 w-4 mr-2" />
-            Add Friend
+            Add
           </Button>
         );
     }
   };
 
   const getDisplayName = (searchedUser: SearchedUser) => {
-    return searchedUser.username || searchedUser.full_name || 'Unknown';
+    return searchedUser.full_name || searchedUser.username || 'Unknown';
   };
 
+  const getDisplayUsername = (searchedUser: SearchedUser) => {
+    return searchedUser.username || '...';
+  }
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center space-x-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+    <div className="user-search-container">
+      <div className="search-bar">
+        <div className="search-input-wrapper">
+          <Search className="search-icon" />
           <Input
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && searchUsers()}
-            placeholder="Search by username or full name..."
-            className="pl-10 bg-black border-[4px] border-[#2f1930] text-white"
-
+            placeholder="Search by username"
+            className="search-input"
           />
         </div>
         <Button
           onClick={searchUsers}
           disabled={loading || !searchTerm.trim()}
-          className="bg-[#2f1930]"
+          className="search-button"
         >
-          {loading ? 'Searching...' : 'Search'}
+          {loading ? '...' : 'Search'}
         </Button>
       </div>
 
-      <div className="space-y-2 max-h-96 overflow-y-auto">
+      <div className="search-results">
         {searchResults.map((searchedUser) => (
-          <Card key={searchedUser.id} className="">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
+          <Card key={searchedUser.id} className="user-card">
+            <CardContent className="user-card-content">
+              <div className="user-info">
                 <div className="flex items-center space-x-3">
-                  <Avatar className="h-10 w-10">
+                  <Avatar className="h-12 w-12">
                     <AvatarImage src={searchedUser.avatar_url || ''} />
-                    <AvatarFallback className="bg-[#2f1930] text-white">
+                    <AvatarFallback
+                      className="avatar-fallback"
+                      style={{ backgroundColor: generatePastelColor(searchedUser.id) }}
+                    >
                       {getInitials(getDisplayName(searchedUser))}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-medium text-white">
-                      @{getDisplayName(searchedUser)}
+                    <p className="user-name">
+                      {getDisplayName(searchedUser)}
+                    </p>
+                    <p className="user-username">
+                      @{getDisplayUsername(searchedUser)}
                     </p>
                   </div>
                 </div>
@@ -239,7 +257,7 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
         ))}
 
         {hasSearched && searchResults.length === 0 && !loading && (
-          <p className="text-center text-gray-400 py-4">No users found</p>
+          <p className="no-results-text">No users found</p>
         )}
       </div>
     </div>

@@ -61,13 +61,16 @@ const Auth = () => {
   };
 
   return (
-    <div className="auth-container">
+    <div
+      className="auth-container"
+      style={{ background: 'radial-gradient(circle 25% at 50% 20%, #FF0046, #000000)' }}
+    >
       <div className="auth-mobile-frame">
         <div className="auth-layout">
           <div className="auth-header">
-            <h1 className="auth-app-title">SocialStreak</h1>
+            <h1 className="auth-app-title">GETOUT</h1>
             <h2 className="auth-page-title">
-              {isLogin ? 'Welcome back' : 'Create account'}
+              {isLogin ? 'Welcome back!' : 'Create account'}
             </h2>
             <p className="auth-description">
               {isLogin ? 'Sign in to continue your streak' : 'Join the community and start your journey'}
@@ -77,7 +80,7 @@ const Auth = () => {
           <form onSubmit={handleSubmit} className="auth-form">
             {!isLogin && (
               <div className="auth-field">
-                <Label htmlFor="username" className="auth-label">Username</Label>
+
                 <Input
                   id="username"
                   type="text"
@@ -91,7 +94,7 @@ const Auth = () => {
             )}
 
             <div className="auth-field">
-              <Label htmlFor="email" className="auth-label">Email</Label>
+
               <Input
                 id="email"
                 type="email"

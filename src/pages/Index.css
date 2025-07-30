@@ -1,19 +1,24 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap');
+
 /* ========================================
    INDEX PAGE (HOME) STYLES
    ======================================== */
 
 /* Make sure the body and html fill the screen and prevent scrolling */
-html, body {
+html, body, #root {
   height: 100%;
   margin: 0;
   padding: 0;
   overflow: hidden;
+  font-family: 'Poppins', sans-serif;
+  background-color: #000000; /* Base black background */
 }
-
-/* Full screen container */
+/* Full screen container with the new gradient */
 .index-container {
   height: 100vh;
-  background-color: black;
+  background: black;
+  background-image: radial-gradient(ellipse 50% 25% at 50% 25%, rgba(235, 156, 154, 0.8), transparent) !important;
+  background-repeat: no-repeat;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -22,10 +27,9 @@ html, body {
 /* Mobile phone frame container */
 .index-mobile-frame {
   width: 100%;
-  max-width: 24rem; /* Phone width */
+  max-width: 26rem; /* Phone width */
   height: 100%;
   margin: 0 auto;
-  background-color: black;
   color: white;
   display: flex;
   flex-direction: column;
@@ -37,92 +41,175 @@ html, body {
   display: flex;
   flex-direction: column;
   overflow: hidden; /* Prevent layout from expanding */
+  justify-content: space-between; /* Pushes nav to bottom */
 }
 
-/* Main content area (scrollable if needed, but constrained) */
+/* Main content area */
 .index-main-content {
   flex: 1;
-  padding: 2rem 1.5rem;
-  background-color: black;
+  padding: 2vh 1.5rem; /* Use vh for vertical padding */
+  background-color: transparent;
   overflow-y: auto;
-}
-
-/* Bottom navigation bar */
-.index-bottom-nav {
-  height: 4rem;
-  flex-shrink: 0;
-  background-color: black;
-  border-top: 1px solid #1f2937;
-  padding: 0 1.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Navigation buttons container */
-.index-nav-container {
-  display: flex;
-  justify-content: center;
-  gap: 4rem;
-}
-
-/* Navigation button styles */
-.index-nav-button {
   display: flex;
   flex-direction: column;
   align-items: center;
-  color: white;
+  justify-content: center; /* Center content vertically */
+  text-align: center;
+}
+
+/* Daily Challenge Specific Styles */
+.challenge-title {
+    font-size: 3vh; /* Responsive font size */
+    font-weight: 700;
+    margin-bottom: 1vh;
+}
+
+.challenge-subtitle {
+    color: #d1d5db; /* light gray */
+    margin-bottom: 3vh;
+    font-size: 1.8vh;
+}
+
+.challenge-button {
+    background-color: #FF0046;
+    color: white;
+    border: none;
+    border-radius: 9999px;
+    padding: 1.5vh 2.5rem; /* Responsive padding */
+    font-size: 1.8vh; /* Responsive font size */
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 0 20px rgba(255, 0, 70, 0.7);
+    transition: transform 0.2s ease-in-out;
+    margin-bottom: 4vh;
+}
+
+.challenge-button:hover {
+    transform: scale(1.05);
+}
+
+/* Timer Styles */
+.timer-container {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 4vh;
+}
+
+.timer-box {
+    border: 2px solid white;
+    border-radius: 0.75rem;
+    width: 15vw; /* Use vw for width */
+    height: 8vh; /* Use vh for height */
+    max-width: 5rem; /* Set a max size */
+    max-height: 5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.timer-value {
+    font-size: 3.5vh; /* Responsive font size */
+    font-weight: 700;
+}
+
+.timer-label {
+    font-size: 1.5vh; /* Responsive font size */
+    color: #d1d5db;
+}
+
+/* Day Streak Styles from StreakCounter component */
+.streak-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 1vh;
+}
+
+.streak-number {
+    font-size: 5vh;
+    font-weight: 700;
+    color: #FF0046;
+}
+
+.streak-label {
+    font-size: 2vh;
+    font-weight: 500;
+    margin-bottom: 1vh;
+}
+
+.streak-line {
+    width: 20%;
+    height: 2px;
+    background-color: white;
+}
+
+.streak-subtext {
+    margin-top: 1.5vh;
+    color: #d1d5db;
+    font-size: 1.8vh;
+}
+
+
+/* Bottom Navigation */
+.index-bottom-nav {
+  height: 10vh; /* Responsive height */
+  min-height: 5rem; /* Ensure it's not too small */
+  flex-shrink: 0;
+  background-color: black;
+  padding: 0; /* Removed padding */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.index-nav-container {
+  display: flex;
+  justify-content: space-evenly; /* Changed for better spacing */
+  width: 100%;
+  align-items: center;
+}
+
+.index-nav-button {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0.5rem;
+  padding: 1.3rem;
 }
 
+/* Style for the active middle button */
+.index-nav-button-active {
+    color: #FF0046; /* Pink color for the '+' */
+}
+
+/* Style for inactive, outlined icons */
 .index-nav-button-inactive {
-  color: #6b7280;
+  color: white;
   transition: color 0.2s ease;
 }
 
 .index-nav-button-inactive:hover {
-  color: white;
+  color: #a1a1aa; /* A light gray for hover */
 }
 
+/* General icon styling */
 .index-nav-icon {
-  height: 1.5rem;
-  width: 1.5rem;
-  margin-bottom: 0.25rem;
+  height: 1.8rem;
+  width: 1.8rem;
+  stroke-width: 1.5;
 }
-
-/* ========================================
-   LOADING STATES
-   ======================================== */
-
+.index-nav-container > .index-nav-button:nth-child(2) .index-nav-icon {
+  height: 2.2rem;
+  width: 2.2rem;
+}
+/* Loading State (from your old file, kept for consistency) */
 .index-loading {
   height: 100vh;
   background-color: black;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
-}
-
-.index-loading-frame {
-  width: 100%;
-  max-width: 24rem;
-  height: 100%;
-  margin: 0 auto;
-}
-
-.index-loading-content {
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.index-loading-inner {
-  text-align: center;
-  color: white;
 }
 
 .index-loading-spinner {
@@ -133,21 +220,6 @@ html, body {
   border: 4px solid white;
   border-top-color: transparent;
   margin: 0 auto 1rem;
-}
-
-.index-loading-title {
-  font-size: 1.5rem;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-}
-
-.index-loading-text {
-  color: #9ca3af;
-}
-
-.index-title{
-text-align: center;
-font-weight: bold;
 }
 
 @keyframes spin {

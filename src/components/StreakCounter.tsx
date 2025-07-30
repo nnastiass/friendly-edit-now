@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Flame } from 'lucide-react';
@@ -23,16 +22,17 @@ const StreakCounter: React.FC<StreakCounterProps> = ({ streak }) => {
     <Card className="streak-counter-card">
       <CardContent className="streak-counter-content">
         <div className="streak-counter-main">
-
-          <div>
-            <div className="streak-counter-stats">
-              <Flame className="h-5 w-5" />
-              <span className="streak-counter-number">{streak}</span>
-            </div>
-            <p className="streak-counter-label">Day Streak</p>
+          <div className="streak-counter-stats">
+            {/* The Flame icon is hidden by the CSS, but kept for consistency */}
+            <Flame className="h-5 w-5" />
+            <span className="streak-counter-number">{streak}</span>
           </div>
+          <p className="streak-counter-label">Day Streak</p>
         </div>
-        
+
+        {/* This is the new line element that matches the CSS */}
+        <div className="streak-counter-line"></div>
+
         <p className="streak-counter-message">
           {getStreakMessage(streak)}
         </p>

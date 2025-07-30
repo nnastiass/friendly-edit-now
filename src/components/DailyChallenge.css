@@ -4,139 +4,132 @@
 
 /* Main container for the entire challenge section */
 .daily-challenge-container {
-  margin-bottom: 2rem;
-  background-color: black; /* Black background */
-  color: white; /* Default white text */
-  padding-top: 2rem;
-}
-
-/* Header section with title and subtitle */
-.daily-challenge-header {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
-  margin-bottom: 2rem;
   color: white;
+  margin-top: 8vh; /* Use vh for vertical spacing */
 }
 
-/* Main "Daily Challenge" title */
-.daily-challenge-title {
-  font-size: 1.5rem;
-  font-weight: 600;
+/* The card itself is now transparent */
+.daily-challenge-card {
+  width: 100%;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.daily-challenge-content {
+  padding: 0 !important; /* No extra padding needed */
+}
+
+/* The emoji is not in the new design, so we hide it */
+.daily-challenge-emoji {
+  display: none;
+}
+
+/* Main "Share something about yourself" title */
+.daily-challenge-text {
+  font-size: 2.5vh; /* Responsive font size */
+  font-weight: 700;
+  margin-bottom: 1vh;
   color: white;
-  margin-bottom: 0.5rem;
 }
 
 /* Subtitle under the main title */
-.daily-challenge-subtitle {
-  color: #9ca3af;
-}
-
-/* Challenge card container */
-.daily-challenge-card {
-  background-color: black; /* Black background */
-  border-radius: 0.75rem;
-  margin-bottom: 1.5rem;
-  color: white;
-}
-
-/* Content inside the challenge card */
-.daily-challenge-content {
-  padding: 1.5rem;
-  text-align: center;
-  background-color: black; /* Black background */
-
-  border-radius: 0.75rem; /* Optional: to match card radius */
-}
-
-
-/* Large emoji at the top of challenge */
-.daily-challenge-emoji {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-}
-
-/* Challenge title text */
-.daily-challenge-text {
-  font-size: 2rem;
-  font-weight: 500;
-  color: white;
-  margin-bottom: 0.5rem;
-}
-
-/* Challenge description text */
 .daily-challenge-description {
-  color: #9ca3af;
-  margin-bottom: 1.5rem;
-}
-
-/* Challenge action button - INCOMPLETE state */
-.daily-challenge-button {
-  width: 100%;
-  background-color: #2F1930;
   color: white;
-  border: none;
-  border-radius: 9999px;
-
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
+  margin-bottom: 2.5vh;
+  font-size: 1.6vh; /* Responsive font size */
 }
 
-/* Button hover state */
+/* Challenge action button */
+.daily-challenge-button {
+    background-color: #FF0046 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 9999px !important;
+    padding: 2.5vh 1rem !important; /* Responsive padding */
+    font-size: 1.6vh !important; /* Responsive font size */
+    font-weight: 600 !important;
+    cursor: pointer;
+    box-shadow: 0 0 20px rgba(255, 0, 70, 0.5);
+    transition: transform 0.2s ease-in-out;
+    margin-top: 1vh;
+    margin-bottom: 3vh;
+}
+
 .daily-challenge-button:hover {
-  background-color: #451f3d;
+    transform: scale(1.05);
 }
 
-/* Challenge button - COMPLETE state */
+/* Style for the button when challenge is complete */
 .daily-challenge-complete {
-  background-color: #059669;
-  border-radius: 9999px;
-}
-
-/* Complete button hover state */
-.daily-challenge-complete:hover {
-  background-color: #047857;
-}
-
-/* Progress indicator container */
-.daily-challenge-progress {
-  margin-top: 1rem;
+  background-color: transparent !important;
+  border: 2px solid white !important;
+  box-shadow: none !important;
+  color: white !important; /* Force text to be white */
+  opacity: 1 !important; /* Force full opacity */
+  cursor: not-allowed !important; /* Keep the disabled cursor */
 }
 
 /* Timer boxes container */
 .daily-challenge-timer-boxes {
   display: flex;
   justify-content: center;
-  gap: 1rem;
-  margin-top: 1.5rem;
-  margin-bottom: 1.5rem;
+  gap: 0.5rem;
+  margin-bottom: 3vh;
+  background: transparent;
 }
 
-/* Individual timer box */
-.daily-challenge-timer-box {
-  background-color: #000; /* Black background */
-  color: white;
-  padding: 1rem 1.5rem;
-  border-radius: 12px;
-  font-size: 1.5rem;
-  font-weight: bold;
-  text-align: center;
+/* Individual timer box (overrides inline styles from TSX for consistency) */
+.daily-challenge-timer-boxes > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 
 }
+
+.daily-challenge-timer-boxes > div > div {
+  border: 3px solid white !important;
+  border-radius: 1rem !important;
+  width: 22vw; /* Use vw for width */
+  height: 10vh; /* Use vh for height */
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 3vh !important; /* Responsive font size */
+  background: transparent !important;
+
+}
+
+.daily-challenge-timer-boxes > div > span {
+  font-size: 1.5vh; /* Responsive font size */
+  color: #d1d5db;
+  margin-top: 0.5rem;
+}
+
 
 /* === Streak counter container === */
 .streak-counter {
-  background-color: #000; /* Black background */
-  color: white;
-  border: 2px solid white; /* White border */
-  border-radius: 0.75rem;
-  padding: 1rem;
-  margin-top: 1.5rem;
-
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1rem;
+  background: transparent;
+  border: none;
 }
 
+.streak-counter .streak-number {
+    font-size: 4vh; /* Responsive font size */
+    font-weight: 700;
+    color: #FF0046;
+}
 
-
-
-
-
+.streak-counter .streak-label {
+    font-size: 1.8vh; /* Responsive font size */
+}
