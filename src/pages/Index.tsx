@@ -1,32 +1,43 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Home, User } from 'lucide-react';
+import { Home, User, Plus } from 'lucide-react';
 import DailyChallenge from '@/components/DailyChallenge';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import './Index.css';
 
 const Index = () => {
-  const [currentStreak, setCurrentStreak] = useState(7);
-  const [totalChallenges, setTotalChallenges] = useState(23);
+  // These states are now primarily managed by DailyChallenge internally,
+  // but kept here if Index needs to display them or pass them down.
+  const [currentStreak, setCurrentStreak] = useState(0);
+  const [totalChallenges, setTotalChallenges] = useState(0);
+
   const [isLoading, setIsLoading] = useState(true);
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!authLoading) {
-      if (!user) {
-        navigate('/auth');
-      } else {
-        // Simulate loading for the main content
-        const timer = setTimeout(() => setIsLoading(false), 1500);
-        return () => clearTimeout(timer);
+      console.log("Index: useEffect triggered. authLoading:", authLoading, "user:", user ? user.id : "null");
+      if (!authLoading) {
+        if (!user) {
+          console.log("Index: No user found, navigating to /auth.");
+          navigate('/auth');
+        } else {
+          console.log("Index: User found, starting 1.5s content loading timer.");
+          const timer = setTimeout(() => {
+            setIsLoading(false);
+            console.log("Index: Content loading timer finished. isLoading set to false.");
+          }, 1500);
+          return () => clearTimeout(timer);
+        }
       }
-    }
-  }, [user, authLoading, navigate]);
+    }, [user, authLoading, navigate]);
 
+    console.log("Index: Rendering. authLoading:", authLoading, "isLoading:", isLoading, "user:", user ? user.id : "null");
+
+  // If authentication is still loading or the page's content is loading, show a spinner
   if (authLoading || isLoading) {
+      console.log("Index: Displaying loading spinner.");
     return (
       <div className="index-loading">
         <div className="index-loading-frame">
@@ -42,37 +53,49 @@ const Index = () => {
     );
   }
 
+  // If authLoading is false but no user is found, this return null
+  // should ideally be caught by the navigate('/auth') above, but as a fallback.
   if (!user) {
-    return null; // Will redirect to auth
+      console.log("Index: User is null, returning null (should redirect).");
+    return null;
   }
-
+console.log("Index: Displaying main content.");
   return (
     <div className="index-container">
       <div className="index-mobile-frame">
         <div className="index-layout">
-          {/* Main Content */}
+          {/* Main Content Area */}
           <div className="index-main-content">
-            {/* Header */}
-            <div className="index-header">
-              <h1 className="index-title">GetOut</h1>
-            </div>
-
-            {/* Daily Challenge */}
-            <DailyChallenge 
+            {/* Daily Challenge Component */}
+            <DailyChallenge
               onComplete={(points) => {
+                // These callbacks are here if you need to update Index's state
+                // based on DailyChallenge completion, e.g., for a global score.
+                // DailyChallenge now updates the streak directly in the backend.
                 setCurrentStreak(prev => prev + 1);
                 setTotalChallenges(prev => prev + 1);
               }}
             />
           </div>
 
-          {/* Bottom Navigation */}
+          {/* Bottom Navigation Bar */}
           <div className="index-bottom-nav">
             <div className="index-nav-container">
-              <button className="index-nav-button">
+              {/* Left Button (Home/Future Page) */}
+              <button
+                className="index-nav-button index-nav-button-inactive"
+                onClick={() => { /* TODO: Add navigation for this button later */ }}
+              >
                 <Home className="index-nav-icon" />
               </button>
-              <button 
+
+              {/* Middle Button (Challenge Page - Active) */}
+              <button className="index-nav-button index-nav-button-active">
+                <Plus className="index-nav-icon" />
+              </button>
+
+              {/* Right Button (Profile Page) */}
+              <button
                 className="index-nav-button index-nav-button-inactive"
                 onClick={() => navigate('/profile')}
               >

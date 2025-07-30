@@ -1,78 +1,70 @@
-
 /* ========================================
    STREAK COUNTER COMPONENT STYLES
-   ========================================
-   
-   This file contains all styling for the StreakCounter component.
-   The component displays the user's current streak with fire emoji
-   and motivational messages.
-   
-   Main sections:
-   - Card container and layout
-   - Emoji and streak display
-   - Stats and labels
-   - Messages and text
    ======================================== */
 
-/* Main card container */
+/* Main card container - now transparent */
 .streak-counter-card {
-  background-color: black; /* <-- add this */
-  color: white;
-  border: none;
-  border-radius: 0.75rem;
+  background-color: transparent !important;
+  border: none !important;
+  width: 100%;
 }
 
-
-/* Content wrapper inside the card */
+/* Content wrapper inside the card - also transparent */
 .streak-counter-content {
-background-color: black;
-color: white;
-border: 3px solid #f6b85b;
-border-radius: 20px;
-  padding: 1.5rem;
+  background-color: transparent;
+  padding: 0;
   text-align: center;
 }
 
 /* Main streak display container */
 .streak-counter-main {
   display: flex;
+  flex-direction: column; /* Stack number and label vertically */
   align-items: center;
   justify-content: center;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
-  margin-top: 0.75rem;
+  margin-bottom: 0.5vh; /* Use vh for vertical spacing */
 }
 
-/* Emoji display (fire, rocket, star, etc.) */
-.streak-counter-emoji {
-  font-size: 1.875rem; /* Make emoji larger/smaller here */
+/* The emoji is not in the new design, so we hide it */
+.streak-counter-emoji,
+.streak-counter-stats .lucide-flame {
+  display: none;
 }
 
-/* Container for streak number and flame icon */
+/* Container for streak number and flame icon (not needed, but kept for structure) */
 .streak-counter-stats {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #f6b85b;
 }
 
-/* The actual streak number */
+/* The actual streak number, styled to be large and pink */
 .streak-counter-number {
-  font-size: 1.5rem; /* Change number size here */
-  font-weight: bold;
-  color: #f6b85b;
+  font-size: 4vh; /* Use vh for responsive font size */
+  font-weight: 700;
+  color: #FF0046;
+  text-shadow: 0 0 20px #FF0046;
 }
 
 /* "Day Streak" label text */
 .streak-counter-label {
-  font-size: 0.875rem; /* Change label size here */
-  opacity: 0.9; /* Slightly transparent */
-    color: #f6b85b;
+    font-size: 2vh; /* Use vh for responsive font size */
+    font-weight: 500;
+    color: #FF0046;
+}
+
+/* We need a new style for the line under the label */
+.streak-counter-line {
+    width: 50%;
+    height: 2px;
+    background-color: white;
+    margin: 1vh auto 1.5vh; /* Use vh for vertical spacing */
+    border-width: 2px;
+    border-radius: 999px;
 }
 
 /* Motivational message at the bottom */
 .streak-counter-message {
-  color: #fed7aa; /* Light orange color */
-  font-size: 0.875rem; /* Change message size here */
-  color: #d97f59;
+  color: #d1d5db; /* light gray */
+  font-size: 1.8vh; /* Use vh for responsive font size */
 }

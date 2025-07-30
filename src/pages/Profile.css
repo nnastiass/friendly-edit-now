@@ -1,0 +1,332 @@
+/* ========================================
+   PROFILE PAGE STYLES
+   ======================================== */
+
+.profile-container {
+  width: 100%;
+  height: 100vh;
+  background-color: #000000;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: 'Poppins', sans-serif;
+  background-image: radial-gradient(ellipse 40% 20% at 50% 20%, #FF0046, transparent);
+  transition: background-image 0.3s ease-in-out; /* Smooth transition */
+}
+
+/* This rule removes the gradient when in edit mode */
+.profile-container.edit-mode {
+    background-image: none !important;
+}
+
+.profile-main-content {
+  flex: 1;
+  overflow-y: hidden; /* Prevent scrolling */
+}
+
+/* Header with Gradient */
+.profile-header-gradient {
+  position: relative;
+  padding: 2vh 1.5rem 1.5vh; /* Responsive padding */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-repeat: no-repeat;
+  min-height: 10vh; /* Ensure header has a minimum height */
+}
+
+.profile-settings-button {
+  position: absolute;
+  top: 2.5vh;
+  right: 2rem;
+  color: #FF0046 !important;
+  background-color: transparent !important;
+}
+
+/* New style for the edit button */
+.profile-edit-button {
+  position: absolute;
+  top: 2.5vh;
+  left: 2rem;
+  color: #FF0046 !important;
+  background-color: transparent !important;
+}
+
+/* New style for the back button */
+.profile-back-button {
+  position: absolute;
+  top: 2.5vh;
+  left: 2rem;
+  color: #FF0046 !important;
+  background-color: transparent !important;
+}
+
+.profile-requests-button{
+  color: #FF0046 !important;
+  background-color: transparent !important;
+}
+
+.profile-settings-button svg,
+.profile-edit-button svg,
+.profile-back-button svg, .profile-requests-button svg{
+  height: 3vh !important;
+  width: 3vh !important;
+}
+
+.profile-back-button svg{
+stroke-width: 3 !important; /* Made icons thicker */
+}
+
+.profile-requests-button svg{
+    stroke-width: 2.5 !important;
+}
+
+.profile-avatar {
+  width: 12vh;
+  height: 12vh;
+  border: 4px solid white;
+  margin-bottom: 1rem;
+  margin-top: 5rem;
+}
+
+.profile-avatar-fallback {
+  /* background-color removed, now handled in TSX */
+  font-size: 4vh; /* Responsive font size */
+  color: #333; /* Dark text for light pastel backgrounds */
+}
+
+.profile-name {
+  font-size: 2.5vh; /* Responsive font size */
+  font-weight: 500;
+}
+
+.profile-username {
+  color: white;
+  font-size: 1.8vh; /* Responsive font size */
+}
+
+/* Friends Actions Section */
+.profile-actions-section {
+  display: flex;
+  justify-content: center; /* Center items horizontally */
+  align-items: center;
+  padding: 2vh 1.5rem; /* Responsive padding */
+  gap: 2rem;
+}
+
+.profile-friends-count {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Center text vertically */
+}
+
+.count-number {
+  font-size: 2vh; /* Responsive font size */
+  font-weight: 700;
+}
+
+.count-label {
+  color: #d1d5db;
+  font-size: 1.6vh; /* Responsive font size */
+}
+
+.profile-add-friends-btn {
+  background-color: transparent !important;
+  border: 2px solid white !important;
+  border-radius: 9999px !important;
+  color: white !important;
+  padding: 1vh 1.7rem !important; /* Responsive padding */
+  font-weight: 600 !important;
+  font-size: 1.8vh !important;
+}
+
+/* Streak Section */
+.profile-streak-section {
+  text-align: center;
+  padding: 1.5vh 1rem; /* Responsive padding */
+}
+
+.streak-number {
+  font-size: 2vh; /* Responsive font size */
+  color: #FF0046;
+  display: inline-block;
+  vertical-align: baseline;
+  margin-right: 0.5rem;
+}
+
+.streak-label {
+  font-size: 2vh; /* Responsive font size */
+  color: #FF0046;
+  display: inline-block;
+  vertical-align: baseline;
+}
+
+.streak-line {
+  width: 40%;
+  height: 4px;
+  background-color: white;
+  margin: 0vh auto 0;
+  border-width: 2px;
+  border-radius: 999px;
+}
+
+/* Edit Profile Section Styles */
+.profile-edit-section {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+.edit-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 1rem;
+}
+.edit-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.profile-edit-input {
+    background: transparent !important;
+    border: 2px solid white !important;
+    border-radius: 9999px !important;
+    color: white !important;
+    padding: 1.2rem 1.8rem !important;
+    font-size: 0.9rem !important;
+}
+.profile-save-button {
+    background-color: #FF0046 !important;
+    color: white !important;
+    border-radius: 9999px !important;
+    font-size: 0.9rem !important;
+    font-weight: 600 !important;
+    box-shadow: 0 0 20px rgba(255, 0, 70, 0.7);
+    width: 18vh !important;
+    margin-left: auto; /* Added to center the button */
+    margin-right: auto; /* Added to center the button */
+}
+.edit-divider {
+    height: 1px;
+    background-color: #374151; /* gray */
+    margin: 1rem 0;
+}
+.profile-signout-button {
+  width: 100%;
+  background-color: transparent !important;
+  color: #f87171 !important; /* Light red text */
+  transition: all 0.2s ease;
+}
+
+.view-title{
+    font-size: 1.2rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+/* Friends List Section */
+.friends-list-section {
+  padding: 1vh 0.2rem;
+}
+
+.friends-list-title {
+  text-align: center;
+  font-size: 1.8vh; /* Responsive font size */
+  margin-bottom: 2vh;
+}
+
+.friends-list-container {
+  display: flex;
+  justify-content: space-around;
+  gap: 1rem;
+}
+
+.friend-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  background: black;
+}
+
+.friend-avatar {
+  width: 10vw; /* Responsive size */
+  height: 10vw;
+  max-width: 4rem;
+  max-height: 4rem;
+  margin-bottom: 0.5rem;
+}
+
+.friend-avatar-fallback {
+  /* background-color removed, now handled in TSX */
+  color: #333; /* Dark text for light pastel backgrounds */
+}
+
+.friend-name {
+  font-size: 1.5vh; /* Responsive font size */
+  color: #d1d5db;
+  max-width: 4rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.friend-streak {
+  font-size: 1.8vh; /* Responsive font size */
+  font-weight: 700;
+  color: #FF0046;
+}
+
+
+/* Bottom Navigation Bar (Consistent with Index page) */
+.profile-bottom-nav {
+  height: 10vh; /* Responsive height */
+  min-height: 5rem;
+  flex-shrink: 0;
+  background-color: black;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-nav-container {
+  display: flex;
+  justify-content: space-evenly;
+  width: 100%;
+  align-items: center;
+}
+
+.profile-nav-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 1.3rem;
+}
+
+.profile-nav-button-active {
+    color: #FF0046;
+}
+
+.profile-nav-container > .profile-nav-button:nth-child(2) .profile-nav-icon {
+  height: 2.2rem;
+  width: 2.2rem;
+}
+
+.profile-nav-button-inactive {
+  color: white;
+  transition: color 0.2s ease;
+}
+
+.profile-nav-button-inactive:hover {
+  color: #a1a1aa;
+}
+
+.profile-nav-icon {
+  height: 1.8rem;
+  width: 1.8rem;
+  stroke-width: 1.5;
+}

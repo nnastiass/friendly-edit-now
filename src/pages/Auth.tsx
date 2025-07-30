@@ -13,11 +13,10 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp, user } = useAuth(); // We assume these functions in the context are updated to use the API
+  const { signIn, signUp, user } = useAuth(); // useAuth now handles API calls internally
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Redirect if user is already logged in
     if (user) {
       navigate('/');
     }
@@ -28,41 +27,50 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      let error;
       if (isLogin) {
-        // The `signIn` function in your AuthContext should handle the API call
-        ({ error } = await signIn(email, password));
+        const { error } = await signIn(email, password);
         if (error) {
-            toast.error(error.message || 'Invalid email or password');
+          if (error.message.includes('Invalid credentials')) { // Match your API's error message
+            toast.error('Invalid email or password');
+          } else {
+            toast.error(error.message);
+          }
         } else {
-            toast.success('Successfully signed in!');
-            navigate('/');
+          toast.success('Successfully signed in!');
+          navigate('/');
         }
       } else {
-        // The `signUp` function in your AuthContext should handle the API call
-        ({ error } = await signUp(email, password, username));
+        const { error } = await signUp(email, password, username);
         if (error) {
-            toast.error(error.message || 'Failed to create account');
+          if (error.message.includes('A user with this email or username already exists')) { // Match your API's error message
+            toast.error('An account with this email or username already exists');
+          } else {
+            toast.error(error.message);
+          }
         } else {
-            toast.success('Account created! Please check your email for verification.');
-            setIsLogin(true); // Switch to login view after successful signup
+          toast.success('Account created successfully! You can now sign in.'); // Removed email verification message
+          setIsLogin(true); // Automatically switch to login after successful signup
         }
       }
-    } catch (err: any) {
-      toast.error(err.message || 'An unexpected error occurred');
+    } catch (error) {
+      console.error("Auth handleSubmit error:", error);
+      toast.error('An unexpected error occurred');
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div className="auth-container">
+    <div
+      className="auth-container"
+      style={{ background: 'radial-gradient(circle 25% at 50% 20%, #FF0046, #000000)' }}
+    >
       <div className="auth-mobile-frame">
         <div className="auth-layout">
           <div className="auth-header">
-            <h1 className="auth-app-title">SocialStreak</h1>
+            <h1 className="auth-app-title">GETOUT</h1>
             <h2 className="auth-page-title">
-              {isLogin ? 'Welcome back' : 'Create account'}
+              {isLogin ? 'Welcome back!' : 'Create account'}
             </h2>
             <p className="auth-description">
               {isLogin ? 'Sign in to continue your streak' : 'Join the community and start your journey'}

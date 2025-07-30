@@ -1,154 +1,158 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Urbanist:wght@600&display=swap');
 
-/* ========================================
-   AUTHENTICATION PAGE STYLES
-   ========================================
-   
-   This file styles the login/signup page including:
-   - Mobile-first design with phone frame
-   - Form inputs and labels
-   - Submit buttons
-   - Toggle between login/signup
-   
-   Design: Black background with custom inputs and buttons
-   ======================================== */
+/* Apply the gradient background to the entire page for the auth route */
+html,
+body,
+#root /* This targets the main React app container */ {
+    /* Set a base background color first */
+    background-color: #000000 !important;
+    /* Then, apply the gradient as an image on top using a more compatible syntax */
+    background-image: radial-gradient(circle 250px at 50% 34%, rgba(255, 0, 70, 0.7), transparent 80%) !important;
+    background-repeat: no-repeat !important;
+    background-attachment: fixed; /* Keeps the gradient centered */
+    height: 100%;
+}
 
-/* Full screen container */
+/* General body styling for a clean slate */
+body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif; /* A modern, clean font */
+    color: white;
+}
+
+/* * The main container is now transparent to let the body's background show through.
+ */
 .auth-container {
-  min-height: 100vh;
-  background-color: black;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: transparent; /* This is the key change */
 }
 
-/* Mobile phone frame container */
-.auth-mobile-frame {
-  width: 100%;
-  max-width: 24rem; /* Phone width */
-  margin: 0 auto;
-  background-color: black;
-  color: white;
-  aspect-ratio: 9/16; /* Phone aspect ratio */
-}
-
-/* Main layout container */
+/* * This class is in your component, we'll use it to center the content.
+ * The auth-mobile-frame can be ignored for now if this handles the layout.
+ */
 .auth-layout {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 0 1.5rem;
+    width: 100%;
+    max-width: 24rem; /* Reduced width */
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
-/* Header section with titles */
+/* Header styling */
 .auth-header {
-  text-align: center;
-  margin-bottom: 2rem;
+    text-align: center;
+    margin-bottom: 2rem; /* Reduced margin */
 }
 
-/* App title "SocialStreak" */
+/* Styling for your H1 title */
 .auth-app-title {
-  font-size: 1.875rem; /* Change app title size here */
-  font-weight: bold;
-  margin-bottom: 0.5rem;
+    font-family: 'Urbanist', sans-serif; /* Using the new font */
+    font-size: 2.5rem; /* Reduced font size */
+    font-weight: 400; /* A bit bold */
+    font-style: normal; /* Not italic */
+    letter-spacing: normal; /* Default letter spacing */
+    margin: 0;
+    color: white;
 }
 
-/* Page title "Welcome back" / "Create account" */
+/* Styling for your H2 subtitle */
 .auth-page-title {
-  font-size: 1.25rem; /* Change page title size here */
-  font-weight: 600;
+    margin-top: 0.2rem; /* 8px */
+    font-size: 0.9rem; /* Reduced font size */
+    color: #d1d5db; /* light gray */
+    font-weight: 400; /* Overriding bold default */
+
 }
 
-/* Description text under page title */
+/* The design doesn't have a third line of text, so we hide it */
 .auth-description {
-  color: #9ca3af; /* Gray color for description */
-  margin-top: 0.5rem;
+    display: none;
 }
 
-/* Form container */
-.auth-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem; /* Space between form fields */
-}
-
-/* Individual form field container */
-.auth-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem; /* Space between label and input */
-}
-
-/* Form labels */
+/* The design doesn't have visible labels, so we hide them */
 .auth-label {
-  color: white;
-  font-weight: 500;
+    display: none;
 }
 
-/* Form inputs - YOUR CUSTOM STYLING */
+
+/* Form styling */
+.auth-form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem; /* Reduced gap */
+}
+
+/* Input field styling */
 .auth-input {
-  background-color: black; /* Black background as requested */
-  border: 2px solid white; /* White border as requested */
-  border-radius: 9999px; /* Fully rounded edges as requested */
-  color: white; /* White text as requested */
-  padding: 0.75rem 1rem;
-  font-size: 1rem;
-  transition: border-color 0.2s ease;
+    /* This shorthand property ensures no background color, image, etc. */
+    background: transparent !important;
+    border: 2px solid white !important;
+    border-radius: 9999px !important; /* Fully rounded edges */
+    color: white !important;
+    /* Reduced right padding to give text more space */
+    padding: 1.2rem 3rem !important; /* Reduced padding */
+    font-size: 0.9rem !important; /* Reduced font size */
+    box-sizing: border-box;
+    transition: border-color 0.2s ease-in-out;
 }
 
-/* Input focus state */
-.auth-input:focus {
-  outline: none;
-  border-color: #a855f7; /* Purple border on focus */
-}
-
-/* Input placeholder text */
 .auth-input::placeholder {
-  color: #9ca3af; /* Gray placeholder text */
+    color: white; /* medium gray */
 }
 
-/* Submit button - YOUR CUSTOM STYLING */
+.auth-input:focus {
+    outline: none !important;
+    box-shadow: none !important;
+    border-color: #FF0046 !important; /* A nice pink for focus state */
+}
+
+/* Submit button styling */
 .auth-submit-button {
-  width: 100%;
-  background-color: #2F1930; /* Your custom purple color */
-  color: white;
-  border: none;
-  border-radius: 9999px; /* Fully rounded edges as requested */
-  padding: 0.75rem 1.5rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
+    width: 50%; /* Reduced width */
+    margin-left: auto; /* Center the button */
+    margin-right: auto; /* Center the button */
+    background-color: #FF0046 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 9999px !important; /* Fully rounded edges */
+    padding: 1rem 1.2rem !important; /* Reduced padding */
+    font-size: 0.85rem !important; /* Reduced font size */
+    font-weight: 600 !important;
+    cursor: pointer;
+    margin-top: 0.5rem; /* Space above the button */
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    /* Added pink glow effect */
+    box-shadow: 0 0 20px rgba(255, 0, 70, 0.7);
 }
 
-/* Submit button hover state */
 .auth-submit-button:hover {
-  background-color: #451f3d; /* Slightly lighter on hover */
+    transform: scale(1.05); /* Grow effect on hover */
+    box-shadow: 0 0 30px rgba(255, 0, 70, 1); /* Intensify glow on hover */
 }
 
-/* Submit button disabled state */
-.auth-submit-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* Toggle section container */
+/* Toggle container and button styling */
 .auth-toggle-container {
-  text-align: center;
-  margin-top: 1.5rem;
+    text-align: center;
+    margin-top: 1.5rem; /* Reduced margin */
+    color: #9ca3af; /* medium gray */
+    font-size: 0.8rem; /* Reduced font size */
 }
 
-/* Toggle button (switch between login/signup) */
 .auth-toggle-button {
-  color: #a855f7; /* Purple color */
-  text-decoration: underline;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 0.875rem;
+    color: white;
+    text-decoration: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-weight: 400; /* Made text thinner */
 }
 
-/* Toggle button hover state */
 .auth-toggle-button:hover {
-  color: #c084fc; /* Lighter purple on hover */
+    text-decoration: underline;
 }

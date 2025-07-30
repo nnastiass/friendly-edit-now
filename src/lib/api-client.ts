@@ -1,91 +1,88 @@
-import { toast } from 'sonner';
+// src/lib/api-client.ts
 
-// ====================================================================
-// IMPORTANT: Replace this with your computer's local IP address!
-// On Windows, open Command Prompt and type `ipconfig`.
-// On Mac/Linux, open Terminal and type `ifconfig` or `ip addr`.
-const API_BASE_URL = 'http://192.168.0.140:3000'; // USE YOUR ACTUAL IP
-// ====================================================================
+// *** IMPORTANT: REPLACE WITH YOUR ACTUAL API BASE URL ***
+// This should be your development machine's IP address and the port your Docker API exposes
+// For example: 'http://192.168.0.138:3000' or 'http://localhost:3000' if running on web browser dev server
+// Remember to change this when building for production!
+const API_BASE_URL = 'http://192.168.0.138:3000';
 
+// A generic helper function for making API requests
+async function apiFetch<T>(
+  endpoint: string,
+  options?: RequestInit
+): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options?.headers,
+      // Add Authorization header here if your API requires it (e.g., Bearer Token)
+      // 'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+    },
+  });
 
-/**
- * A helper function to handle fetch requests and basic error handling.
- * @param endpoint The API endpoint to call (e.g., '/api/profiles/123').
- * @param options The options for the fetch request (method, headers, body).
- * @returns The JSON response from the API.
- */
-async function fetchApi(endpoint: string, options: RequestInit = {}) {
-  try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: `The server responded with a ${response.status} error.` }));
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+  if (!response.ok) {
+    let errorData: any = {};
+    try {
+      // Try to parse JSON error response
+      errorData = await response.json();
+    } catch (e) {
+      // If not JSON, use response text or default message
+      errorData.message = await response.text();
     }
-
-    // For DELETE requests which might not have a body
-    if (response.status === 204) {
-        return null;
-    }
-
-    return await response.json();
-  } catch (error: any) {
-    console.error(`API call to ${endpoint} failed:`, error);
-    // Let the component that called this function handle the toast message.
-    throw error;
+    throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
   }
+
+  // Handle cases where the API might return no content (e.g., DELETE requests)
+  if (response.status === 204) {
+    return {} as T; // Return an empty object for no-content responses
+  }
+
+  return response.json();
 }
 
-
-// --- API Client Methods ---
-
+// Define specific API client methods
 export const apiClient = {
-  // === Auth ===
-  signUp: (email: string, password: string, username: string) =>
-    fetchApi('/api/auth/signup', {
-      method: 'POST',
-      body: JSON.stringify({ email, password, username }),
+  // Profiles
+  getProfile: (userId: string) => apiFetch<any>(`/api/profiles/${userId}`),
+  updateProfile: (userId: string, data: { full_name?: string; username?: string; streak?: number }) =>
+    apiFetch<any>(`/api/profiles/${userId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
     }),
+
+  // Authentication
   signIn: (email: string, password: string) =>
-    fetchApi('/api/auth/login', {
+    apiFetch<any>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     }),
-
-  // === User Search & Profiles ===
-  searchUsers: (term: string, currentUserId: string) =>
-    fetchApi(`/api/users/search?term=${encodeURIComponent(term)}&currentUserId=${encodeURIComponent(currentUserId)}`),
-  getProfile: (userId: string) => fetchApi(`/api/profiles/${userId}`),
-  updateProfile: (userId: string, updates: { full_name?: string; username?: string; streak?: number }) =>
-    fetchApi(`/api/profiles/${userId}`, {
-      method: 'PUT',
-      body: JSON.stringify(updates),
+  signUp: (email: string, password: string, username: string) =>
+    apiFetch<any>('/api/auth/signup', {
+      method: 'POST',
+      body: JSON.stringify({ email, password, username }),
     }),
 
-  // === Friends & Requests ===
-  getFriends: (userId: string) => fetchApi(`/api/friends/${userId}`),
-  removeFriend: (userId: string, friendId: string) =>
-    fetchApi(`/api/friends/${userId}/${friendId}`, {
+  // Friends & Friend Requests
+  searchUsers: () => apiFetch<any[]>('/api/profiles'), // Assumes /api/profiles returns all users for client-side filtering
+  getFriends: (userId: string) => apiFetch<any[]>(`/api/friends/${userId}`),
+  deleteFriend: (userId: string, friendId: string) =>
+    apiFetch<void>(`/api/friends/${userId}/${friendId}`, {
       method: 'DELETE',
     }),
-  getFriendRequests: (userId: string) => fetchApi(`/api/friend-requests/${userId}`),
+  getFriendRequests: (userId: string) => apiFetch<any[]>(`/api/friend-requests/${userId}`),
   sendFriendRequest: (senderId: string, receiverId: string) =>
-    fetchApi('/api/friend-requests', {
-        method: 'POST',
-        body: JSON.stringify({ senderId, receiverId })
+    apiFetch<any>('/api/friend-requests/send', { // Assuming this endpoint exists
+      method: 'POST',
+      body: JSON.stringify({ sender_id: senderId, receiver_id: receiverId }),
     }),
   respondToFriendRequest: (requestId: string, action: 'accepted' | 'rejected') =>
-    fetchApi('/api/friend-requests/respond', {
+    apiFetch<any>('/api/friend-requests/respond', {
       method: 'POST',
       body: JSON.stringify({ requestId, action }),
     }),
+  getSentFriendRequests: (userId: string) => apiFetch<any[]>(`/api/friend-requests/sent/${userId}`), // Assuming this endpoint exists
 
-  // === Leaderboard ===
-  getLeaderboard: (userId: string) => fetchApi(`/api/leaderboard/${userId}`),
+  // Leaderboard
+  getLeaderboard: (userId: string) => apiFetch<any[]>(`/api/leaderboard/${userId}`),
 };
