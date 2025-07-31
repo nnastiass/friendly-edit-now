@@ -255,7 +255,7 @@ const Profile = () => {
             {/* Friends List Section */}
             <div className="friends-list-section">
               <h2 className="friends-list-title">Check how your friends are doing!</h2>
-              <div className="friends-list-container">
+              <div className="friends-list-container-profile">
                 {friends.slice(0, 4).map((friend) => (
                   <div key={friend.id} className="friend-item">
                     <Avatar className="friend-avatar">

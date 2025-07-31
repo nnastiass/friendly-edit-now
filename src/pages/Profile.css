@@ -238,11 +238,17 @@ stroke-width: 3 !important; /* Made icons thicker */
   margin-bottom: 2vh;
 }
 
-.friends-list-container {
-  display: flex;
-  justify-content: space-around;
+.friends-list-container-profile {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: center;
   gap: 1rem;
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  padding: 0 1.5rem;
+  background: black !important;
 }
+
 
 .friend-item {
   display: flex;
