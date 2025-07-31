@@ -67,6 +67,7 @@
 
 /* Style for the button when challenge is complete */
 .daily-challenge-complete {
+padding: 2.2vh 1rem !important;
   background-color: transparent !important;
   border: 2px solid white !important;
   box-shadow: none !important;
@@ -110,7 +111,7 @@
 .daily-challenge-timer-boxes > div > span {
   font-size: 1.5vh; /* Responsive font size */
   color: #d1d5db;
-  margin-top: 0.5rem;
+
 }
 
 

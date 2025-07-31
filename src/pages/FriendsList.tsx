@@ -8,7 +8,7 @@ import { Home, User, Plus, ArrowLeft } from 'lucide-react';
 import './FriendsList.css';
 
 // *** IMPORTANT: REPLACE WITH YOUR ACTUAL API BASE URL ***
-const API_BASE_URL = 'http://192.168.0.138:3000';
+const API_BASE_URL = 'http://192.168.0.102:3000';
 
 // --- NEW HELPER FUNCTION FOR API CALLS ---
 async function apiFetch<T>(

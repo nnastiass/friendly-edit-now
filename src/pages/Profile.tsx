@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import './Profile.css';
 
 // *** IMPORTANT: REPLACE WITH YOUR ACTUAL API BASE URL ***
-const API_BASE_URL = 'http://192.168.0.138:3000';
+const API_BASE_URL = 'http://192.168.0.102:3000';
 
 // --- NEW HELPER FUNCTION FOR API CALLS ---
 async function apiFetch<T>(
@@ -22,8 +22,6 @@ async function apiFetch<T>(
     headers: {
       'Content-Type': 'application/json',
       ...options?.headers,
-      // Add Authorization header here if your API requires it (e.g., Bearer Token)
-      // 'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
     },
   });
 
@@ -54,13 +52,16 @@ interface ProfileData {
   streak: number | null;
 }
 
+// --- UPDATED INTERFACE ---
 interface Friend {
-  id: string; // This is the friendship ID from your API
-  friend_id: string; // The ID of the friend
-  username: string | null;
-  full_name: string | null;
-  avatar_url: string | null;
-  streak: number | null;
+  id: string; // This is the friendship ID
+  friend_profile: { // The friend's data is nested here
+    id: string;
+    full_name: string | null;
+    username: string | null;
+    avatar_url: string | null;
+    streak: number | null;
+  } | null;
 }
 
 const Profile = () => {
@@ -86,7 +87,6 @@ const Profile = () => {
   const fetchProfile = async () => {
     if (!user || !user.id) return;
     try {
-      // Your API endpoint: GET /api/profiles/:id
       const data: ProfileData = await apiFetch(`/api/profiles/${user.id}`);
       setProfile(data);
       if (data) {
@@ -104,7 +104,6 @@ const Profile = () => {
   const fetchFriends = async () => {
     if (!user || !user.id) return;
     try {
-      // Your API endpoint: GET /api/friends/:userId
       const friendsData: Friend[] = await apiFetch(`/api/friends/${user.id}`);
       setFriends(friendsData);
       setFriendCount(friendsData.length);
@@ -117,7 +116,6 @@ const Profile = () => {
     if (!user || !user.id) return;
     setLoading(true);
     try {
-      // Your API endpoint: PUT /api/profiles/:id
       await apiFetch(`/api/profiles/${user.id}`, {
         method: 'PUT',
         body: JSON.stringify({
@@ -127,8 +125,8 @@ const Profile = () => {
       });
 
       toast.success('Profile updated!');
-      setView('profile'); // Return to profile view
-      fetchProfile(); // Re-fetch profile to update UI
+      setView('profile');
+      fetchProfile();
     } catch (error) {
       console.error('Error updating profile:', error);
       toast.error('Failed to update profile');
@@ -138,7 +136,7 @@ const Profile = () => {
   };
 
   const handleSignOut = async () => {
-    await signOut(); // AuthContext handles clearing user state and localStorage
+    await signOut();
     navigate('/auth');
     toast.success('Signed out successfully');
   };
@@ -148,7 +146,7 @@ const Profile = () => {
     return name.split(' ').map(n => n.charAt(0)).join('').toUpperCase();
   };
 
-  if (!user) return null; // Or show a loading spinner/redirect
+  if (!user) return null;
 
   return (
     <div className={`profile-container ${view !== 'profile' ? 'edit-mode' : ''}`}>
@@ -159,17 +157,32 @@ const Profile = () => {
           {view === 'profile' ? (
             <>
               <Button variant="ghost" size="icon" className="profile-edit-button" onClick={() => setView('edit')}>
-                              <Edit className="h-6 w-6" />
-                            </Button>
-
-                            <Button variant="ghost" size="icon" className="profile-settings-button" onClick={() => setView('settings')}>
-                              <Settings className="h-6 w-6" />
-                            </Button>
+                <Edit className="h-6 w-6" />
+              </Button>
+              <Button variant="ghost" size="icon" className="profile-settings-button" onClick={() => setView('settings')}>
+                <Settings className="h-6 w-6" />
+              </Button>
             </>
           ) : (
             <Button variant="ghost" size="icon" className="profile-back-button" onClick={() => setView('profile')}>
               <ArrowLeft className="h-6 w-6" />
             </Button>
+          )}
+
+          {view === 'profile' && (
+            <>
+              <Avatar className="profile-avatar">
+                <AvatarImage src={profile?.avatar_url || ''} />
+                <AvatarFallback
+                  className="profile-avatar-fallback"
+                  style={{ backgroundColor: generatePastelColor(profile?.id || '') }}
+                >
+                  {getInitials(profile?.full_name)}
+                </AvatarFallback>
+              </Avatar>
+              <h1 className="profile-name">{profile?.full_name || 'Your Name'}</h1>
+              <p className="profile-username">@{profile?.username || 'username'}</p>
+            </>
           )}
 
           {view !== 'profile' && (
@@ -228,8 +241,8 @@ const Profile = () => {
                 Add friends
               </Button>
               <Button variant="ghost" size="icon" className="profile-requests-button" onClick={() => navigate('/friend-requests')}>
-                                             <UserPlus className="h-6 w-6" />
-                                          </Button>
+                <UserPlus className="h-6 w-6" />
+              </Button>
             </div>
 
             {/* Streak Section */}
@@ -246,16 +259,16 @@ const Profile = () => {
                 {friends.slice(0, 4).map((friend) => (
                   <div key={friend.id} className="friend-item">
                     <Avatar className="friend-avatar">
-                      <AvatarImage src={friend.avatar_url || ''} />
+                      <AvatarImage src={friend.friend_profile?.avatar_url || ''} />
                       <AvatarFallback
                         className="friend-avatar-fallback"
-                        style={{ backgroundColor: generatePastelColor(friend.id) }}
+                        style={{ backgroundColor: generatePastelColor(friend.friend_profile?.id || '') }}
                       >
-                        {getInitials(friend.full_name)}
+                        {getInitials(friend.friend_profile?.full_name)}
                       </AvatarFallback>
                     </Avatar>
-                    <p className="friend-name">@{friend.full_name || '...'}</p>
-                    <p className="friend-streak">{friend.streak || 0}</p>
+                    <p className="friend-name">@{friend.friend_profile?.full_name || '...'}</p>
+                    <p className="friend-streak">{friend.friend_profile?.streak || 0}</p>
                   </div>
                 ))}
               </div>

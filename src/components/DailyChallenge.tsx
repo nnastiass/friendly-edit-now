@@ -11,7 +11,7 @@ import './DailyChallenge.css';
 
 // *** IMPORTANT: REPLACE WITH YOUR ACTUAL API BASE URL ***
 // Ensure consistency with src/lib/api-client.ts and src/contexts/AuthContext.tsx
-const API_BASE_URL = 'http://192.168.0.138:3000';
+const API_BASE_URL = 'http://192.168.0.102:3000';
 
 const challenges = [
   { id: 1, title: 'Say hi to a stranger', description: 'Greet someone you don’t know with a smile and a friendly hello', points: 10, emoji: '👋' },
@@ -180,15 +180,7 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ onComplete }) => {
 
     setIsCompleted(true); // Mark as completed
 
-    // Animate progress bar
-    let currentProgress = 0;
-    const interval = setInterval(() => {
-      currentProgress += 5;
-      setProgress(currentProgress);
-      if (currentProgress >= 100) {
-        clearInterval(interval);
-      }
-    }, 50);
+
 
     // Store completion status in local storage for the current day
     const today = new Date();
@@ -247,18 +239,11 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ onComplete }) => {
           >
             {isCompleted ? `Completed!` : 'Complete Challenge'}
           </Button>
-
-          {/* Progress Bar (shown when challenge is completed) */}
-          {isCompleted && (
-            <div className="daily-challenge-progress">
-              <Progress value={progress} className="w-full" />
-            </div>
-          )}
         </CardContent>
       </Card>
 
       {/* 2. Timer Boxes */}
-      <div className="daily-challenge-timer-boxes flex justify-center gap-4 mt-6">
+      <div className="daily-challenge-timer-boxes flex justify-center gap-1 mt-6">
         {['Hours', 'Minutes', 'Seconds'].map((label, i) => {
           const value = i === 0 ? timeLeft.hours : i === 1 ? timeLeft.minutes : timeLeft.seconds;
           return (

@@ -25,7 +25,10 @@ const StreakCounter: React.FC<StreakCounterProps> = ({ streak }) => {
         <div className="streak-counter-main">
 
           <div>
-            <div className="streak-counter-stats">
+            // In your StreakCounter.tsx file
+
+            <div className="streak-counter-stats flex flex-col items-center">
+              {/* By adding 'flex-col', you are overriding the default 'flex-row' */}
               <Flame className="h-5 w-5" />
               <span className="streak-counter-number">{streak}</span>
             </div>
