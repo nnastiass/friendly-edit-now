@@ -44,8 +44,8 @@ const Index = () => {
           <div className="index-loading-content">
             <div className="index-loading-inner">
               <div className="index-loading-spinner"></div>
-              <h2 className="index-loading-title">GetOut</h2>
-              <p className="index-loading-text">Loading your daily challenge...</p>
+
+
             </div>
           </div>
         </div>

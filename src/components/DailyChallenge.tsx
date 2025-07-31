@@ -258,7 +258,7 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ onComplete }) => {
       </Card>
 
       {/* 2. Timer Boxes */}
-      <div className="daily-challenge-timer-boxes flex justify-center gap-4 mt-6"> {/* Changed gap-1 to gap-4 for more spacing */}
+      <div className="daily-challenge-timer-boxes flex justify-center gap-1 mt-6"> {/* Changed gap-1 to gap-4 for more spacing */}
         {['Hours', 'Minutes', 'Seconds'].map((label, i) => {
           const value = i === 0 ? timeLeft.hours : i === 1 ? timeLeft.minutes : timeLeft.seconds;
           return (

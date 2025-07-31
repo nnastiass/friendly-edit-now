@@ -4,7 +4,7 @@
 // This should be your development machine's IP address and the port your Docker API exposes
 // For example: 'http://192.168.0.138:3000' or 'http://localhost:3000' if running on web browser dev server
 // Remember to change this when building for production!
-const API_BASE_URL = 'http://192.168.0.138:3000';
+const API_BASE_URL = 'http://192.168.1.8:3000';
 
 // A generic helper function for making API requests
 async function apiFetch<T>(

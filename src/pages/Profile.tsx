@@ -141,17 +141,32 @@ const Profile = () => {
           {view === 'profile' ? (
             <>
               <Button variant="ghost" size="icon" className="profile-edit-button" onClick={() => setView('edit')}>
-                              <Edit className="h-6 w-6" />
-                            </Button>
-
-                            <Button variant="ghost" size="icon" className="profile-settings-button" onClick={() => setView('settings')}>
-                              <Settings className="h-6 w-6" />
-                            </Button>
+                <Edit className="h-6 w-6" />
+              </Button>
+              <Button variant="ghost" size="icon" className="profile-settings-button" onClick={() => setView('settings')}>
+                <Settings className="h-6 w-6" />
+              </Button>
             </>
           ) : (
             <Button variant="ghost" size="icon" className="profile-back-button" onClick={() => setView('profile')}>
               <ArrowLeft className="h-6 w-6" />
             </Button>
+          )}
+
+          {view === 'profile' && (
+            <>
+              <Avatar className="profile-avatar">
+                <AvatarImage src={profile?.avatar_url || ''} />
+                <AvatarFallback
+                  className="profile-avatar-fallback"
+                  style={{ backgroundColor: generatePastelColor(profile?.id || '') }}
+                >
+                  {getInitials(profile?.full_name)}
+                </AvatarFallback>
+              </Avatar>
+              <h1 className="profile-name">{profile?.full_name || 'Your Name'}</h1>
+              <p className="profile-username">@{profile?.username || 'username'}</p>
+            </>
           )}
 
           {view !== 'profile' && (
@@ -228,20 +243,16 @@ const Profile = () => {
                 {friends.slice(0, 4).map((friend) => (
                   <div key={friend.id} className="friend-item">
                     <Avatar className="friend-avatar">
-                      {/* Use friend.avatar_url directly */}
-                      <AvatarImage src={friend.avatar_url || ''} />
+                      <AvatarImage src={friend.friend_profile?.avatar_url || ''} />
                       <AvatarFallback
                         className="friend-avatar-fallback"
-                        // Use friend.friend_id for color generation (or friend.id if it's unique per friend item)
-                        style={{ backgroundColor: generatePastelColor(friend.friend_id || '') }}
+                        style={{ backgroundColor: generatePastelColor(friend.friend_profile?.id || '') }}
                       >
-                        {/* Use friend.full_name directly */}
-                        {getInitials(friend.full_name)}
+                        {getInitials(friend.friend_profile?.full_name)}
                       </AvatarFallback>
                     </Avatar>
-                    {/* Use friend.full_name and friend.username directly */}
-                    <p className="friend-name">@{friend.full_name || '...'}</p>
-                    <p className="friend-streak">{friend.streak || 0}</p>
+                    <p className="friend-name">@{friend.friend_profile?.full_name || '...'}</p>
+                    <p className="friend-streak">{friend.friend_profile?.streak || 0}</p>
                   </div>
                 ))}
               </div>
