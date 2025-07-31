@@ -3,35 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
+import { apiClient } from '@/lib/api-client'; // Import the centralized API client
 import { toast } from 'sonner';
 import { Home, User, Plus, ArrowLeft } from 'lucide-react';
 import './FriendsList.css';
-
-// *** IMPORTANT: REPLACE WITH YOUR ACTUAL API BASE URL ***
-const API_BASE_URL = 'http://192.168.0.102:3000';
-
-// --- NEW HELPER FUNCTION FOR API CALLS ---
-async function apiFetch<T>(
-  endpoint: string,
-  options?: RequestInit
-): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-      // Add Authorization header here if your API requires it (e.g., Bearer Token)
-      // 'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-    },
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-    throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-  }
-
-  return response.json();
-}
 
 // Helper function to generate pastel colors for avatars
 const pastelColors = [
@@ -65,14 +40,17 @@ const FriendsList = () => {
   }, [user]);
 
   const fetchFriends = async () => {
-    if (!user || !user.id) return;
+    if (!user || !user.id) {
+      console.warn("FriendsList: User or user ID not available for fetching friends.");
+      return;
+    }
     setLoading(true);
     try {
-      // Your API endpoint: GET /api/friends/:userId
-      const friendsData: Friend[] = await apiFetch(`/api/friends/${user.id}`);
+      // Use apiClient to fetch friends
+      const friendsData: Friend[] = await apiClient.getFriends(user.id);
       setFriends(friendsData);
     } catch (error) {
-      console.error('Error fetching friends:', error);
+      console.error('FriendsList: Error fetching friends:', error);
       toast.error('Failed to load friends list.');
     } finally {
       setLoading(false);
@@ -80,19 +58,20 @@ const FriendsList = () => {
   };
 
   const handleDeleteFriend = async (friendId: string) => {
-    if (!user || !user.id) return;
+    if (!user || !user.id) {
+      console.warn("FriendsList: User or user ID not available for deleting friend.");
+      return;
+    }
 
     const originalFriends = friends;
-    setFriends(friends.filter(f => f.friend_id !== friendId)); // Filter by friend_id
+    setFriends(friends.filter(f => f.friend_id !== friendId)); // Optimistic UI update
 
     try {
-      // Your API endpoint: DELETE /api/friends/:userId/:friendId
-      await apiFetch(`/api/friends/${user.id}/${friendId}`, {
-        method: 'DELETE',
-      });
+      // Use apiClient to delete friend
+      await apiClient.deleteFriend(user.id, friendId);
       toast.success('Friend removed.');
     } catch (error) {
-      console.error('Error deleting friend:', error);
+      console.error('FriendsList: Error deleting friend:', error);
       toast.error('Failed to remove friend.');
       setFriends(originalFriends); // Revert UI if API call fails
     }

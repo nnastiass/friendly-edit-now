@@ -4,34 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
+import { apiClient } from '@/lib/api-client'; // Import the centralized API client
 import { toast } from 'sonner';
 import { Search, UserPlus, Check } from 'lucide-react';
-
-// *** IMPORTANT: REPLACE WITH YOUR ACTUAL API BASE URL ***
-const API_BASE_URL = 'http://192.168.0.102:3000';
-
-// --- NEW HELPER FUNCTION FOR API CALLS ---
-async function apiFetch<T>(
-  endpoint: string,
-  options?: RequestInit
-): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-      // Add Authorization header here if your API requires it (e.g., Bearer Token)
-      // 'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-    },
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-    throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-  }
-
-  return response.json();
-}
 
 // --- NEW HELPER FUNCTION ---(existing)
 const pastelColors = [
@@ -69,15 +44,20 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
   const [hasSearched, setHasSearched] = useState(false);
 
   const searchUsers = async () => {
-    if (!searchTerm.trim() || !user) return;
+    if (!searchTerm.trim() || !user || !user.id) {
+      console.log("UserSearch: Search term is empty or user not available.");
+      return;
+    }
 
     setLoading(true);
+    console.log("UserSearch: Starting user search for term:", searchTerm);
 
     try {
       // Your API's /api/profiles endpoint returns all profiles.
       // We will filter client-side for simplicity, or you can enhance your API
       // to support search queries.
-      const allProfiles: SearchedUser[] = await apiFetch('/api/profiles');
+      const allProfiles: SearchedUser[] = await apiClient.searchUsers();
+      console.log("UserSearch: All profiles fetched:", allProfiles);
 
       const filteredUsers = allProfiles.filter(profile =>
         (profile.username?.toLowerCase().includes(searchTerm.trim().toLowerCase()) ||
@@ -87,30 +67,41 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
 
       setSearchResults(filteredUsers);
       setHasSearched(true);
+      console.log("UserSearch: Filtered search results:", filteredUsers);
 
       if (filteredUsers.length) {
         await checkFriendStatuses(filteredUsers.map((u) => u.id));
+      } else {
+        setRequestStatuses({}); // Clear statuses if no users found
       }
     } catch (error) {
-      console.error('Error searching users:', error);
+      console.error('UserSearch: Error searching users:', error);
       toast.error('Failed to search users');
     } finally {
       setLoading(false);
+      console.log("UserSearch: Search finished.");
     }
   };
 
   const checkFriendStatuses = async (userIds: string[]) => {
-    if (!user || !user.id) return;
+    if (!user || !user.id || userIds.length === 0) {
+      console.warn("UserSearch: checkFriendStatuses called without user, user ID, or user IDs to check.");
+      return;
+    }
+    console.log("UserSearch: Checking friend statuses for user IDs:", userIds);
 
     try {
       // Fetch current user's friends
-      const friends: { friend_id: string }[] = await apiFetch(`/api/friends/${user.id}`);
+      const friends: { friend_id: string }[] = await apiClient.getFriends(user.id);
+      console.log("UserSearch: Friends fetched:", friends);
 
       // Fetch sent requests by current user
-      const sentRequests: { receiver_id: string }[] = await apiFetch(`/api/friend-requests/sent/${user.id}`); // Assuming a new API endpoint for sent requests
+      const sentRequests: { receiver_id: string }[] = await apiClient.getSentFriendRequests(user.id); // Assuming this API endpoint exists
+      console.log("UserSearch: Sent requests fetched:", sentRequests);
 
       // Fetch received requests for current user
-      const receivedRequests: { sender_id: string }[] = await apiFetch(`/api/friend-requests/${user.id}`);
+      const receivedRequests: { sender_id: string }[] = await apiClient.getFriendRequests(user.id); // This is for incoming requests
+      console.log("UserSearch: Received requests fetched:", receivedRequests);
 
       const statuses: Record<string, FriendRequestStatus> = {};
 
@@ -127,27 +118,32 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
       });
 
       setRequestStatuses(statuses);
+      console.log("UserSearch: Final request statuses:", statuses);
+
     } catch (error) {
-      console.error('Error checking friend statuses:', error);
+      console.error('UserSearch: Error checking friend statuses:', error);
+      toast.error('Failed to check friend statuses.');
     }
   };
 
   const sendFriendRequest = async (receiverId: string) => {
-    if (!user || !user.id) return;
+    if (!user || !user.id) {
+      console.warn("UserSearch: sendFriendRequest called without user or user ID.");
+      return;
+    }
+    console.log("UserSearch: Sending friend request to receiver ID:", receiverId);
 
     try {
-      await apiFetch('/api/friend-requests/send', { // Assuming a new API endpoint for sending requests
-        method: 'POST',
-        body: JSON.stringify({ sender_id: user.id, receiver_id: receiverId }),
-      });
+      await apiClient.sendFriendRequest(user.id, receiverId); // Using apiClient for sending request
 
       toast.success('Friend request sent!');
       setRequestStatuses(prev => ({
         ...prev,
         [receiverId]: { userId: receiverId, status: 'sent' }
       }));
+      console.log("UserSearch: Friend request sent successfully, status updated.");
     } catch (error) {
-      console.error('Error sending friend request:', error);
+      console.error('UserSearch: Error sending friend request:', error);
       toast.error('Failed to send friend request');
     }
   };
@@ -159,6 +155,7 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
 
   const renderActionButton = (searchedUser: SearchedUser) => {
     const status = requestStatuses[searchedUser.id]?.status || 'none';
+    console.log(`UserSearch: Rendering button for ${searchedUser.username}, status: ${status}`);
 
     switch (status) {
       case 'friends':

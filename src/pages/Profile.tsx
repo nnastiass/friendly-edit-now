@@ -4,34 +4,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
+import { apiClient } from '@/lib/api-client'; // Import the centralized API client
 import { toast } from 'sonner';
 import { Home, User, Settings, Plus, Edit, ArrowLeft, UserPlus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import './Profile.css';
-
-// *** IMPORTANT: REPLACE WITH YOUR ACTUAL API BASE URL ***
-const API_BASE_URL = 'http://192.168.0.102:3000';
-
-// --- NEW HELPER FUNCTION FOR API CALLS ---
-async function apiFetch<T>(
-  endpoint: string,
-  options?: RequestInit
-): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-    throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-  }
-
-  return response.json();
-}
 
 // --- HELPER FUNCTION ---
 const pastelColors = [
@@ -52,23 +29,21 @@ interface ProfileData {
   streak: number | null;
 }
 
-// --- UPDATED INTERFACE ---
+// UPDATED INTERFACE to match API's flat response structure for friends
 interface Friend {
-  id: string; // This is the friendship ID
-  friend_profile: { // The friend's data is nested here
-    id: string;
-    full_name: string | null;
-    username: string | null;
-    avatar_url: string | null;
-    streak: number | null;
-  } | null;
+  id: string; // This is the friendship ID from your API
+  friend_id: string; // The ID of the friend
+  username: string | null; // Directly from API join
+  full_name: string | null; // Directly from API join
+  avatar_url: string | null; // Directly from API join
+  streak: number | null; // Directly from API join
 }
 
 const Profile = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<ProfileData | null>(null);
-  const [friends, setFriends] = useState<Friend[]>([]);
+  const [friends, setFriends] = useState<Friend[]>([]); // Use the flattened Friend interface
   const [friendCount, setFriendCount] = useState(0);
   const [view, setView] = useState<'profile' | 'edit' | 'settings'>('profile');
   const [loading, setLoading] = useState(false);
@@ -85,9 +60,13 @@ const Profile = () => {
   }, [user]);
 
   const fetchProfile = async () => {
-    if (!user || !user.id) return;
+    if (!user || !user.id) {
+      console.warn("Profile: User or user ID not available for fetching profile.");
+      return;
+    }
     try {
-      const data: ProfileData = await apiFetch(`/api/profiles/${user.id}`);
+      // Use apiClient to fetch profile data
+      const data: ProfileData = await apiClient.getProfile(user.id);
       setProfile(data);
       if (data) {
         setEditForm({
@@ -96,39 +75,44 @@ const Profile = () => {
         });
       }
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      console.error('Profile: Error fetching profile:', error);
       toast.error('Failed to load profile');
     }
   };
 
   const fetchFriends = async () => {
-    if (!user || !user.id) return;
+    if (!user || !user.id) {
+      console.warn("Profile: User or user ID not available for fetching friends.");
+      return;
+    }
     try {
-      const friendsData: Friend[] = await apiFetch(`/api/friends/${user.id}`);
+      // Use apiClient to fetch friends
+      const friendsData: Friend[] = await apiClient.getFriends(user.id);
       setFriends(friendsData);
       setFriendCount(friendsData.length);
     } catch (error) {
-      console.error('Error fetching friends:', error);
+      console.error('Profile: Error fetching friends:', error);
     }
   };
 
   const handleUpdateProfile = async () => {
-    if (!user || !user.id) return;
+    if (!user || !user.id) {
+      console.warn("Profile: User or user ID not available for updating profile.");
+      return;
+    }
     setLoading(true);
     try {
-      await apiFetch(`/api/profiles/${user.id}`, {
-        method: 'PUT',
-        body: JSON.stringify({
-          full_name: editForm.full_name,
-          username: editForm.username
-        }),
+      // Use apiClient to update profile
+      await apiClient.updateProfile(user.id, {
+        full_name: editForm.full_name,
+        username: editForm.username
       });
 
       toast.success('Profile updated!');
       setView('profile');
-      fetchProfile();
+      fetchProfile(); // Re-fetch profile to update UI
     } catch (error) {
-      console.error('Error updating profile:', error);
+      console.error('Profile: Error updating profile:', error);
       toast.error('Failed to update profile');
     } finally {
       setLoading(false);
@@ -136,7 +120,7 @@ const Profile = () => {
   };
 
   const handleSignOut = async () => {
-    await signOut();
+    await signOut(); // AuthContext handles clearing user state and localStorage
     navigate('/auth');
     toast.success('Signed out successfully');
   };
@@ -146,7 +130,7 @@ const Profile = () => {
     return name.split(' ').map(n => n.charAt(0)).join('').toUpperCase();
   };
 
-  if (!user) return null;
+  if (!user) return null; // Or show a loading spinner/redirect
 
   return (
     <div className={`profile-container ${view !== 'profile' ? 'edit-mode' : ''}`}>
@@ -157,32 +141,17 @@ const Profile = () => {
           {view === 'profile' ? (
             <>
               <Button variant="ghost" size="icon" className="profile-edit-button" onClick={() => setView('edit')}>
-                <Edit className="h-6 w-6" />
-              </Button>
-              <Button variant="ghost" size="icon" className="profile-settings-button" onClick={() => setView('settings')}>
-                <Settings className="h-6 w-6" />
-              </Button>
+                              <Edit className="h-6 w-6" />
+                            </Button>
+
+                            <Button variant="ghost" size="icon" className="profile-settings-button" onClick={() => setView('settings')}>
+                              <Settings className="h-6 w-6" />
+                            </Button>
             </>
           ) : (
             <Button variant="ghost" size="icon" className="profile-back-button" onClick={() => setView('profile')}>
               <ArrowLeft className="h-6 w-6" />
             </Button>
-          )}
-
-          {view === 'profile' && (
-            <>
-              <Avatar className="profile-avatar">
-                <AvatarImage src={profile?.avatar_url || ''} />
-                <AvatarFallback
-                  className="profile-avatar-fallback"
-                  style={{ backgroundColor: generatePastelColor(profile?.id || '') }}
-                >
-                  {getInitials(profile?.full_name)}
-                </AvatarFallback>
-              </Avatar>
-              <h1 className="profile-name">{profile?.full_name || 'Your Name'}</h1>
-              <p className="profile-username">@{profile?.username || 'username'}</p>
-            </>
           )}
 
           {view !== 'profile' && (
@@ -259,16 +228,20 @@ const Profile = () => {
                 {friends.slice(0, 4).map((friend) => (
                   <div key={friend.id} className="friend-item">
                     <Avatar className="friend-avatar">
-                      <AvatarImage src={friend.friend_profile?.avatar_url || ''} />
+                      {/* Use friend.avatar_url directly */}
+                      <AvatarImage src={friend.avatar_url || ''} />
                       <AvatarFallback
                         className="friend-avatar-fallback"
-                        style={{ backgroundColor: generatePastelColor(friend.friend_profile?.id || '') }}
+                        // Use friend.friend_id for color generation (or friend.id if it's unique per friend item)
+                        style={{ backgroundColor: generatePastelColor(friend.friend_id || '') }}
                       >
-                        {getInitials(friend.friend_profile?.full_name)}
+                        {/* Use friend.full_name directly */}
+                        {getInitials(friend.full_name)}
                       </AvatarFallback>
                     </Avatar>
-                    <p className="friend-name">@{friend.friend_profile?.full_name || '...'}</p>
-                    <p className="friend-streak">{friend.friend_profile?.streak || 0}</p>
+                    {/* Use friend.full_name and friend.username directly */}
+                    <p className="friend-name">@{friend.full_name || '...'}</p>
+                    <p className="friend-streak">{friend.streak || 0}</p>
                   </div>
                 ))}
               </div>

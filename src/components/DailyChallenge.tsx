@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
+import { Progress } from '@/components/ui/progress'; // Keep import as it might be used elsewhere, or remove if truly unused
 import StreakCounter from './StreakCounter';
 import { useAuth } from '@/contexts/AuthContext';
-import { apiClient } from '@/lib/api-client';
+import { apiClient } from '@/lib/api-client'; // Using the centralized API client
 import { toast } from 'sonner';
 import { RotateCcw } from 'lucide-react';
 import './DailyChallenge.css';
 
-// *** IMPORTANT: REPLACE WITH YOUR ACTUAL API BASE URL ***
-// Ensure consistency with src/lib/api-client.ts and src/contexts/AuthContext.tsx
-const API_BASE_URL = 'http://192.168.0.102:3000';
+// *** IMPORTANT: REMOVED API_BASE_URL - NOW USES apiClient DIRECTLY ***
 
 const challenges = [
   { id: 1, title: 'Say hi to a stranger', description: 'Greet someone you don’t know with a smile and a friendly hello', points: 10, emoji: '👋' },
@@ -74,7 +72,8 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ onComplete }) => {
   const { user } = useAuth();
   const [todaysChallenge, setTodaysChallenge] = useState(challenges[0]);
   const [isCompleted, setIsCompleted] = useState(false);
-  const [progress, setProgress] = useState(0);
+  // Removed 'progress' state as it's no longer needed for the progress bar
+  // const [progress, setProgress] = useState(0);
   const [timeLeft, setTimeLeft] = useState({ hours: '00', minutes: '00', seconds: '00' });
   const [currentStreak, setCurrentStreak] = useState(0);
   const [hasLoadedProfile, setHasLoadedProfile] = useState(false); // New state to track profile loading
@@ -112,7 +111,7 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ onComplete }) => {
     const completedToday = localStorage.getItem(`challenge-${today}`);
     if (completedToday) {
       setIsCompleted(true);
-      setProgress(100);
+      // setProgress(100); // Removed as progress state is removed
     }
 
     // Set up and update countdown timer to midnight
@@ -180,6 +179,15 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ onComplete }) => {
 
     setIsCompleted(true); // Mark as completed
 
+    // Removed progress bar animation
+    // let currentProgress = 0;
+    // const interval = setInterval(() => {
+    //   currentProgress += 5;
+    //   setProgress(currentProgress);
+    //   if (currentProgress >= 100) {
+    //     clearInterval(interval);
+    //   }
+    // }, 50);
 
 
     // Store completion status in local storage for the current day
@@ -209,7 +217,7 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ onComplete }) => {
     localStorage.removeItem(`challenge-${today}`); // Clear completion status
 
     setIsCompleted(false); // Reset completion state
-    setProgress(0); // Reset progress bar
+    // setProgress(0); // Removed as progress state is removed
 
     toast.success('New challenge generated!');
   };
@@ -239,11 +247,18 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ onComplete }) => {
           >
             {isCompleted ? `Completed!` : 'Complete Challenge'}
           </Button>
+
+          {/* Progress Bar (removed) */}
+          {/* {isCompleted && (
+            <div className="daily-challenge-progress">
+              <Progress value={progress} className="w-full" />
+            </div>
+          )} */}
         </CardContent>
       </Card>
 
       {/* 2. Timer Boxes */}
-      <div className="daily-challenge-timer-boxes flex justify-center gap-1 mt-6">
+      <div className="daily-challenge-timer-boxes flex justify-center gap-4 mt-6"> {/* Changed gap-1 to gap-4 for more spacing */}
         {['Hours', 'Minutes', 'Seconds'].map((label, i) => {
           const value = i === 0 ? timeLeft.hours : i === 1 ? timeLeft.minutes : timeLeft.seconds;
           return (
