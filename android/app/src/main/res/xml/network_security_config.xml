@@ -6,22 +6,15 @@
       Production traffic to other domains will still default to requiring HTTPS.
     -->
     <domain-config cleartextTrafficPermitted="true">
-        <!--
-            Allow localhost for Android emulators (special IP address that
-            maps to your host machine's localhost).
-        -->
+        <!-- Allow localhost for emulators (special IP) -->
         <domain includeSubdomains="true">10.0.2.2</domain>
-        <!--
-            Allow your development machine's current local IP address (192.168.0.140).
-            Ensure this matches the IP address of your backend server.
-        -->
-        <domain includeSubdomains="true">192.168.1.8</domain>
+        <!-- Allow your development machine's IP address -->
+        <domain includeSubdomains="true">192.168.1.8</domain> <!-- IMPORTANT: Replace with your actual dev machine's IP if different -->
     </domain-config>
 
     <!--
       This is the default configuration for all other domains not listed above.
-      It enforces the standard security practice of disallowing cleartext traffic,
-      meaning all other external API calls will require HTTPS.
+      It enforces the standard security practice of disallowing cleartext traffic.
     -->
     <base-config cleartextTrafficPermitted="false">
         <trust-anchors>
