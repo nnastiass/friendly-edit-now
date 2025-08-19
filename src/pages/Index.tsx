@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Home, User, Plus } from 'lucide-react';
+import { Home, User, Plus, Info } from 'lucide-react'; // 1. Added Info icon
 import DailyChallenge from '@/components/DailyChallenge';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -87,6 +87,14 @@ console.log("Index: Displaying main content.");
                 onClick={() => { /* TODO: Add navigation for this button later */ }}
               >
                 <Home className="index-nav-icon" />
+              </button>
+
+              {/* 2. New Info Button */}
+              <button
+                className="index-nav-button index-nav-button-inactive"
+                onClick={() => navigate('/info')}
+              >
+                <Info className="index-nav-icon" />
               </button>
 
               {/* Middle Button (Challenge Page - Active) */}
