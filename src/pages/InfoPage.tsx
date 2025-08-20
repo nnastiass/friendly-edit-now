@@ -7,42 +7,29 @@ import './InfoPage.css';
 const InfoPage = () => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isMenuClosing, setIsMenuClosing] = useState(false); // State to handle closing animation
+  const [isMenuClosing, setIsMenuClosing] = useState(false);
 
-  const handleMenuClose = () => {
-    setIsMenuClosing(true);
-    // Wait for the animation to finish before removing the menu
-    setTimeout(() => {
-      setIsMenuOpen(false);
-      setIsMenuClosing(false);
-    }, 400); // This duration must match the CSS animation
-  };
-
-  const handleMenuOpen = () => {
-    setIsMenuOpen(true);
+  const handleMenuToggle = () => {
+    if (isMenuOpen) {
+      // If menu is open, start the closing animation
+      setIsMenuClosing(true);
+      setTimeout(() => {
+        setIsMenuOpen(false);
+        setIsMenuClosing(false);
+      }, 400); // This duration must match the CSS animation
+    } else {
+      // If menu is closed, just open it
+      setIsMenuOpen(true);
+    }
   };
 
   const handleNavAndClose = (path: string) => {
       navigate(path);
-      handleMenuClose();
+      handleMenuToggle();
   }
 
   return (
     <div className="info-page-container">
-      {/* --- UPDATED MOBILE MENU OVERLAY --- */}
-      {isMenuOpen && (
-        <div className={`info-page-mobile-menu ${isMenuClosing ? 'closing' : ''}`}>
-          <Button variant="ghost" size="icon" className="menu-close-button" onClick={handleMenuClose}>
-            <X className="h-8 w-8 text-white" />
-          </Button>
-          <nav className="menu-nav">
-            <button className="menu-button" onClick={() => handleNavAndClose('/info')}>Home</button>
-            <button className="menu-button" onClick={() => handleNavAndClose('/program')}>Program</button>
-            <button className="menu-button" onClick={() => handleNavAndClose('/speakers')}>Speakers</button>
-          </nav>
-        </div>
-      )}
-
       {/* Header */}
       <header className="info-page-header">
         <div className="logo-placeholder">
@@ -50,10 +37,26 @@ const InfoPage = () => {
             <text x="10" y="20" fontFamily="Arial, sans-serif" fontSize="16" fill="white">Your Logo</text>
           </svg>
         </div>
-        <Button variant="ghost" size="icon" onClick={handleMenuOpen}>
-          <Menu className="text-white" />
+        {/* This single button now handles both opening and closing */}
+        <Button variant="ghost" size="icon" onClick={handleMenuToggle} className="menu-toggle-button">
+          <div className={`menu-icon-wrapper ${isMenuOpen ? 'open' : ''}`}>
+            <Menu className="menu-hamburger-icon" />
+            <X className="menu-close-icon" />
+          </div>
         </Button>
       </header>
+
+      {/* Mobile Menu Overlay */}
+      {isMenuOpen && (
+        <div className={`info-page-mobile-menu ${isMenuClosing ? 'closing' : ''}`}>
+          {/* The close button has been removed from here */}
+          <nav className="menu-nav">
+            <button className="menu-button" onClick={() => handleNavAndClose('/info')}>Home</button>
+            <button className="menu-button" onClick={() => handleNavAndClose('/program')}>Program</button>
+            <button className="menu-button" onClick={() => handleNavAndClose('/speakers')}>Speakers</button>
+          </nav>
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="info-page-main-content">
@@ -64,13 +67,14 @@ const InfoPage = () => {
             className="hero-image"
           />
           <div className="hero-overlay">
-            <h1 className="hero-title">YOUR CONFERENCE 2025</h1>
+            <h1 className="hero-title">TESTING UNITED CONFERENCE 2025</h1>
           </div>
         </div>
         <div className="info-about-section">
-          <h2 className="about-title">About Your Conference</h2>
+          <h2 className="about-title">About Testing United</h2>
           <p className="about-text">
-            This is where the main content about your conference will go. You can describe the theme, the purpose, and what attendees can expect. This text is a placeholder.
+            Testing United is a premier conference, organized by Krone Consulting, designed for professionals across all levels of the software testing field—from testers and test managers to consultants and IT staff who collaborate with testing teams daily. This event brings together experts from the wider Central European region to share insights and strategies.
+            This year’s theme, “Getting value from testing beyond 2025: Don’t lose money with AI, Automation and New skills while transforming QA in your organization,” will explore the critical changes reshaping the testing community. Renowned speakers will guide attendees through the latest trends, ensuring organizations stay competitive and efficient.
           </p>
         </div>
       </div>

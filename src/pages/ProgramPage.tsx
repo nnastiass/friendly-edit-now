@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Home, User, Plus, Info, Menu, Users, Clock, X } from 'lucide-react';
+import { Home, User, Plus, Info, Menu, Users, Clock, X } from 'lucide-react'; // Added Menu and X
 import './ProgramPage.css';
 
 // Placeholder data that matches your 'Schedule' database table
@@ -35,18 +35,28 @@ const ProgramPage = () => {
     }, 400); // This should match the animation duration in the CSS
   };
 
+  const handleMenuToggle = () => {
+      if (isMenuOpen) {
+          handleMenuClose();
+      } else {
+          setIsMenuOpen(true);
+      }
+  }
+
+  const handleNavAndClose = (path: string) => {
+      navigate(path);
+      handleMenuClose();
+  }
+
   return (
     <div className="program-page-container">
       {/* --- UPDATED MOBILE MENU OVERLAY --- */}
       {isMenuOpen && (
         <div className={`program-page-mobile-menu ${isMenuClosing ? 'closing' : ''}`}>
-          <Button variant="ghost" size="icon" className="menu-close-button" onClick={handleMenuClose}>
-            <X className="h-8 w-8 text-white" />
-          </Button>
           <nav className="menu-nav">
-            <button className="menu-button" onClick={() => { navigate('/info'); handleMenuClose(); }}>Home</button>
-            <button className="menu-button" onClick={() => { navigate('/program'); handleMenuClose(); }}>Program</button>
-            <button className="menu-button" onClick={() => { navigate('/speakers'); handleMenuClose(); }}>Speakers</button>
+            <button className="menu-button" onClick={() => handleNavAndClose('/info')}>Home</button>
+            <button className="menu-button" onClick={() => handleNavAndClose('/program')}>Program</button>
+            <button className="menu-button" onClick={() => handleNavAndClose('/speakers')}>Speakers</button>
           </nav>
         </div>
       )}
@@ -58,8 +68,11 @@ const ProgramPage = () => {
             <text x="10" y="20" fontFamily="Arial, sans-serif" fontSize="16" fill="white">Your Logo</text>
           </svg>
         </div>
-        <Button variant="ghost" size="icon" onClick={() => setIsMenuOpen(true)}>
-          <Menu className="text-white" />
+        <Button variant="ghost" size="icon" onClick={handleMenuToggle} className="menu-toggle-button">
+            <div className={`menu-icon-wrapper ${isMenuOpen ? 'open' : ''}`}>
+                <Menu className="menu-hamburger-icon" />
+                <X className="menu-close-icon" />
+            </div>
         </Button>
       </header>
 

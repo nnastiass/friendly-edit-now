@@ -6,10 +6,10 @@ import './SpeakersPage.css';
 
 // Placeholder data that matches your 'Speakers' database table
 const speakersData = [
-  { id: 1, name: 'Tariq King', title: 'CEO and Head of Test IO', country: 'Germany', photo_url: 'https://placehold.co/200x200/808080/FFFFFF?text=Photo', bio: 'Tariq King is a recognized thought-leader in software quality engineering...' },
-  { id: 2, name: 'Jane Doe', title: 'Lead QA Engineer', country: 'USA', photo_url: 'https://placehold.co/200x200/808080/FFFFFF?text=Photo', bio: 'Jane Doe is an expert in test automation and agile methodologies...' },
-  { id: 3, name: 'John Smith', title: 'Security Specialist', country: 'Canada', photo_url: 'https://placehold.co/200x200/808080/FFFFFF?text=Photo', bio: 'John Smith focuses on penetration testing and application security...' },
-  { id: 4, name: 'Emily Jones', title: 'Performance Engineer', country: 'UK', photo_url: 'https://placehold.co/200x200/808080/FFFFFF?text=Photo', bio: 'Emily Jones specializes in load testing and performance optimization...' },
+  { id: 1, name: 'Tariq King', title: 'CEO and Head of Test IO', country: 'Germany', photo_url: 'https://placehold.co/200x200/808080/FFFFFF?text=', bio: 'Tariq King is a recognized thought-leader in software quality engineering...' },
+  { id: 2, name: 'Jane Doe', title: 'Lead QA Engineer', country: 'USA', photo_url: 'https://placehold.co/200x200/808080/FFFFFF?text=', bio: 'Jane Doe is an expert in test automation and agile methodologies...' },
+  { id: 3, name: 'John Smith', title: 'Security Specialist', country: 'Canada', photo_url: 'https://placehold.co/200x200/808080/FFFFFF?text=', bio: 'John Smith focuses on penetration testing and application security...' },
+  { id: 4, name: 'Emily Jones', title: 'Performance Engineer', country: 'UK', photo_url: 'https://placehold.co/200x200/808080/FFFFFF?text=', bio: 'Emily Jones specializes in load testing and performance optimization...' },
 ];
 
 // This is the new component for the speaker detail view
@@ -27,11 +27,24 @@ const SpeakerDetailView = ({ speaker, onBack }) => (
 const SpeakersPage = () => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [selectedSpeaker, setSelectedSpeaker] = useState(null); // State to track the selected speaker
+  const [isMenuClosing, setIsMenuClosing] = useState(false);
+  const [selectedSpeaker, setSelectedSpeaker] = useState(null);
 
   const handleMenuClose = () => {
-    setIsMenuOpen(false);
+    setIsMenuClosing(true);
+    setTimeout(() => {
+      setIsMenuOpen(false);
+      setIsMenuClosing(false);
+    }, 400);
   };
+
+  const handleMenuToggle = () => {
+      if (isMenuOpen) {
+          handleMenuClose();
+      } else {
+          setIsMenuOpen(true);
+      }
+  }
 
   const handleNavAndClose = (path: string) => {
     navigate(path);
@@ -42,7 +55,7 @@ const SpeakersPage = () => {
       if (selectedSpeaker) {
           setSelectedSpeaker(null);
       } else {
-          navigate(-1); // Or navigate('/info')
+          navigate(-1);
       }
   }
 
@@ -50,10 +63,7 @@ const SpeakersPage = () => {
     <div className="speakers-page-container">
       {/* Mobile Menu Overlay */}
       {isMenuOpen && (
-        <div className="speakers-page-mobile-menu">
-          <Button variant="ghost" size="icon" className="menu-close-button" onClick={handleMenuClose}>
-            <X className="h-8 w-8 text-white" />
-          </Button>
+        <div className={`speakers-page-mobile-menu ${isMenuClosing ? 'closing' : ''}`}>
           <nav className="menu-nav">
             <button className="menu-button" onClick={() => handleNavAndClose('/info')}>Home</button>
             <button className="menu-button" onClick={() => handleNavAndClose('/program')}>Program</button>
@@ -64,7 +74,6 @@ const SpeakersPage = () => {
 
       {/* Header */}
       <header className="speakers-page-header">
-        {/* The back button now handles both views */}
         <Button onClick={handleBack} variant="ghost" size="icon" className="speakers-page-back-button">
           <ArrowLeft />
         </Button>
@@ -73,8 +82,11 @@ const SpeakersPage = () => {
             <text x="10" y="20" fontFamily="Arial, sans-serif" fontSize="16" fill="white">Your Logo</text>
           </svg>
         </div>
-        <Button variant="ghost" size="icon" onClick={() => setIsMenuOpen(true)}>
-          <Menu className="text-white" />
+        <Button variant="ghost" size="icon" onClick={handleMenuToggle} className="menu-toggle-button">
+            <div className={`menu-icon-wrapper ${isMenuOpen ? 'open' : ''}`}>
+                <Menu className="menu-hamburger-icon" />
+                <X className="menu-close-icon" />
+            </div>
         </Button>
       </header>
 
@@ -90,7 +102,7 @@ const SpeakersPage = () => {
                 <button
                   key={speaker.id}
                   className="speaker-card"
-                  onClick={() => setSelectedSpeaker(speaker)} // Set the selected speaker on click
+                  onClick={() => setSelectedSpeaker(speaker)}
                 >
                   <img src={speaker.photo_url} alt={speaker.name} className="speaker-photo" />
                   <div className="speaker-info">

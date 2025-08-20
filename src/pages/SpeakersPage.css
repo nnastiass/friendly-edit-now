@@ -13,12 +13,15 @@
 
 .speakers-page-header {
   padding: 1rem 1.5rem;
-  background-color: #3B82F6;
+  background-color: #444EC9;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-shrink: 0;
   position: relative;
+  height: 5rem;
+  box-sizing: border-box;
+  z-index: 51;
 }
 
 .speakers-page-back-button {
@@ -32,11 +35,11 @@
 /* --- MOBILE MENU STYLES --- */
 .speakers-page-mobile-menu {
   position: fixed;
-  top: 0;
+  top: 5rem; /* Position it to start below the header */
   left: 0;
   width: 100%;
-  height: 33.33vh;
-  background-color: #3B82F6;
+  height: 23.33vh; /* Changed to 1/3 of the screen height */
+  background-color: #444EC9; /* Same blue as header */
   z-index: 50;
   display: flex;
   flex-direction: column;
@@ -44,19 +47,51 @@
   justify-content: center;
   padding: 2rem;
   box-sizing: border-box;
-  border-bottom-left-radius: 1.5rem;
-  border-bottom-right-radius: 1.5rem;
+  border-bottom-left-radius: 0.7rem; /* Optional: adds a nice curve */
+  border-bottom-right-radius: 0.7rem;
+  /* This applies the opening animation */
   animation: slideDownMenu 0.4s ease-out forwards;
 }
 .speakers-page-mobile-menu.closing {
     animation: slideUpMenu 0.4s ease-out forwards;
 }
-.menu-close-button {
-  position: absolute !important;
-  top: 1rem !important;
-  right: 1.5rem !important;
+
+.menu-toggle-button {
   color: white !important;
 }
+
+.menu-icon-wrapper {
+  position: relative;
+  width: 28px;
+  height: 28px;
+}
+
+.menu-hamburger-icon,
+.menu-close-icon {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.4s ease, opacity 0.4s ease;
+}
+
+.menu-icon-wrapper.open .menu-hamburger-icon {
+  transform: rotate(90deg);
+  opacity: 0;
+}
+
+.menu-close-icon {
+  transform: rotate(-90deg);
+  opacity: 0;
+}
+
+.menu-icon-wrapper.open .menu-close-icon {
+  transform: rotate(0deg);
+  opacity: 1;
+}
+
+
 .menu-nav {
   display: flex;
   flex-direction: column;
@@ -80,7 +115,7 @@
 }
 
 .speakers-title {
-  font-size: 1.75rem;
+  font-size: 1.6rem;
   font-weight: 700;
   margin-bottom: 2rem;
 }
@@ -93,7 +128,6 @@
 
 .speaker-card {
   display: flex;
-  align-items: center;
   gap: 1rem;
   background: none;
   border: none;
@@ -103,8 +137,8 @@
 }
 
 .speaker-photo {
-  width: 6rem;
-  height: 6rem;
+  width: 7rem;
+  height: 7rem;
   object-fit: cover;
   flex-shrink: 0;
 }
@@ -117,10 +151,9 @@
 }
 
 .speaker-name-card {
-  background-color: #3B82F6;
+  background-color: #444EC9;
   color: white;
-  padding: 0.75rem;
-  border-radius: 0.5rem;
+  padding: 0.4rem;
   text-align: left;
   font-weight: 600;
 }
@@ -128,8 +161,8 @@
 .speaker-country-card {
   background-color: #FBBF24; /* Yellow */
   color: #111827;
-  padding: 0.75rem;
-  border-radius: 0.5rem;
+  padding-left: 0.4rem;
+
   text-align: left;
   font-weight: 600;
 }
@@ -141,7 +174,7 @@
 }
 
 .speaker-detail-title {
-  font-size: 1.75rem;
+  font-size: 1.6rem;
   font-weight: 700;
   margin-bottom: 2rem;
 }
@@ -158,7 +191,7 @@
 .speaker-detail-name {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #3B82F6;
+  color: #444EC9;
 }
 
 .speaker-detail-job-title {
@@ -179,7 +212,7 @@
 .speakers-page-bottom-nav {
   height: 5rem;
   flex-shrink: 0;
-  background-color: #3B82F6;
+  background-color: #444EC9;
 }
 .speakers-page-nav-container {
   display: flex;
