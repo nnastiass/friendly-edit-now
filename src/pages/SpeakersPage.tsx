@@ -13,9 +13,18 @@ const speakersData = [
 ];
 
 // This is the new component for the speaker detail view
+// This is the new component for the speaker detail view
 const SpeakerDetailView = ({ speaker, onBack }) => (
   <div className="speaker-detail-view">
-    <h1 className="speaker-detail-title">About the Speaker</h1>
+
+    {/* ADD THIS WRAPPER FOR THE TITLE AND NEW BUTTON */}
+    <div className="speaker-detail-header">
+<Button onClick={onBack} variant="ghost" size="icon" className="speaker-detail-back-button">
+    <ArrowLeft strokeWidth={3} size={36} />
+</Button>
+      <h1 className="speaker-detail-title">About the Speaker</h1>
+    </div>
+
     <img src={speaker.photo_url} alt={speaker.name} className="speaker-detail-photo" />
     <h2 className="speaker-detail-name">{speaker.name}</h2>
     <p className="speaker-detail-job-title">{speaker.title}</p>
@@ -74,20 +83,18 @@ const SpeakersPage = () => {
 
       {/* Header */}
       <header className="speakers-page-header">
-        <Button onClick={handleBack} variant="ghost" size="icon" className="speakers-page-back-button">
-          <ArrowLeft />
-        </Button>
+
         <div className="logo-placeholder">
           <svg width="150" height="30" viewBox="0 0 150 30" fill="none" xmlns="http://www.w3.org/2000/svg">
             <text x="10" y="20" fontFamily="Arial, sans-serif" fontSize="16" fill="white">Your Logo</text>
           </svg>
         </div>
-        <Button variant="ghost" size="icon" onClick={handleMenuToggle} className="menu-toggle-button">
-            <div className={`menu-icon-wrapper ${isMenuOpen ? 'open' : ''}`}>
-                <Menu className="menu-hamburger-icon" />
-                <X className="menu-close-icon" />
-            </div>
-        </Button>
+<Button variant="ghost" size="icon" onClick={handleMenuToggle} className="menu-toggle-button">
+    <div className={`menu-icon-wrapper ${isMenuOpen ? 'open' : ''}`}>
+        <Menu className="menu-hamburger-icon" strokeWidth={3} />
+        <X className="menu-close-icon" strokeWidth={3} />
+    </div>
+</Button>
       </header>
 
       {/* Main Content */}

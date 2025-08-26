@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
-import { apiClient } from '@/lib/api-client'; // Import the centralized API client
+import { apiClient } from '@/lib/api-client';
 import { toast } from 'sonner';
 import { Home, User, Settings, Plus, Edit, ArrowLeft, UserPlus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -29,28 +29,34 @@ interface ProfileData {
   streak: number | null;
 }
 
-// UPDATED INTERFACE to match API's flat response structure for friends
 interface Friend {
-  id: string; // This is the friendship ID from your API
-  friend_id: string; // The ID of the friend
-  username: string | null; // Directly from API join
-  full_name: string | null; // Directly from API join
-  avatar_url: string | null; // Directly from API join
-  streak: number | null; // Directly from API join
+  id: string;
+  friend_id: string;
+  username: string | null;
+  full_name: string | null;
+  avatar_url: string | null;
+  streak: number | null;
 }
 
 const Profile = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<ProfileData | null>(null);
-  const [friends, setFriends] = useState<Friend[]>([]); // Use the flattened Friend interface
+  const [friends, setFriends] = useState<Friend[]>([]);
   const [friendCount, setFriendCount] = useState(0);
   const [view, setView] = useState<'profile' | 'edit' | 'settings'>('profile');
   const [loading, setLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [editForm, setEditForm] = useState({
     full_name: '',
     username: '',
   });
+
+  // --- STATE FOR EMAIL CHANGE ---
+  const [newEmail, setNewEmail] = useState('');
+  const [currentPassword, setCurrentPassword] = useState(''); // <-- ADDED
+  const [isChangingEmail, setIsChangingEmail] = useState(false);
+
 
   useEffect(() => {
     if (user) {
@@ -60,12 +66,8 @@ const Profile = () => {
   }, [user]);
 
   const fetchProfile = async () => {
-    if (!user || !user.id) {
-      console.warn("Profile: User or user ID not available for fetching profile.");
-      return;
-    }
+    if (!user || !user.id) return;
     try {
-      // Use apiClient to fetch profile data
       const data: ProfileData = await apiClient.getProfile(user.id);
       setProfile(data);
       if (data) {
@@ -81,12 +83,8 @@ const Profile = () => {
   };
 
   const fetchFriends = async () => {
-    if (!user || !user.id) {
-      console.warn("Profile: User or user ID not available for fetching friends.");
-      return;
-    }
+    if (!user || !user.id) return;
     try {
-      // Use apiClient to fetch friends
       const friendsData: Friend[] = await apiClient.getFriends(user.id);
       setFriends(friendsData);
       setFriendCount(friendsData.length);
@@ -96,21 +94,16 @@ const Profile = () => {
   };
 
   const handleUpdateProfile = async () => {
-    if (!user || !user.id) {
-      console.warn("Profile: User or user ID not available for updating profile.");
-      return;
-    }
+    if (!user || !user.id) return;
     setLoading(true);
     try {
-      // Use apiClient to update profile
       await apiClient.updateProfile(user.id, {
         full_name: editForm.full_name,
         username: editForm.username
       });
-
       toast.success('Profile updated!');
       setView('profile');
-      fetchProfile(); // Re-fetch profile to update UI
+      fetchProfile();
     } catch (error) {
       console.error('Profile: Error updating profile:', error);
       toast.error('Failed to update profile');
@@ -120,23 +113,75 @@ const Profile = () => {
   };
 
   const handleSignOut = async () => {
-    await signOut(); // AuthContext handles clearing user state and localStorage
+    await signOut();
     navigate('/auth');
     toast.success('Signed out successfully');
   };
+
+  const handleDeleteAccount = async () => {
+    // Switched to a custom modal/toast confirmation in a real app
+    const isConfirmed = window.confirm(
+      'Are you absolutely sure you want to delete your account? This action is permanent and cannot be undone.'
+    );
+
+    if (!isConfirmed || !user || !user.id) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      await apiClient.deleteProfile(user.id);
+
+      toast.success('Your account has been successfully deleted.');
+      await signOut();
+      navigate('/auth');
+
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      toast.error('Could not delete your account. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // --- UPDATED FUNCTION TO HANDLE EMAIL CHANGE ---
+  const handleChangeEmail = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!newEmail || !currentPassword || !user) {
+        toast.error("Please fill in all fields.");
+        return;
+      }
+
+      setIsChangingEmail(true);
+      try {
+          // Pass the current password to the API client
+          await apiClient.requestEmailChange(user.id, newEmail, currentPassword);
+
+          toast.success('Your email has been successfully updated.');
+          setNewEmail('');
+          setCurrentPassword('');
+          // Optionally, you might want to refresh the user context or log them out
+          // For now, we just clear the fields.
+
+      } catch (error: any) {
+          console.error('Error changing email:', error);
+          toast.error(error.message || 'Failed to change email.');
+      } finally {
+          setIsChangingEmail(false);
+      }
+  };
+
 
   const getInitials = (name: string | null) => {
     if (!name) return user?.email?.charAt(0).toUpperCase() || 'U';
     return name.split(' ').map(n => n.charAt(0)).join('').toUpperCase();
   };
 
-  if (!user) return null; // Or show a loading spinner/redirect
+  if (!user) return null;
 
   return (
     <div className={`profile-container ${view !== 'profile' ? 'edit-mode' : ''}`}>
-      {/* Main Content */}
       <div className="profile-main-content">
-        {/* Top section with gradient */}
         <div className="profile-header-gradient">
           {view === 'profile' ? (
             <>
@@ -176,7 +221,6 @@ const Profile = () => {
           )}
         </div>
 
-        {/* Conditional Rendering for Main Content Area */}
         {view === 'edit' && (
           <div className="profile-edit-section">
             <div className="edit-form-group">
@@ -205,17 +249,62 @@ const Profile = () => {
           </div>
         )}
 
+        {/* --- UPDATED SETTINGS VIEW --- */}
         {view === 'settings' && (
-            <div className="profile-edit-section">
+            <div className="profile-settings-section">
+                {/* --- EMAIL CHANGE FORM --- */}
+                <div className="settings-card">
+                    <h3 className="settings-card-title">Change Email Address</h3>
+                    <p className="settings-card-description">
+                        Your current email is: <strong>{user.email}</strong>. Enter your new email and current password to make the change.
+                    </p>
+                    <form onSubmit={handleChangeEmail} className="settings-form">
+                        <Input
+                            type="email"
+                            value={newEmail}
+                            onChange={(e) => setNewEmail(e.target.value)}
+                            placeholder="Enter new email address"
+                            required
+                            className="settings-input"
+                        />
+                        {/* --- ADDED PASSWORD INPUT --- */}
+                        <Input
+                            type="password"
+                            value={currentPassword}
+                            onChange={(e) => setCurrentPassword(e.target.value)}
+                            placeholder="Enter current password"
+                            required
+                            className="settings-input"
+                        />
+                        <Button type="submit" disabled={isChangingEmail} className="settings-button">
+                            {isChangingEmail ? 'Saving...' : 'Save New Email'}
+                        </Button>
+                    </form>
+                </div>
+
                  <Button onClick={handleSignOut} className="profile-signout-button">
                     Sign Out
                 </Button>
+
+                <div className="profile-danger-zone">
+                    <h3 className="danger-zone-title">Danger Zone</h3>
+                    <p className="danger-zone-description">
+                        Deleting your account is a permanent action and cannot be undone. All of your data will be removed forever.
+                    </p>
+                    <Button
+                        variant="destructive"
+                        onClick={handleDeleteAccount}
+                        disabled={isDeleting}
+                        className="profile-delete-button"
+                    >
+                        {isDeleting ? 'Deleting Account...' : 'Delete My Account'}
+                    </Button>
+                </div>
             </div>
         )}
 
         {view === 'profile' && (
           <>
-            {/* Friends and Add Friends Section */}
             <div className="profile-actions-section">
               <button className="profile-friends-count" onClick={() => navigate('/friends')}>
                 <span className="count-number">{friendCount}</span>
@@ -229,30 +318,28 @@ const Profile = () => {
               </Button>
             </div>
 
-            {/* Streak Section */}
             <div className="profile-streak-section">
               <span className="streak-number">{profile?.streak || 0}</span>
               <p className="streak-label">Day Streak</p>
               <div className="streak-line"></div>
             </div>
 
-            {/* Friends List Section */}
             <div className="friends-list-section">
               <h2 className="friends-list-title">Check how your friends are doing!</h2>
               <div className="friends-list-container-profile">
                 {friends.slice(0, 4).map((friend) => (
                   <div key={friend.id} className="friend-item">
                     <Avatar className="friend-avatar">
-                      <AvatarImage src={friend.friend_profile?.avatar_url || ''} />
+                      <AvatarImage src={friend.avatar_url || ''} />
                       <AvatarFallback
                         className="friend-avatar-fallback"
-                        style={{ backgroundColor: generatePastelColor(friend.friend_profile?.id || '') }}
+                        style={{ backgroundColor: generatePastelColor(friend.friend_id) }}
                       >
-                        {getInitials(friend.friend_profile?.full_name)}
+                        {getInitials(friend.full_name)}
                       </AvatarFallback>
                     </Avatar>
-                    <p className="friend-name">@{friend.friend_profile?.full_name || '...'}</p>
-                    <p className="friend-streak">{friend.friend_profile?.streak || 0}</p>
+                    <p className="friend-name">@{friend.full_name || '...'}</p>
+                    <p className="friend-streak">{friend.streak || 0}</p>
                   </div>
                 ))}
               </div>
@@ -261,7 +348,6 @@ const Profile = () => {
         )}
       </div>
 
-      {/* Bottom Navigation */}
       <div className="profile-bottom-nav">
         <div className="profile-nav-container">
           <button className="profile-nav-button profile-nav-button-inactive" onClick={() => { /* TODO */ }}>

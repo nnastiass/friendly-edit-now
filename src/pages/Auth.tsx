@@ -12,8 +12,9 @@ const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
+  const [agreedToTerms, setAgreedToTerms] = useState(false); // 1. New state for the checkbox
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp, user } = useAuth(); // useAuth now handles API calls internally
+  const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -30,7 +31,7 @@ const Auth = () => {
       if (isLogin) {
         const { error } = await signIn(email, password);
         if (error) {
-          if (error.message.includes('Invalid credentials')) { // Match your API's error message
+          if (error.message.includes('Invalid credentials')) {
             toast.error('Invalid email or password');
           } else {
             toast.error(error.message);
@@ -40,16 +41,17 @@ const Auth = () => {
           navigate('/');
         }
       } else {
-        const { error } = await signUp(email, password, username);
+        // 2. Pass the 'agreedToTerms' state to the signUp function
+        const { error } = await signUp(email, password, username, agreedToTerms);
         if (error) {
-          if (error.message.includes('A user with this email or username already exists')) { // Match your API's error message
+          if (error.message.includes('A user with this email or username already exists')) {
             toast.error('An account with this email or username already exists');
           } else {
             toast.error(error.message);
           }
         } else {
-          toast.success('Account created successfully! You can now sign in.'); // Removed email verification message
-          setIsLogin(true); // Automatically switch to login after successful signup
+          toast.success('Account created! Please check your email to verify your account.');
+          setIsLogin(true);
         }
       }
     } catch (error) {
@@ -59,6 +61,9 @@ const Auth = () => {
       setLoading(false);
     }
   };
+
+  // 3. Determine if the signup button should be disabled
+  const isSignUpDisabled = loading || (!isLogin && !agreedToTerms);
 
   return (
     <div
@@ -119,9 +124,29 @@ const Auth = () => {
               />
             </div>
 
+            {/* 4. Add the checkbox and link to the form, only shows on signup */}
+            {!isLogin && (
+                <div className="auth-field-terms">
+                    <input
+                        type="checkbox"
+                        id="terms"
+                        checked={agreedToTerms}
+                        onChange={(e) => setAgreedToTerms(e.target.checked)}
+                        className="auth-checkbox"
+                    />
+                    <Label htmlFor="terms" className="auth-label-terms">
+                        I agree to the{' '}
+                        <a href="/Terms-and-Conditions.pdf" target="_blank" rel="noopener noreferrer" className="auth-link">
+                            Terms and Conditions
+                        </a>
+                    </Label>
+                </div>
+            )}
+
+
             <Button
               type="submit"
-              disabled={loading}
+              disabled={isLogin ? loading : isSignUpDisabled}
               className="auth-submit-button"
             >
               {loading ? 'Loading...' : (isLogin ? 'Sign In' : 'Create Account')}

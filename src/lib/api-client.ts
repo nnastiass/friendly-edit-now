@@ -4,7 +4,7 @@
 // This should be your development machine's IP address and the port your Docker API exposes
 // For example: 'http://192.168.0.138:3000' or 'http://localhost:3000' if running on web browser dev server
 // Remember to change this when building for production!
-const API_BASE_URL = 'http://192.168.1.8:3000';
+const API_BASE_URL = 'http://192.168.0.102:3000';
 
 // A generic helper function for making API requests
 async function apiFetch<T>(
@@ -49,6 +49,15 @@ export const apiClient = {
     apiFetch<any>(`/api/profiles/${userId}`, {
       method: 'PUT',
       body: JSON.stringify(data),
+    }),
+  deleteProfile: (userId: string) =>
+    apiFetch<void>(`/api/profiles/${userId}`, {
+      method: 'DELETE',
+    }),
+  requestEmailChange: (userId: string, newEmail: string, currentPassword?: string) =>
+    apiFetch<any>(`/api/profiles/${userId}/change-email`, {
+      method: 'POST',
+      body: JSON.stringify({ new_email: newEmail, current_password: currentPassword }),
     }),
 
   // Authentication
