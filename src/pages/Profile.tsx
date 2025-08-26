@@ -264,7 +264,7 @@ const Profile = () => {
       {/* Bottom Navigation */}
       <div className="profile-bottom-nav">
         <div className="profile-nav-container">
-          <button className="profile-nav-button profile-nav-button-inactive" onClick={() => { /* TODO */ }}>
+          <button className="profile-nav-button profile-nav-button-inactive" onClick={() => navigate('/feed')}>
             <Home className="profile-nav-icon" />
           </button>
           <button className="profile-nav-button profile-nav-button-inactive" onClick={() => navigate('/')}>

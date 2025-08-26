@@ -41,6 +41,34 @@ async function apiFetch<T>(
   return response.json();
 }
 
+// Helper function for file uploads
+async function uploadFile<T>(
+  endpoint: string,
+  formData: FormData
+): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    method: 'POST',
+    body: formData,
+    // Don't set Content-Type for FormData, let the browser set it with boundary
+    headers: {
+      // Add Authorization header here if your API requires it (e.g., Bearer Token)
+      // 'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+    },
+  });
+
+  if (!response.ok) {
+    let errorData: any = {};
+    try {
+      errorData = await response.json();
+    } catch (e) {
+      errorData.message = await response.text();
+    }
+    throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+  }
+
+  return response.json();
+}
+
 // Define specific API client methods
 export const apiClient = {
   // Profiles
@@ -85,4 +113,23 @@ export const apiClient = {
 
   // Leaderboard
   getLeaderboard: (userId: string) => apiFetch<any[]>(`/api/leaderboard/${userId}`),
+
+  // Media Upload & Feed
+  uploadMedia: (userId: string, file: File, challengeTitle: string) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('userId', userId);
+    formData.append('challengeTitle', challengeTitle);
+    formData.append('mediaType', file.type.startsWith('image/') ? 'image' : 'video');
+    
+    return uploadFile<any>('/api/media/upload', formData);
+  },
+  
+  getFeed: (userId: string) => apiFetch<any[]>(`/api/feed/${userId}`),
+  
+  getUserPosts: (userId: string) => apiFetch<any[]>(`/api/posts/user/${userId}`),
+  
+  deletePost: (postId: string) => apiFetch<void>(`/api/posts/${postId}`, {
+    method: 'DELETE',
+  }),
 };

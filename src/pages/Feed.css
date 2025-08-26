@@ -1,0 +1,192 @@
+/* Feed Page Styles (harmonized with Index/Profile) */
+.feed-container {
+  height: 100vh;
+  background: black;
+  background-image: radial-gradient(ellipse 50% 25% at 50% 25%, rgba(235, 156, 154, 0.8), transparent) !important;
+  background-repeat: no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.feed-mobile-frame {
+  width: 100%;
+  max-width: 26rem;
+  height: 100%;
+  margin: 0 auto;
+  color: white;
+  display: flex;
+  flex-direction: column;
+}
+
+.feed-layout {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  justify-content: space-between;
+}
+
+/* Header */
+.feed-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem;
+  background: transparent;
+}
+
+.feed-back-button {
+  color: white;
+  background: transparent;
+  border: none;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.feed-back-button:hover { background: #333; }
+
+.feed-title {
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+  margin: 0;
+}
+
+.feed-header-spacer {
+  width: 40px;
+}
+
+/* Content */
+.feed-content { flex: 1; overflow-y: auto; padding: 1.25rem; }
+
+.feed-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+}
+
+.feed-empty-text { color: white; font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; }
+
+.feed-empty-subtext { color: #d1d5db; font-size: 0.95rem; }
+
+/* Posts */
+.feed-posts {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.feed-post { background: #0f0f0f; border-radius: 12px; overflow: hidden; border: 1px solid #333; }
+
+.feed-post-header { padding: 0.9rem; border-bottom: 1px solid #333; }
+
+.feed-post-username { color: white; font-weight: 700; font-size: 1rem; display: block; margin-bottom: 0.25rem; }
+
+.feed-post-challenge { color: #d1d5db; font-size: 0.9rem; }
+
+.feed-post-media {
+  width: 100%;
+}
+
+.feed-post-image,
+.feed-post-video {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  display: block;
+}
+
+.feed-post-footer { padding: 0.75rem 0.9rem; border-top: 1px solid #333; }
+
+.feed-post-date { color: #a1a1aa; font-size: 0.8rem; }
+
+/* Loading */
+.feed-loading { min-height: 100vh; background: black; display: flex; justify-content: center; align-items: center; }
+
+.feed-loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Bottom Navigation (match Index/Profile design) */
+.feed-bottom-nav {
+  height: 10vh;
+  min-height: 5rem;
+  flex-shrink: 0;
+  background-color: black;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.feed-nav-container {
+  display: flex;
+  justify-content: space-evenly;
+  width: 100%;
+  align-items: center;
+}
+
+.feed-nav-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 1.3rem;
+}
+
+.feed-nav-button-active {
+  color: #FF0046;
+}
+
+.feed-nav-button-inactive {
+  color: white;
+  transition: color 0.2s ease;
+}
+
+.feed-nav-button-inactive:hover {
+  color: #a1a1aa;
+}
+
+.feed-nav-icon {
+  height: 1.8rem;
+  width: 1.8rem;
+  stroke-width: 1.5;
+}
+
+.feed-nav-container > .feed-nav-button:nth-child(2) .feed-nav-icon {
+  height: 2.2rem;
+  width: 2.2rem;
+}
+
+/* Scrollbar */
+.feed-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.feed-content::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+.feed-content::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 3px;
+}
+
+.feed-content::-webkit-scrollbar-thumb:hover {
+  background: #555;
+} 

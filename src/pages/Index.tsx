@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Home, User, Plus } from 'lucide-react';
+import { Home, User, Plus, Upload } from 'lucide-react';
 import DailyChallenge from '@/components/DailyChallenge';
+import MediaUpload from '@/components/MediaUpload';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import './Index.css';
@@ -11,6 +12,8 @@ const Index = () => {
   // but kept here if Index needs to display them or pass them down.
   const [currentStreak, setCurrentStreak] = useState(0);
   const [totalChallenges, setTotalChallenges] = useState(0);
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [currentChallenge, setCurrentChallenge] = useState('');
 
   const [isLoading, setIsLoading] = useState(true);
   const { user, loading: authLoading } = useAuth();
@@ -59,6 +62,13 @@ const Index = () => {
       console.log("Index: User is null, returning null (should redirect).");
     return null;
   }
+
+  const handleUploadComplete = (mediaUrl: string, mediaType: 'image' | 'video') => {
+    console.log('Upload completed:', { mediaUrl, mediaType });
+    // TODO: Navigate to feed or show success message
+    // For now, just close the upload dialog
+  };
+
 console.log("Index: Displaying main content.");
   return (
     <div className="index-container">
@@ -75,16 +85,30 @@ console.log("Index: Displaying main content.");
                 setCurrentStreak(prev => prev + 1);
                 setTotalChallenges(prev => prev + 1);
               }}
+              onChallengeLoaded={(challengeTitle) => {
+                setCurrentChallenge(challengeTitle);
+              }}
             />
+            
+            {/* Pridat dokaz Button */}
+            <div className="mt-6 flex justify-center">
+              <Button
+                onClick={() => setIsUploadOpen(true)}
+                className="bg-pink-500 hover:bg-pink-600 text-white px-8 py-3 rounded-lg flex items-center gap-2"
+              >
+                <Upload className="h-5 w-5" />
+                Pridat dokaz
+              </Button>
+            </div>
           </div>
 
           {/* Bottom Navigation Bar */}
           <div className="index-bottom-nav">
             <div className="index-nav-container">
-              {/* Left Button (Home/Future Page) */}
+              {/* Left Button (Home/Feed Page) */}
               <button
                 className="index-nav-button index-nav-button-inactive"
-                onClick={() => { /* TODO: Add navigation for this button later */ }}
+                onClick={() => navigate('/feed')}
               >
                 <Home className="index-nav-icon" />
               </button>
@@ -105,6 +129,14 @@ console.log("Index: Displaying main content.");
           </div>
         </div>
       </div>
+
+      {/* Media Upload Dialog */}
+      <MediaUpload
+        isOpen={isUploadOpen}
+        onClose={() => setIsUploadOpen(false)}
+        challengeTitle={currentChallenge}
+        onUploadComplete={handleUploadComplete}
+      />
     </div>
   );
 };

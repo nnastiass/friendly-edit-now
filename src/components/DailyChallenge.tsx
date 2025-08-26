@@ -66,9 +66,10 @@ const challenges = [
 
 interface DailyChallengeProps {
   onComplete?: (points: number) => void;
+  onChallengeLoaded?: (challengeTitle: string) => void;
 }
 
-const DailyChallenge: React.FC<DailyChallengeProps> = ({ onComplete }) => {
+const DailyChallenge: React.FC<DailyChallengeProps> = ({ onComplete, onChallengeLoaded }) => {
   const { user } = useAuth();
   const [todaysChallenge, setTodaysChallenge] = useState(challenges[0]);
   const [isCompleted, setIsCompleted] = useState(false);
@@ -94,16 +95,26 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ onComplete }) => {
       const found = challenges.find(c => c.id === Number(storedChallengeId));
       if (found) {
         setTodaysChallenge(found);
+        if (onChallengeLoaded) {
+          onChallengeLoaded(found.title);
+        }
       } else {
         // Fallback if stored ID is invalid, pick a default/random
         const challengeIndex = new Date().getDate() % challenges.length;
-        setTodaysChallenge(challenges[challengeIndex]);
-        localStorage.setItem(`daily-challenge-${today}`, challenges[challengeIndex].id.toString());
+        const selected = challenges[challengeIndex];
+        setTodaysChallenge(selected);
+        if (onChallengeLoaded) {
+          onChallengeLoaded(selected.title);
+        }
+        localStorage.setItem(`daily-challenge-${today}`, selected.id.toString());
       }
     } else {
       const challengeIndex = new Date().getDate() % challenges.length;
       const selected = challenges[challengeIndex];
       setTodaysChallenge(selected);
+      if (onChallengeLoaded) {
+        onChallengeLoaded(selected.title);
+      }
       localStorage.setItem(`daily-challenge-${today}`, selected.id.toString());
     }
 
@@ -133,7 +144,7 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ onComplete }) => {
     const interval = setInterval(updateTimeLeft, 1000); // Update every second
 
     return () => clearInterval(interval); // Cleanup interval on component unmount
-  }, [user, hasLoadedProfile]); // Dependency array: re-run effect if 'user' or 'hasLoadedProfile' changes
+  }, [user, hasLoadedProfile, onChallengeLoaded]); // Dependency array: re-run effect if 'user', 'hasLoadedProfile', or 'onChallengeLoaded' changes
 
   // Fetches the current user's profile data (specifically streak) from the API
   const fetchUserProfile = async () => {
