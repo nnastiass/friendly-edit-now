@@ -1,22 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Home, User, Plus, Info, Menu, Users, Clock, X, ArrowLeft } from 'lucide-react';
+import { toast } from 'sonner';
+import { conferenceApiClient } from '@/lib/conference-api-client'; // Import the new API client
 import './SpeakersPage.css';
 
-// Placeholder data that matches your 'Speakers' database table
-const speakersData = [
-  { id: 1, name: 'Tariq King', title: 'CEO and Head of Test IO', country: 'Germany', photo_url: 'https://placehold.co/200x200/808080/FFFFFF?text=', bio: 'Tariq King is a recognized thought-leader in software quality engineering...' },
-  { id: 2, name: 'Jane Doe', title: 'Lead QA Engineer', country: 'USA', photo_url: 'https://placehold.co/200x200/808080/FFFFFF?text=', bio: 'Jane Doe is an expert in test automation and agile methodologies...' },
-  { id: 3, name: 'John Smith', title: 'Security Specialist', country: 'Canada', photo_url: 'https://placehold.co/200x200/808080/FFFFFF?text=', bio: 'John Smith focuses on penetration testing and application security...' },
-  { id: 4, name: 'Emily Jones', title: 'Performance Engineer', country: 'UK', photo_url: 'https://placehold.co/200x200/808080/FFFFFF?text=', bio: 'Emily Jones specializes in load testing and performance optimization...' },
-];
+// This helper function now correctly handles URL encoding for filenames with spaces
+const getImageUrl = (imageName: string) => {
+    // encodeURIComponent is used to safely encode special characters like spaces
+    const encodedName = encodeURIComponent(imageName);
+    return `/images/speakers/${encodedName}`;
+};
+
+// Interface to match the API response for speakers
+interface Speaker {
+  id: number;
+  name: string;
+  title: string;
+  country: string;
+  photo_url: string; // The database stores the filename, this maps to a URL
+  bio: string;
+  linkedin_url: string;
+  twitter_url: string;
+}
 
 // This is the new component for the speaker detail view
 const SpeakerDetailView = ({ speaker, onBack }) => (
   <div className="speaker-detail-view">
+    <Button onClick={onBack} variant="ghost" size="icon" className="speakers-page-back-button">
+      <ArrowLeft />
+    </Button>
     <h1 className="speaker-detail-title">About the Speaker</h1>
-    <img src={speaker.photo_url} alt={speaker.name} className="speaker-detail-photo" />
+    {/* Use getImageUrl helper to construct the full URL */}
+    <img src={getImageUrl(speaker.photo_url)} alt={speaker.name} className="speaker-detail-photo" />
     <h2 className="speaker-detail-name">{speaker.name}</h2>
     <p className="speaker-detail-job-title">{speaker.title}</p>
     <p className="speaker-detail-bio">{speaker.bio}</p>
@@ -28,7 +45,29 @@ const SpeakersPage = () => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMenuClosing, setIsMenuClosing] = useState(false);
-  const [selectedSpeaker, setSelectedSpeaker] = useState(null);
+  const [selectedSpeaker, setSelectedSpeaker] = useState<Speaker | null>(null);
+  const [speakers, setSpeakers] = useState<Speaker[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // You will likely have a way to get the conference ID, e.g., from a URL parameter or global state
+  const conferenceId = '1'; // Placeholder conference ID
+
+  useEffect(() => {
+    fetchSpeakers(conferenceId);
+  }, [conferenceId]);
+
+  const fetchSpeakers = async (confId: string) => {
+    setLoading(true);
+    try {
+        const data = await conferenceApiClient.getSpeakersByConferenceId(confId);
+        setSpeakers(data);
+    } catch (error) {
+        console.error("Failed to fetch speakers:", error);
+        toast.error("Failed to load speakers.");
+    } finally {
+        setLoading(false);
+    }
+  };
 
   const handleMenuClose = () => {
     setIsMenuClosing(true);
@@ -92,19 +131,21 @@ const SpeakersPage = () => {
 
       {/* Main Content */}
       <div className="speakers-page-main-content">
-        {selectedSpeaker ? (
+        {loading ? (
+            <p className="loading-text">Loading speakers...</p>
+        ) : selectedSpeaker ? (
           <SpeakerDetailView speaker={selectedSpeaker} onBack={() => setSelectedSpeaker(null)} />
         ) : (
           <>
             <h1 className="speakers-title">Workshops</h1>
             <div className="speakers-list">
-              {speakersData.map((speaker) => (
+              {speakers.map((speaker) => (
                 <button
                   key={speaker.id}
                   className="speaker-card"
                   onClick={() => setSelectedSpeaker(speaker)}
                 >
-                  <img src={speaker.photo_url} alt={speaker.name} className="speaker-photo" />
+                  <img src={getImageUrl(speaker.photo_url)} alt={speaker.name} className="speaker-photo" />
                   <div className="speaker-info">
                     <div className="speaker-name-card">{speaker.name}</div>
                     <div className="speaker-country-card">{speaker.country}</div>
