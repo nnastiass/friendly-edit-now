@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/lib/api-client';
 import { toast } from 'sonner';
-import { Home, User, Settings, Plus, Edit, ArrowLeft, UserPlus } from 'lucide-react';
+import { Home, User, Settings, Plus, Edit, ArrowLeft, UserPlus, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import './Profile.css';
 
@@ -145,31 +145,29 @@ const Profile = () => {
   };
 
   // --- UPDATED FUNCTION TO HANDLE EMAIL CHANGE ---
-  const handleChangeEmail = async (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!newEmail || !currentPassword || !user) {
-        toast.error("Please fill in all fields.");
-        return;
-      }
+// In your Profile.tsx file
 
-      setIsChangingEmail(true);
-      try {
-          // Pass the current password to the API client
-          await apiClient.requestEmailChange(user.id, newEmail, currentPassword);
+const handleChangeEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newEmail || !user) return;
 
-          toast.success('Your email has been successfully updated.');
-          setNewEmail('');
-          setCurrentPassword('');
-          // Optionally, you might want to refresh the user context or log them out
-          // For now, we just clear the fields.
+    setIsChangingEmail(true);
+    try {
+        // This function now correctly uses the apiClient
+        const data = await apiClient.requestEmailChange(user.id, newEmail);
 
-      } catch (error: any) {
-          console.error('Error changing email:', error);
-          toast.error(error.message || 'Failed to change email.');
-      } finally {
-          setIsChangingEmail(false);
-      }
-  };
+        // --- THIS IS THE FIX ---
+        // Display the specific message from the API, not a generic one.
+        toast.success(data.message);
+        setNewEmail('');
+
+    } catch (error: any) {
+        console.error('Error changing email:', error);
+        toast.error(error.message);
+    } finally {
+        setIsChangingEmail(false);
+    }
+};
 
 
   const getInitials = (name: string | null) => {
@@ -348,14 +346,26 @@ const Profile = () => {
         )}
       </div>
 
+      {/* Bottom Navigation */}
       <div className="profile-bottom-nav">
         <div className="profile-nav-container">
           <button className="profile-nav-button profile-nav-button-inactive" onClick={() => { /* TODO */ }}>
             <Home className="profile-nav-icon" />
           </button>
+
+          {/* --- NEW INFO BUTTON --- */}
+          <button
+            className="profile-nav-button profile-nav-button-inactive"
+            onClick={() => navigate('/info')}
+          >
+            <Info className="profile-nav-icon" />
+          </button>
+          {/* ----------------------- */}
+
           <button className="profile-nav-button profile-nav-button-inactive" onClick={() => navigate('/')}>
             <Plus className="profile-nav-icon" />
           </button>
+
           <button className="profile-nav-button profile-nav-button-active">
             <User className="profile-nav-icon" />
           </button>

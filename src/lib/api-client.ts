@@ -1,9 +1,6 @@
 // src/lib/api-client.ts
 
 // *** IMPORTANT: REPLACE WITH YOUR ACTUAL API BASE URL ***
-// This should be your development machine's IP address and the port your Docker API exposes
-// For example: 'http://192.168.0.138:3000' or 'http://localhost:3000' if running on web browser dev server
-// Remember to change this when building for production!
 const API_BASE_URL = 'http://192.168.0.102:3000';
 
 // A generic helper function for making API requests
@@ -16,26 +13,21 @@ async function apiFetch<T>(
     headers: {
       'Content-Type': 'application/json',
       ...options?.headers,
-      // Add Authorization header here if your API requires it (e.g., Bearer Token)
-      // 'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
     },
   });
 
   if (!response.ok) {
     let errorData: any = {};
     try {
-      // Try to parse JSON error response
       errorData = await response.json();
     } catch (e) {
-      // If not JSON, use response text or default message
       errorData.message = await response.text();
     }
     throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
   }
 
-  // Handle cases where the API might return no content (e.g., DELETE requests)
   if (response.status === 204) {
-    return {} as T; // Return an empty object for no-content responses
+    return {} as T;
   }
 
   return response.json();
@@ -54,10 +46,13 @@ export const apiClient = {
     apiFetch<void>(`/api/profiles/${userId}`, {
       method: 'DELETE',
     }),
-  requestEmailChange: (userId: string, newEmail: string, currentPassword?: string) =>
+
+  // --- FIX 1: Corrected the requestEmailChange function ---
+  // It now sends the correct JSON body that the backend expects.
+  requestEmailChange: (userId: string, newEmail: string) =>
     apiFetch<any>(`/api/profiles/${userId}/change-email`, {
       method: 'POST',
-      body: JSON.stringify({ new_email: newEmail, current_password: currentPassword }),
+      body: JSON.stringify({ newEmail: newEmail }), // The backend expects a field named "newEmail"
     }),
 
   // Authentication
@@ -66,14 +61,17 @@ export const apiClient = {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     }),
-  signUp: (email: string, password: string, username: string) =>
+
+  // --- FIX 2: Updated the signUp function ---
+  // It now accepts the 'agreedToTerms' boolean and includes it in the request body.
+  signUp: (email: string, password: string, username: string, agreedToTerms: boolean) =>
     apiFetch<any>('/api/auth/signup', {
       method: 'POST',
-      body: JSON.stringify({ email, password, username }),
+      body: JSON.stringify({ email, password, username, agreedToTerms }),
     }),
 
   // Friends & Friend Requests
-  searchUsers: () => apiFetch<any[]>('/api/profiles'), // Assumes /api/profiles returns all users for client-side filtering
+  searchUsers: () => apiFetch<any[]>('/api/profiles'),
   getFriends: (userId: string) => apiFetch<any[]>(`/api/friends/${userId}`),
   deleteFriend: (userId: string, friendId: string) =>
     apiFetch<void>(`/api/friends/${userId}/${friendId}`, {
@@ -81,7 +79,7 @@ export const apiClient = {
     }),
   getFriendRequests: (userId: string) => apiFetch<any[]>(`/api/friend-requests/${userId}`),
   sendFriendRequest: (senderId: string, receiverId: string) =>
-    apiFetch<any>('/api/friend-requests/send', { // Assuming this endpoint exists
+    apiFetch<any>('/api/friend-requests/send', {
       method: 'POST',
       body: JSON.stringify({ sender_id: senderId, receiver_id: receiverId }),
     }),
@@ -90,7 +88,7 @@ export const apiClient = {
       method: 'POST',
       body: JSON.stringify({ requestId, action }),
     }),
-  getSentFriendRequests: (userId: string) => apiFetch<any[]>(`/api/friend-requests/sent/${userId}`), // Assuming this endpoint exists
+  getSentFriendRequests: (userId: string) => apiFetch<any[]>(`/api/friend-requests/sent/${userId}`),
 
   // Leaderboard
   getLeaderboard: (userId: string) => apiFetch<any[]>(`/api/leaderboard/${userId}`),
