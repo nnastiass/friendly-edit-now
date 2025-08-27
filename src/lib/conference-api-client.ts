@@ -4,7 +4,7 @@
 // This should be your development machine's IP address and the port your Docker API exposes.
 // For the new conference API, we're using host port 3001.
 // Example: 'http://192.168.1.8:3001' or 'http://localhost:3001' if running on a local web browser.
-// Remember to change this when building for production!
+// Remember to change this when building for productions!
 const API_BASE_URL = 'http://192.168.5.81:3001';
 
 // A generic helper function for making API requests.
