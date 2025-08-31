@@ -4,17 +4,18 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
-import PrivateRoute from "@/components/PrivateRoute";
+// import PrivateRoute from "@/components/PrivateRoute"; // (optional) not used below
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
-import AddFriends from './pages/AddFriends';
-import FriendsList from './pages/FriendsList';
-import FriendRequests from './pages/FriendRequests';
-import InfoPage from "./pages/InfoPage"; // 1. Import the new page
-import ProgramPage from "./pages/ProgramPage"; // 1. Import the new page
-import SpeakersPage from "./pages/SpeakersPage"; //
+import AddFriends from "./pages/AddFriends";
+import FriendsList from "./pages/FriendsList";
+import FriendRequests from "./pages/FriendRequests";
+import InfoPage from "./pages/InfoPage";        // ✅ keep ONE InfoPage import
+import ProgramPage from "./pages/ProgramPage";
+import SpeakersPage from "./pages/SpeakersPage";
+import ConferenceProtectedRoute from "@/components/auth/ConferenceProtectedRoute"; // ✅
 
 const queryClient = new QueryClient();
 
@@ -32,10 +33,21 @@ const App = () => (
             <Route path="/add-friends" element={<AddFriends />} />
             <Route path="/friends" element={<FriendsList />} />
             <Route path="/friend-requests" element={<FriendRequests />} />
-            {/* 2. Add the new route for the info page */}
-            <Route path="/info" element={<InfoPage />} />
+
+            {/* 🔒 Protect the Info page */}
+            <Route
+              path="/info"
+              element={
+                <ConferenceProtectedRoute>
+                  <InfoPage />
+                </ConferenceProtectedRoute>
+              }
+            />
+
+            {/* Public (or protect these similarly if needed) */}
             <Route path="/program" element={<ProgramPage />} />
             <Route path="/speakers" element={<SpeakersPage />} />
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

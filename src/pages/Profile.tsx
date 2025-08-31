@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/lib/api-client';
 import { toast } from 'sonner';
-import { Home, User, Settings, Plus, Edit, ArrowLeft, UserPlus, Info } from 'lucide-react';
+import { Home, User, Settings, Plus, Edit, ArrowLeft, UserPlus, Info } from 'lucide-react'; // Added Info icon
 import { useNavigate } from 'react-router-dom';
 import './Profile.css';
 
@@ -44,7 +44,7 @@ const Profile = () => {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [friends, setFriends] = useState<Friend[]>([]);
   const [friendCount, setFriendCount] = useState(0);
-  const [view, setView] = useState<'profile' | 'edit' | 'settings'>('profile');
+  const [view, setView] = useState<'profile' | 'edit' | 'settings' | 'account' | 'changeEmail' | 'changePassword'>('profile');
   const [loading, setLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -52,10 +52,16 @@ const Profile = () => {
     username: '',
   });
 
-  // --- STATE FOR EMAIL CHANGE ---
   const [newEmail, setNewEmail] = useState('');
-  const [currentPassword, setCurrentPassword] = useState(''); // <-- ADDED
+  const [currentPasswordForEmail, setCurrentPasswordForEmail] = useState('');
   const [isChangingEmail, setIsChangingEmail] = useState(false);
+
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
 
   useEffect(() => {
@@ -104,9 +110,8 @@ const Profile = () => {
       toast.success('Profile updated!');
       setView('profile');
       fetchProfile();
-    } catch (error) {
-      console.error('Profile: Error updating profile:', error);
-      toast.error('Failed to update profile');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update profile');
     } finally {
       setLoading(false);
     }
@@ -119,7 +124,6 @@ const Profile = () => {
   };
 
   const handleDeleteAccount = async () => {
-    // Switched to a custom modal/toast confirmation in a real app
     const isConfirmed = window.confirm(
       'Are you absolutely sure you want to delete your account? This action is permanent and cannot be undone.'
     );
@@ -136,39 +140,75 @@ const Profile = () => {
       await signOut();
       navigate('/auth');
 
-    } catch (error) {
-      console.error('Error deleting account:', error);
-      toast.error('Could not delete your account. Please try again.');
+    } catch (error: any) {
+      toast.error(error.message || 'Could not delete your account. Please try again.');
     } finally {
       setIsDeleting(false);
     }
   };
 
-  // --- UPDATED FUNCTION TO HANDLE EMAIL CHANGE ---
-// In your Profile.tsx file
+  const handleChangeEmail = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!newEmail || !currentPasswordForEmail || !user) return;
 
-const handleChangeEmail = async (e: React.FormEvent) => {
+      setIsChangingEmail(true);
+      try {
+          const data = await apiClient.requestEmailChange(user.id, newEmail, currentPasswordForEmail);
+
+          toast.success(data.message);
+          setNewEmail('');
+          setCurrentPasswordForEmail('');
+          setView('account');
+
+      } catch (error: any) {
+          console.error('Error changing email:', error);
+          toast.error(error.message || 'Failed to request email change.');
+      } finally {
+          setIsChangingEmail(false);
+      }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newEmail || !user) return;
-
-    setIsChangingEmail(true);
-    try {
-        // This function now correctly uses the apiClient
-        const data = await apiClient.requestEmailChange(user.id, newEmail);
-
-        // --- THIS IS THE FIX ---
-        // Display the specific message from the API, not a generic one.
-        toast.success(data.message);
-        setNewEmail('');
-
-    } catch (error: any) {
-        console.error('Error changing email:', error);
-        toast.error(error.message);
-    } finally {
-        setIsChangingEmail(false);
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      toast.error("New passwords do not match.");
+      return;
     }
-};
+    if (!user) return;
 
+    setIsChangingPassword(true);
+    try {
+      const data = await apiClient.changePassword(user.id, passwordForm);
+      toast.success(data.message);
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setView('account');
+    } catch (error: any) {
+      toast.error(error.message || "Failed to change password.");
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
+  const handleBackNavigation = () => {
+    if (view === 'edit' || view === 'settings') {
+        setView('profile');
+    } else if (view === 'account') {
+        setView('settings');
+    } else if (view === 'changeEmail' || view === 'changePassword') {
+        setView('account');
+    }
+  }
+
+  const getTitleForView = () => {
+    switch(view) {
+        case 'edit': return 'Edit Profile';
+        case 'settings': return 'Settings';
+        case 'account': return 'Account';
+        case 'changeEmail': return 'Change Email';
+        case 'changePassword': return 'Change Password';
+        default: return '';
+    }
+  }
 
   const getInitials = (name: string | null) => {
     if (!name) return user?.email?.charAt(0).toUpperCase() || 'U';
@@ -177,8 +217,11 @@ const handleChangeEmail = async (e: React.FormEvent) => {
 
   if (!user) return null;
 
+  const isFormView = ['edit', 'changeEmail', 'changePassword'].includes(view);
+  const isSettingsView = ['settings', 'account'].includes(view);
+
   return (
-    <div className={`profile-container ${view !== 'profile' ? 'edit-mode' : ''}`}>
+    <div className={`profile-container ${isFormView || isSettingsView ? 'edit-mode' : ''}`}>
       <div className="profile-main-content">
         <div className="profile-header-gradient">
           {view === 'profile' ? (
@@ -191,7 +234,7 @@ const handleChangeEmail = async (e: React.FormEvent) => {
               </Button>
             </>
           ) : (
-            <Button variant="ghost" size="icon" className="profile-back-button" onClick={() => setView('profile')}>
+            <Button variant="ghost" size="icon" className="profile-back-button" onClick={handleBackNavigation}>
               <ArrowLeft className="h-6 w-6" />
             </Button>
           )}
@@ -214,7 +257,7 @@ const handleChangeEmail = async (e: React.FormEvent) => {
 
           {view !== 'profile' && (
              <h1 className="view-title">
-              {view === 'edit' ? 'Edit Profile' : 'Settings'}
+              {getTitleForView()}
             </h1>
           )}
         </div>
@@ -247,37 +290,27 @@ const handleChangeEmail = async (e: React.FormEvent) => {
           </div>
         )}
 
-        {/* --- UPDATED SETTINGS VIEW --- */}
         {view === 'settings' && (
             <div className="profile-settings-section">
-                {/* --- EMAIL CHANGE FORM --- */}
+                <div className="settings-list">
+                    <Button onClick={() => setView('account')} className="settings-button">
+                        Account
+                    </Button>
+                </div>
+            </div>
+        )}
+
+        {/* 4. UPDATE Account view to include Change Password button */}
+        {view === 'account' && (
+            <div className="profile-settings-section">
                 <div className="settings-card">
-                    <h3 className="settings-card-title">Change Email Address</h3>
-                    <p className="settings-card-description">
-                        Your current email is: <strong>{user.email}</strong>. Enter your new email and current password to make the change.
-                    </p>
-                    <form onSubmit={handleChangeEmail} className="settings-form">
-                        <Input
-                            type="email"
-                            value={newEmail}
-                            onChange={(e) => setNewEmail(e.target.value)}
-                            placeholder="Enter new email address"
-                            required
-                            className="settings-input"
-                        />
-                        {/* --- ADDED PASSWORD INPUT --- */}
-                        <Input
-                            type="password"
-                            value={currentPassword}
-                            onChange={(e) => setCurrentPassword(e.target.value)}
-                            placeholder="Enter current password"
-                            required
-                            className="settings-input"
-                        />
-                        <Button type="submit" disabled={isChangingEmail} className="settings-button">
-                            {isChangingEmail ? 'Saving...' : 'Save New Email'}
-                        </Button>
-                    </form>
+                    <h3 className="settings-card-title">Account Management</h3>
+                    <Button onClick={() => setView('changeEmail')} className="settings-button">
+                        Change Email Address
+                    </Button>
+                    <Button onClick={() => setView('changePassword')} className="settings-button">
+                        Change Password
+                    </Button>
                 </div>
 
                  <Button onClick={handleSignOut} className="profile-signout-button">
@@ -287,7 +320,7 @@ const handleChangeEmail = async (e: React.FormEvent) => {
                 <div className="profile-danger-zone">
                     <h3 className="danger-zone-title">Danger Zone</h3>
                     <p className="danger-zone-description">
-                        Deleting your account is a permanent action and cannot be undone. All of your data will be removed forever.
+                        Deleting your account is a permanent action and cannot be undone.
                     </p>
                     <Button
                         variant="destructive"
@@ -295,10 +328,94 @@ const handleChangeEmail = async (e: React.FormEvent) => {
                         disabled={isDeleting}
                         className="profile-delete-button"
                     >
-                        {isDeleting ? 'Deleting Account...' : 'Delete My Account'}
+                        {isDeleting ? 'Deleting...' : 'Delete My Account'}
                     </Button>
                 </div>
             </div>
+        )}
+
+        {view === 'changeEmail' && (
+            <div className="profile-edit-section">
+                <form onSubmit={handleChangeEmail} className="settings-form">
+                    <div className="edit-form-group">
+                        <Label htmlFor="newEmail">New Email Address</Label>
+                        <Input
+                            id="newEmail"
+                            type="email"
+                            value={newEmail}
+                            onChange={(e) => setNewEmail(e.target.value)}
+                            placeholder="Enter your new email"
+                            required
+                            className="profile-edit-input"
+                        />
+                    </div>
+                    <div className="edit-form-group">
+                        <Label htmlFor="currentPasswordForEmail">Current Password</Label>
+                        <Input
+                            id="currentPasswordForEmail"
+                            type="password"
+                            value={currentPasswordForEmail}
+                            onChange={(e) => setCurrentPasswordForEmail(e.target.value)}
+                            placeholder="Enter password to confirm"
+                            required
+                            className="profile-edit-input"
+                        />
+                    </div>
+                    <Button type="submit" disabled={isChangingEmail} className="profile-save-button">
+                        {isChangingEmail ? 'Sending...' : 'Request Change'}
+                    </Button>
+                </form>
+            </div>
+        )}
+
+        {/* 5. CREATE the new 'Change Password' view */}
+        {view === 'changePassword' && (
+          <div className="profile-edit-section">
+            <form onSubmit={handleChangePassword} className="settings-form">
+              <div className="edit-form-group">
+                <Label htmlFor="currentPassword">Current Password</Label>
+                <Input
+                  id="currentPassword"
+                  type="password"
+                  value={passwordForm.currentPassword}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                  placeholder="Enter your current password"
+                  required
+                  className="profile-edit-input"
+                />
+              </div>
+              <div className="edit-form-group">
+                <Label htmlFor="newPassword">New Password</Label>
+                <Input
+                  id="newPassword"
+                  type="password"
+                  value={passwordForm.newPassword}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                  placeholder="Enter your new password"
+                  required
+                  className="profile-edit-input"
+                />
+              </div>
+              <div className="edit-form-group">
+                <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  value={passwordForm.confirmPassword}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                  placeholder="Repeat the new password"
+                  required
+                  className="profile-edit-input"
+                />
+              </div>
+              <Button type="submit" disabled={isChangingPassword} className="profile-save-button">
+                {isChangingPassword ? 'Saving...' : 'Change Password'}
+              </Button>
+            </form>
+             <button className="forgot-password-button" onClick={() => navigate('/forgot-password')}>
+                I forgot my password
+            </button>
+          </div>
         )}
 
         {view === 'profile' && (
@@ -346,33 +463,33 @@ const handleChangeEmail = async (e: React.FormEvent) => {
         )}
       </div>
 
-      {/* Bottom Navigation */}
       <div className="profile-bottom-nav">
-        <div className="profile-nav-container">
-          <button className="profile-nav-button profile-nav-button-inactive" onClick={() => { /* TODO */ }}>
-            <Home className="profile-nav-icon" />
-          </button>
+              <div className="profile-nav-container">
+                <button className="profile-nav-button profile-nav-button-inactive" onClick={() => navigate('/')}>
+                  <Home className="profile-nav-icon" />
+                </button>
 
-          {/* --- NEW INFO BUTTON --- */}
-          <button
-            className="profile-nav-button profile-nav-button-inactive"
-            onClick={() => navigate('/info')}
-          >
-            <Info className="profile-nav-icon" />
-          </button>
-          {/* ----------------------- */}
+                {/* Conditionally render the Info button for conference participants */}
+                {/* Conditionally render the Info button for conference participants */}
+                    {user?.isConferenceParticipant && (
+                      <button className="profile-nav-button profile-nav-button-inactive" onClick={() => navigate('/info')}>
+                        <Info className="profile-nav-icon" />
+                      </button>
+                    )}
 
-          <button className="profile-nav-button profile-nav-button-inactive" onClick={() => navigate('/')}>
-            <Plus className="profile-nav-icon" />
-          </button>
 
-          <button className="profile-nav-button profile-nav-button-active">
-            <User className="profile-nav-icon" />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
+                <button className="info-page-nav-button info-page-nav-button-inactive" onClick={() => navigate('/')}>
+                            <Plus className="info-page-nav-icon" />
+                          </button>
 
-export default Profile;
+                <button className="profile-nav-button profile-nav-button-active">
+                  <User className="profile-nav-icon" />
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      export default Profile;
+

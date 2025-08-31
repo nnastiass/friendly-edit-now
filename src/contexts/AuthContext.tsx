@@ -7,33 +7,65 @@ interface User {
   id: string;
   email: string;
   username: string;
-  full_name: string;
-  // Add other user properties returned by your API's login endpoint
+  full_name?: string;
+
+  // Backend might return either snake_case or camelCase.
+  is_conference_participant?: boolean;
+  isConferenceParticipant?: boolean;
 }
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+
+  // signIn stays the same
   signIn: (email: string, password: string) => Promise<{ error?: Error }>;
-  // 1. UPDATE THE TYPESCRIPT INTERFACE FOR signUp
-  signUp: (email: string, password: string, username: string, agreedToTerms: boolean) => Promise<{ error?: Error }>;
+
+  // signUp now accepts the 5th param used by your Auth.tsx
+  signUp: (
+    email: string,
+    password: string,
+    username: string,
+    agreedToTerms: boolean,
+    isConferenceParticipant?: boolean
+  ) => Promise<{ error?: Error }>;
+
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// --- Normalizer: make sure we always have camelCase available on the frontend
+function normalizeUser(u: any): User | null {
+  if (!u) return null;
+  const isConferenceParticipant =
+    u.isConferenceParticipant ?? u.is_conference_participant ?? false;
+
+  // return a user object that contains BOTH keys (harmless) and a stable camelCase
+  return {
+    ...u,
+    is_conference_participant: u.is_conference_participant ?? isConferenceParticipant,
+    isConferenceParticipant,
+  };
+}
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Load user from localStorage on initial load
+  // Load user from localStorage on initial load (and normalize)
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       try {
-        setUser(JSON.parse(storedUser));
+        const raw = JSON.parse(storedUser);
+        const normalized = normalizeUser(raw);
+        setUser(normalized);
+        if (normalized) {
+          localStorage.setItem('user', JSON.stringify(normalized));
+        }
       } catch (e) {
-        console.error("Failed to parse user from localStorage", e);
+        console.error('Failed to parse user from localStorage', e);
         localStorage.removeItem('user');
       }
     }
@@ -55,27 +87,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error(data.message || 'Login failed');
       }
 
-      const loggedInUser: User = data;
-      setUser(loggedInUser);
-      localStorage.setItem('user', JSON.stringify(loggedInUser));
+      const normalized = normalizeUser(data);
+      setUser(normalized);
+      localStorage.setItem('user', JSON.stringify(normalized));
       return {};
     } catch (error: any) {
       console.error('Sign In Error:', error);
-      return { error: error };
+      return { error };
     } finally {
       setLoading(false);
     }
   };
 
-  // 2. UPDATE THE signUp FUNCTION TO ACCEPT AND SEND 'agreedToTerms'
-  const signUp = async (email: string, password: string, username: string, agreedToTerms: boolean) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    username: string,
+    agreedToTerms: boolean,
+    isConferenceParticipant: boolean = false
+  ) => {
     try {
       setLoading(true);
       const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // 3. ADD 'agreedToTerms' TO THE REQUEST BODY
-        body: JSON.stringify({ email, password, username, agreedToTerms }),
+        // send BOTH keys so your backend can read either style
+        body: JSON.stringify({
+          email,
+          password,
+          username,
+          agreedToTerms,
+          isConferenceParticipant,
+          is_conference_participant: isConferenceParticipant,
+        }),
       });
 
       const data = await response.json();
@@ -84,10 +128,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error(data.message || 'Signup failed');
       }
 
+      // Most flows send users to login after signup. If you ever decide to store the
+      // returned user here, normalize first:
+      // const normalized = normalizeUser(data.user);
+      // setUser(normalized);
+      // localStorage.setItem('user', JSON.stringify(normalized));
+
       return {};
     } catch (error: any) {
       console.error('Sign Up Error:', error);
-      return { error: error };
+      return { error };
     } finally {
       setLoading(false);
     }

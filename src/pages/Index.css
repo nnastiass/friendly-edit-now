@@ -1,4 +1,410 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap');
+/* ========================================
+   PROFILE PAGE STYLES (Updated)
+   ======================================== */
+
+:root {
+  /* Profile & General Colors */
+  --primary-accent: #FF0046;
+  --background-dark: #000000;
+  --background-card: #111;
+  --background-button-translucent: rgba(255, 0, 70, 0.3);
+  --background-hover-light: rgba(255, 255, 255, 0.1);
+  --text-light: white;
+  --text-light-secondary: #d1d5db;
+  --text-dark-secondary: #333;
+  --text-gray: #a1a1aa;
+
+  /* Danger Zone Colors */
+  --danger-red-bright: #f87171;
+  --danger-red-dark: #991b1b;
+  --danger-red-dark-hover: #b91c1c;
+  --danger-border: #5c1b1b;
+
+  /* Index Page Colors */
+  --index-gradient-color: rgba(235, 156, 154, 0.8);
+}
+
+.profile-container {
+  width: 100%;
+  height: 100vh;
+  background-color: var(--background-dark);
+  color: var(--text-light);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: 'Poppins', sans-serif;
+  background-image: radial-gradient(ellipse 40% 20% at 50% 20%, var(--primary-accent), transparent);
+  transition: background-image 0.3s ease-in-out;
+}
+
+.profile-container.settings-view {
+  background-image: radial-gradient(ellipse 50% 45% at 50% 45%, var(--primary-accent), transparent);
+  background-repeat: no-repeat;
+}
+
+.profile-container.edit-mode {
+    background-image: none !important;
+}
+
+.profile-main-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Header */
+.profile-header-gradient {
+  position: relative;
+  padding: 2vh 1.5rem 1.5vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-repeat: no-repeat;
+  min-height: 10vh;
+}
+
+.profile-settings-button,
+.profile-edit-button,
+.profile-back-button {
+  position: absolute;
+  top: 2.5vh;
+  color: var(--primary-accent) !important;
+  background-color: transparent !important;
+}
+
+.profile-settings-button { right: 2rem; }
+.profile-edit-button { left: 2rem; }
+.profile-back-button { left: 2rem; }
+
+.profile-requests-button{
+  color: var(--primary-accent) !important;
+  background-color: transparent !important;
+}
+
+.profile-settings-button svg,
+.profile-edit-button svg,
+.profile-back-button svg,
+.profile-requests-button svg {
+  height: 3vh !important;
+  width: 3vh !important;
+}
+
+.profile-back-button svg { stroke-width: 3 !important; }
+.profile-requests-button svg { stroke-width: 2.5 !important; }
+
+.profile-avatar {
+  width: 12vh;
+  height: 12vh;
+  border: 4px solid var(--text-light);
+  margin-bottom: 1rem;
+  margin-top: 5rem;
+}
+
+.profile-avatar-fallback {
+  font-size: 4vh;
+  color: var(--text-dark-secondary);
+}
+
+.profile-name {
+  font-size: 2.5vh;
+  font-weight: 500;
+}
+
+.profile-username {
+  color: var(--text-light);
+  font-size: 1.8vh;
+}
+
+/* Friends Actions */
+.profile-actions-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2vh 1.5rem;
+  gap: 2rem;
+}
+
+.profile-friends-count {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.count-number {
+  font-size: 2vh;
+  font-weight: 700;
+}
+
+.count-label {
+  color: var(--text-light-secondary);
+  font-size: 1.6vh;
+}
+
+.profile-add-friends-btn {
+  background-color: transparent !important;
+  border: 2px solid var(--text-light) !important;
+  border-radius: 9999px !important;
+  color: var(--text-light) !important;
+  padding: 1vh 1.7rem !important;
+  font-weight: 600 !important;
+  font-size: 1.8vh !important;
+  transition: all 0.2s ease;
+}
+.profile-add-friends-btn:hover {
+    background-color: var(--text-light) !important;
+    color: var(--background-dark) !important;
+}
+
+/* Streak Section */
+.profile-streak-section {
+  text-align: center;
+  padding: 1.5vh 1rem;
+}
+
+.streak-number, .streak-label {
+  font-size: 2vh;
+  color: var(--primary-accent);
+  display: inline-block;
+  vertical-align: baseline;
+}
+.streak-number { margin-right: 0.5rem; }
+
+.streak-line {
+  width: 40%;
+  height: 4px;
+  background-color: var(--text-light);
+  margin: 0.5vh auto 0;
+  border-radius: 9999px;
+}
+
+/* ========================================
+   SETTINGS & EDIT VIEWS
+   ======================================== */
+
+.profile-settings-section,
+.profile-edit-section {
+    padding: 2rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.view-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-align: center;
+    margin-top: 3rem;
+}
+
+/* General Settings Card Style */
+.settings-card {
+    background-color: var(--background-card);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid var(--text-dark-secondary);
+}
+.settings-card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+.settings-card-description {
+    font-size: 0.9rem;
+    color: var(--text-gray);
+    margin-bottom: 1.5rem;
+}
+
+/* Forms inside settings */
+.settings-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+.edit-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.profile-edit-input {
+    background: transparent !important;
+    border: 2px solid var(--text-light) !important;
+    border-radius: 9999px !important;
+    color: var(--text-light) !important;
+    padding: 1.2rem 1.8rem !important;
+    font-size: 0.9rem !important;
+}
+.profile-save-button {
+    background-color: var(--primary-accent) !important;
+    color: var(--text-light) !important;
+    border-radius: 9999px !important;
+    font-size: 0.9rem !important;
+    font-weight: 600 !important;
+    box-shadow: 0 0 20px rgba(255, 0, 70, 0.7);
+    width: 18vh !important;
+    margin: 1rem auto 0;
+}
+
+/* Settings List Styles */
+.settings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.settings-button {
+    width: 100%;
+    padding: 1rem 1.5rem !important;
+    background-color: var(--background-button-translucent) !important;
+    color: var(--text-light) !important;
+    border: none !important;
+    border-radius: 1rem !important;
+    text-align: left !important;
+    justify-content: flex-start !important;
+    font-size: 1rem !important;
+    transition: background-color 0.2s ease;
+}
+.settings-button:hover {
+    background-color: var(--background-hover-light) !important;
+}
+
+/* Danger Zone */
+.profile-danger-zone {
+    border: 2px solid var(--danger-border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-top: 2rem;
+}
+.danger-zone-title {
+    color: var(--danger-red-bright);
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+.danger-zone-description {
+    font-size: 0.9rem;
+    color: var(--text-gray);
+    margin-bottom: 1.5rem;
+}
+.profile-delete-button {
+    width: 100%;
+    background-color: var(--danger-red-dark) !important;
+    color: var(--text-light) !important;
+    transition: background-color 0.2s ease;
+}
+.profile-delete-button:hover {
+    background-color: var(--danger-red-dark-hover) !important;
+}
+.profile-signout-button {
+    width: 100%;
+    background-color: transparent !important;
+    color: var(--danger-red-bright) !important;
+    border: 1px solid var(--danger-border) !important;
+    margin-top: 1rem;
+    transition: all 0.2s ease;
+}
+.profile-signout-button:hover {
+    background-color: var(--danger-border) !important;
+    color: var(--text-light) !important;
+}
+
+
+/* Friends List */
+.friends-list-section {
+  padding: 1vh 0.2rem;
+}
+
+.friends-list-title {
+  text-align: center;
+  font-size: 1.8vh;
+  margin-bottom: 2vh;
+}
+
+.friends-list-container-profile {
+  display: flex !important;
+  justify-content: center;
+  gap: 1rem;
+  overflow-x: auto;
+  padding: 0 1.5rem;
+}
+
+.friend-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.friend-avatar {
+  width: 10vw;
+  height: 10vw;
+  max-width: 4rem;
+  max-height: 4rem;
+  margin-bottom: 0.5rem;
+}
+
+.friend-name {
+  font-size: 1.5vh;
+  color: var(--text-light-secondary);
+  max-width: 4rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.friend-streak {
+  font-size: 1.8vh;
+  font-weight: 700;
+  color: var(--primary-accent);
+}
+
+
+/* Bottom Navigation */
+.profile-bottom-nav {
+  height: 10vh;
+  min-height: 5rem;
+  flex-shrink: 0;
+  background-color: var(--background-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-nav-container {
+  display: flex;
+  justify-content: space-evenly;
+  width: 100%;
+  align-items: center;
+}
+
+.profile-nav-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 1.3rem;
+}
+
+.profile-nav-button-active {
+    color: var(--primary-accent);
+}
+
+.profile-nav-container > .profile-nav-button:nth-child(2) .profile-nav-icon {
+  height: 2.2rem;
+  width: 2.2rem;
+}
+
+.profile-nav-button-inactive {
+  color: var(--text-light);
+  transition: color 0.2s ease;
+}
+
+.profile-nav-button-inactive:hover {
+  color: var(--text-gray);
+}
+
+.profile-nav-icon {
+  height: 1.8rem;
+  width: 1.8rem;
+  stroke-width: 1.5;
+}
 
 /* ========================================
    INDEX PAGE (HOME) STYLES
@@ -11,13 +417,13 @@ html, body, #root {
   padding: 0;
   overflow: hidden;
   font-family: 'Poppins', sans-serif;
-  background-color: #000000; /* Base black background */
+  background-color: var(--background-dark); /* Base black background */
 }
 /* Full screen container with the new gradient */
 .index-container {
   height: 100vh;
-  background: black;
-  background-image: radial-gradient(ellipse 50% 25% at 50% 25%, rgba(235, 156, 154, 0.8), transparent) !important;
+  background: var(--background-dark);
+  background-image: radial-gradient(ellipse 50% 25% at 50% 25%, var(--index-gradient-color), transparent) !important;
   background-repeat: no-repeat;
   display: flex;
   align-items: center;
@@ -30,7 +436,7 @@ html, body, #root {
   max-width: 26rem; /* Phone width */
   height: 100%;
   margin: 0 auto;
-  color: white;
+  color: var(--text-light);
   display: flex;
   flex-direction: column;
 }
@@ -65,14 +471,14 @@ html, body, #root {
 }
 
 .challenge-subtitle {
-    color: #d1d5db; /* light gray */
+    color: var(--text-light-secondary); /* light gray */
     margin-bottom: 3vh;
     font-size: 1.8vh;
 }
 
 .challenge-button {
-    background-color: #FF0046;
-    color: white;
+    background-color: var(--primary-accent);
+    color: var(--text-light);
     border: none;
     border-radius: 9999px;
     padding: 1.5vh 2.5rem; /* Responsive padding */
@@ -97,7 +503,7 @@ html, body, #root {
 }
 
 .timer-box {
-    border: 2px solid white;
+    border: 2px solid var(--text-light);
     border-radius: 0.75rem;
     width: 15vw; /* Use vw for width */
     height: 8vh; /* Use vh for height */
@@ -116,7 +522,7 @@ html, body, #root {
 
 .timer-label {
     font-size: 1.5vh; /* Responsive font size */
-    color: #d1d5db;
+    color: var(--text-light-secondary);
 }
 
 /* Day Streak Styles from StreakCounter component */
@@ -130,7 +536,7 @@ html, body, #root {
 .streak-number {
     font-size: 5vh;
     font-weight: 700;
-    color: #FF0046;
+    color: var(--primary-accent);
 }
 
 .streak-label {
@@ -142,12 +548,12 @@ html, body, #root {
 .streak-line {
     width: 20%;
     height: 2px;
-    background-color: white;
+    background-color: var(--text-light);
 }
 
 .streak-subtext {
     margin-top: 1.5vh;
-    color: #d1d5db;
+    color: var(--text-light-secondary);
     font-size: 1.8vh;
 }
 
@@ -157,7 +563,7 @@ html, body, #root {
   height: 10vh; /* Responsive height */
   min-height: 5rem; /* Ensure it's not too small */
   flex-shrink: 0;
-  background-color: black;
+  background-color: var(--background-dark);
   padding: 0; /* Removed padding */
   display: flex;
   align-items: center;
@@ -180,17 +586,17 @@ html, body, #root {
 
 /* Style for the active middle button */
 .index-nav-button-active {
-    color: #FF0046; /* Pink color for the '+' */
+    color: var(--primary-accent); /* Pink color for the '+' */
 }
 
 /* Style for inactive, outlined icons */
 .index-nav-button-inactive {
-  color: white;
+  color: var(--text-light);
   transition: color 0.2s ease;
 }
 
 .index-nav-button-inactive:hover {
-  color: #a1a1aa; /* A light gray for hover */
+  color: var(--text-gray); /* A light gray for hover */
 }
 
 /* General icon styling */
@@ -206,7 +612,7 @@ html, body, #root {
 /* Loading State (from your old file, kept for consistency) */
 .index-loading {
   height: 100vh;
-  background-color: black;
+  background-color: var(--background-dark);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -217,7 +623,7 @@ html, body, #root {
   border-radius: 50%;
   height: 4rem;
   width: 4rem;
-  border: 4px solid white;
+  border: 4px solid var(--text-light);
   border-top-color: transparent;
   margin: 0 auto 1rem;
 }

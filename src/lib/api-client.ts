@@ -46,13 +46,27 @@ export const apiClient = {
     apiFetch<void>(`/api/profiles/${userId}`, {
       method: 'DELETE',
     }),
-
-  // --- FIX 1: Corrected the requestEmailChange function ---
-  // It now sends the correct JSON body that the backend expects.
-  requestEmailChange: (userId: string, newEmail: string) =>
+  requestEmailChange: (userId: string, newEmail: string, currentPassword?: string) =>
     apiFetch<any>(`/api/profiles/${userId}/change-email`, {
       method: 'POST',
-      body: JSON.stringify({ newEmail: newEmail }), // The backend expects a field named "newEmail"
+      body: JSON.stringify({ newEmail, currentPassword }),
+    }),
+
+  // Password Management
+  changePassword: (userId: string, passwords: { currentPassword?: string; newPassword?: string; confirmPassword?: string; }) =>
+    apiFetch<any>(`/api/profiles/${userId}/change-password`, {
+        method: 'POST',
+        body: JSON.stringify(passwords),
+    }),
+  requestPasswordReset: (email: string) =>
+    apiFetch<any>('/api/auth/forgot-password', {
+        method: 'POST',
+        body: JSON.stringify({ email }),
+    }),
+  resetPassword: (token: string, newPassword: string, confirmPassword: string) =>
+    apiFetch<any>('/api/auth/reset-password', {
+        method: 'POST',
+        body: JSON.stringify({ token, newPassword, confirmPassword }),
     }),
 
   // Authentication
@@ -62,12 +76,18 @@ export const apiClient = {
       body: JSON.stringify({ email, password }),
     }),
 
-  // --- FIX 2: Updated the signUp function ---
-  // It now accepts the 'agreedToTerms' boolean and includes it in the request body.
-  signUp: (email: string, password: string, username: string, agreedToTerms: boolean) =>
+  // --- UPDATED SIGNUP FUNCTION ---
+  signUp: (email: string, password: string, username: string, agreedToTerms: boolean, isConferenceParticipant: boolean) =>
     apiFetch<any>('/api/auth/signup', {
       method: 'POST',
-      body: JSON.stringify({ email, password, username, agreedToTerms }),
+      body: JSON.stringify({ email, password, username, agreedToTerms, isConferenceParticipant }),
+    }),
+
+  // --- NEW CONFERENCE CODE VERIFICATION FUNCTION ---
+  verifyConferenceCode: (code: string) =>
+    apiFetch<any>('/api/auth/verify-conference-code', {
+        method: 'POST',
+        body: JSON.stringify({ code }),
     }),
 
   // Friends & Friend Requests

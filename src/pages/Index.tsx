@@ -23,12 +23,8 @@ const Index = () => {
           console.log("Index: No user found, navigating to /auth.");
           navigate('/auth');
         } else {
-          console.log("Index: User found, starting 1.5s content loading timer.");
-          const timer = setTimeout(() => {
-            setIsLoading(false);
-            console.log("Index: Content loading timer finished. isLoading set to false.");
-          }, 1500);
-          return () => clearTimeout(timer);
+          console.log("Index: User found, setting isLoading to false immediately.");
+          setIsLoading(false); // Set loading to false directly
         }
       }
     }, [user, authLoading, navigate]);
@@ -90,12 +86,15 @@ console.log("Index: Displaying main content.");
               </button>
 
               {/* 2. New Info Button */}
-              <button
-                className="index-nav-button index-nav-button-inactive"
-                onClick={() => navigate('/info')}
-              >
-                <Info className="index-nav-icon" />
-              </button>
+{/* Info Button — visible only for conference participants */}
+{user?.isConferenceParticipant && (
+  <button
+    className="index-nav-button index-nav-button-inactive"
+    onClick={() => navigate('/info')}
+  >
+    <Info className="index-nav-icon" />
+  </button>
+)}
 
               {/* Middle Button (Challenge Page - Active) */}
               <button className="index-nav-button index-nav-button-active">

@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { apiClient } from '@/lib/api-client';
 import './Auth.css';
 
 const Auth = () => {
@@ -12,8 +13,15 @@ const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
-  const [agreedToTerms, setAgreedToTerms] = useState(false); // 1. New state for the checkbox
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // --- NEW STATE FOR CONFERENCE FEATURE ---
+  const [isParticipant, setIsParticipant] = useState(false);
+  const [conferenceCode, setConferenceCode] = useState('');
+  const [isCodeVerified, setIsCodeVerified] = useState(false);
+  const [verifyingCode, setVerifyingCode] = useState(false);
+
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
 
@@ -23,6 +31,25 @@ const Auth = () => {
     }
   }, [user, navigate]);
 
+  // --- NEW FUNCTION TO VERIFY THE CONFERENCE CODE ---
+  const handleVerifyCode = async () => {
+    if (!conferenceCode) {
+      toast.error("Please enter a code.");
+      return;
+    }
+    setVerifyingCode(true);
+    try {
+      await apiClient.verifyConferenceCode(conferenceCode);
+      toast.success("Conference code verified!");
+      setIsCodeVerified(true);
+    } catch (error: any) {
+      toast.error(error.message || "Invalid conference code.");
+      setIsCodeVerified(false);
+    } finally {
+      setVerifyingCode(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -31,24 +58,22 @@ const Auth = () => {
       if (isLogin) {
         const { error } = await signIn(email, password);
         if (error) {
-          if (error.message.includes('Invalid credentials')) {
-            toast.error('Invalid email or password');
-          } else {
-            toast.error(error.message);
-          }
+          toast.error(error.message || 'Invalid email or password');
         } else {
           toast.success('Successfully signed in!');
           navigate('/');
         }
       } else {
-        // 2. Pass the 'agreedToTerms' state to the signUp function
-        const { error } = await signUp(email, password, username, agreedToTerms);
+        // Pass the isParticipant flag (only if the code is also verified)
+        const { error } = await signUp(
+          email,
+          password,
+          username,
+          agreedToTerms,
+          isParticipant && isCodeVerified
+        );
         if (error) {
-          if (error.message.includes('A user with this email or username already exists')) {
-            toast.error('An account with this email or username already exists');
-          } else {
-            toast.error(error.message);
-          }
+          toast.error(error.message || 'An unexpected error occurred during signup.');
         } else {
           toast.success('Account created! Please check your email to verify your account.');
           setIsLogin(true);
@@ -62,8 +87,8 @@ const Auth = () => {
     }
   };
 
-  // 3. Determine if the signup button should be disabled
-  const isSignUpDisabled = loading || (!isLogin && !agreedToTerms);
+  const isSignUpDisabled =
+    loading || !agreedToTerms || (isParticipant && !isCodeVerified);
 
   return (
     <div
@@ -78,7 +103,9 @@ const Auth = () => {
               {isLogin ? 'Welcome back!' : 'Create account'}
             </h2>
             <p className="auth-description">
-              {isLogin ? 'Sign in to continue your streak' : 'Join the community and start your journey'}
+              {isLogin
+                ? 'Sign in to continue your streak'
+                : 'Join the community and start your journey'}
             </p>
           </div>
 
@@ -124,32 +151,84 @@ const Auth = () => {
               />
             </div>
 
-            {/* 4. Add the checkbox and link to the form, only shows on signup */}
             {!isLogin && (
+              <>
                 <div className="auth-field-terms">
-                    <input
-                        type="checkbox"
-                        id="terms"
-                        checked={agreedToTerms}
-                        onChange={(e) => setAgreedToTerms(e.target.checked)}
-                        className="auth-checkbox"
-                    />
-                    <Label htmlFor="terms" className="auth-label-terms">
-                        I agree to the{' '}
-                        <a href="/Terms-and-Conditions.pdf" target="_blank" rel="noopener noreferrer" className="auth-link">
-                            Terms and Conditions
-                        </a>
-                    </Label>
+                  <input
+                    type="checkbox"
+                    id="terms"
+                    checked={agreedToTerms}
+                    onChange={(e) => setAgreedToTerms(e.target.checked)}
+                    className="auth-checkbox"
+                  />
+                  <Label htmlFor="terms" className="auth-label-terms">
+                    I agree to the{' '}
+                    <a
+                      href="/Terms-and-Conditions.pdf"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="auth-link"
+                    >
+                      Terms and Conditions
+                    </a>
+                  </Label>
                 </div>
-            )}
 
+                <div className="auth-field-terms">
+                  <input
+                    type="checkbox"
+                    id="participant"
+                    checked={isParticipant}
+                    onChange={(e) => {
+                      setIsParticipant(e.target.checked);
+                      if (!e.target.checked) {
+                        setIsCodeVerified(false);
+                        setConferenceCode('');
+                      }
+                    }}
+                    className="auth-checkbox"
+                  />
+                  <Label htmlFor="participant" className="auth-label-terms">
+                    I am a Testing United Conference participant
+                  </Label>
+                </div>
+
+                {isParticipant && (
+                  <div className="auth-field-code">
+                    <Input
+                      type="text"
+                      value={conferenceCode}
+                      onChange={(e) => setConferenceCode(e.target.value)}
+                      placeholder="Enter conference code"
+                      className="auth-input"
+                      disabled={isCodeVerified}
+                    />
+                    <Button
+                      type="button"
+                      onClick={handleVerifyCode}
+                      disabled={isCodeVerified || verifyingCode}
+                    >
+                      {verifyingCode
+                        ? 'Verifying...'
+                        : isCodeVerified
+                        ? 'Verified'
+                        : 'Verify'}
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
 
             <Button
               type="submit"
               disabled={isLogin ? loading : isSignUpDisabled}
               className="auth-submit-button"
             >
-              {loading ? 'Loading...' : (isLogin ? 'Sign In' : 'Create Account')}
+              {loading
+                ? 'Loading...'
+                : isLogin
+                ? 'Sign In'
+                : 'Create Account'}
             </Button>
           </form>
 
@@ -158,7 +237,9 @@ const Auth = () => {
               onClick={() => setIsLogin(!isLogin)}
               className="auth-toggle-button"
             >
-              {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
+              {isLogin
+                ? "Don't have an account? Sign up"
+                : 'Already have an account? Sign in'}
             </button>
           </div>
         </div>
