@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Home, User, Plus, ArrowLeft } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { ArrowLeft, Loader2, Volume2, VolumeX } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, API_BASE_URL } from '@/lib/api-client';
 import './Feed.css';
 
 interface Post {
   id: string;
   userId: string;
   username: string;
+  avatarUrl: string;
   mediaUrl: string;
   mediaType: 'image' | 'video';
   challengeTitle: string;
@@ -19,167 +19,142 @@ interface Post {
 const Feed = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isMuted, setIsMuted] = useState(true); // Default muted
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const feedRef = useRef<HTMLDivElement>(null);
+  const videoRefs = useRef<{ [key: string]: HTMLVideoElement | null }>({});
 
-  useEffect(() => {
-    if (!authLoading) {
-      if (!user) {
-        navigate('/auth');
-      } else {
-        fetchPosts();
-      }
-    }
-  }, [user, authLoading, navigate]);
-
-  const fetchPosts = async () => {
+  const fetchPosts = async (currentPage: number) => {
     if (!user) return;
-    
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      const feedData = await apiClient.getFeed(user.id);
-      
-      // Transform API data to match our Post interface
-      const transformedPosts = feedData.map((post: any) => ({
+      const newPosts = await apiClient.getFeed(user.id, currentPage);
+      const transformedPosts = newPosts.map((post: any) => ({
         id: post.id,
-        userId: post.user_id,
-        username: post.username || post.user_name,
+        userId: post.user_id ?? post.userId,
+        username: post.username,
+        avatarUrl: post.avatar_url,
         mediaUrl: post.media_url,
         mediaType: post.media_type,
-        challengeTitle: post.challenge_title,
-        createdAt: post.created_at
+        challengeTitle: post.caption,
+        createdAt: post.created_at,
       }));
-      
-      setPosts(transformedPosts);
-    } catch (error) {
-      console.error('Error fetching posts:', error);
-      // Fallback to mock data if API fails
-      setPosts([
-        {
-          id: '1',
-          userId: 'user1',
-          username: 'John Doe',
-          mediaUrl: 'https://via.placeholder.com/300x200',
-          mediaType: 'image',
-          challengeTitle: 'Say hi to a stranger',
-          createdAt: '2024-01-15T10:30:00Z'
-        },
-        {
-          id: '2',
-          userId: 'user2',
-          username: 'Jane Smith',
-          mediaUrl: 'https://via.placeholder.com/300x200',
-          mediaType: 'video',
-          challengeTitle: 'Compliment someone',
-          createdAt: '2024-01-15T09:15:00Z'
-        }
-      ]);
+      setPosts((prev) => {
+        const unique = transformedPosts.filter((np: Post) => !prev.some((pp) => pp.id === np.id));
+        return [...prev, ...unique];
+      });
+      if (newPosts.length < 10) setHasMore(false);
+    } catch (err) {
+      console.error(err);
+      setHasMore(false);
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (authLoading || isLoading) {
-    return (
-      <div className="feed-loading">
-        <div className="feed-loading-spinner"></div>
-      </div>
-    );
-  }
+  useEffect(() => { if (!authLoading && user) fetchPosts(1); }, [user, authLoading]);
+  useEffect(() => { if (page > 1) fetchPosts(page); }, [page]);
 
-  if (!user) {
-    return null;
-  }
+  // Smooth scroll + detect current post
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!feedRef.current) return;
+      const scrollTop = feedRef.current.scrollTop;
+      const clientHeight = feedRef.current.clientHeight;
+      const newIndex = Math.round(scrollTop / clientHeight);
+      if (newIndex !== currentIndex) setCurrentIndex(newIndex);
+
+      if (scrollTop + clientHeight >= feedRef.current.scrollHeight - clientHeight && !isLoading && hasMore) {
+        setPage((p) => p + 1);
+      }
+    };
+    const feed = feedRef.current;
+    if (feed) {
+      feed.addEventListener('scroll', handleScroll);
+      return () => feed.removeEventListener('scroll', handleScroll);
+    }
+  }, [currentIndex, isLoading, hasMore]);
+
+  // Play/pause videos & mute
+  useEffect(() => {
+    Object.entries(videoRefs.current).forEach(([id, video]) => {
+      if (!video) return;
+      const index = posts.findIndex((p) => p.id === id);
+      if (index === currentIndex) {
+        video.muted = isMuted;
+        video.play().catch(() => {});
+      } else {
+        video.muted = true;
+        video.pause();
+      }
+    });
+  }, [currentIndex, posts, isMuted]);
+
+  if (authLoading) return <div className="flex items-center justify-center min-h-screen bg-black"><Loader2 className="h-8 w-8 text-white animate-spin" /></div>;
+  if (!user) { navigate('/auth'); return null; }
 
   return (
     <div className="feed-container">
-      <div className="feed-mobile-frame">
+      <div className="feed-mobile-frame" ref={feedRef}>
         <div className="feed-layout">
-          {/* Header */}
-          <div className="feed-header">
-            <Button
-              variant="ghost"
-              onClick={() => navigate('/')}
-              className="feed-back-button"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
+          <div className="feed-overlay-header">
+            <button className="feed-back-button" onClick={() => navigate(-1)}><ArrowLeft className="h-5 w-5" /></button>
             <h1 className="feed-title">Feed</h1>
-            <div className="feed-header-spacer"></div>
           </div>
 
-          {/* Posts */}
-          <div className="feed-content">
-            {posts.length === 0 ? (
-              <div className="feed-empty">
-                <p className="feed-empty-text">Zatiaľ žiadne príspevky</p>
-                <p className="feed-empty-subtext">Splň výzvu a pridaj svoj dokaz!</p>
-              </div>
-            ) : (
-              <div className="feed-posts">
-                {posts.map((post) => (
-                  <div key={post.id} className="feed-post">
-                    <div className="feed-post-header">
-                      <span className="feed-post-username">{post.username}</span>
-                      <span className="feed-post-challenge">{post.challengeTitle}</span>
-                    </div>
-                    
-                    <div className="feed-post-media">
-                      {post.mediaType === 'image' ? (
-                        <img 
-                          src={post.mediaUrl} 
-                          alt="Challenge proof" 
-                          className="feed-post-image"
-                        />
-                      ) : (
-                        <video 
-                          src={post.mediaUrl} 
-                          controls 
-                          className="feed-post-video"
-                        />
-                      )}
-                    </div>
-                    
-                    <div className="feed-post-footer">
-                      <span className="feed-post-date">
-                        {new Date(post.createdAt).toLocaleDateString('sk-SK')}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Bottom Navigation Bar */}
-          <div className="feed-bottom-nav">
-            <div className="feed-nav-container">
-              {/* Left Button (Home/Feed Page - Active) */}
-              <button className="feed-nav-button feed-nav-button-active">
-                <Home className="feed-nav-icon" />
-              </button>
-
-              {/* Middle Button (Challenge Page) */}
-              <button
-                className="feed-nav-button feed-nav-button-inactive"
-                onClick={() => navigate('/')}
-              >
-                <Plus className="feed-nav-icon" />
-              </button>
-
-              {/* Right Button (Profile Page) */}
-              <button
-                className="feed-nav-button feed-nav-button-inactive"
-                onClick={() => navigate('/profile')}
-              >
-                <User className="feed-nav-icon" />
-              </button>
+          {posts.length === 0 && !isLoading ? (
+            <div className="feed-empty">
+              <p className="feed-empty-text">Zatiaľ žiadne video príspevky od priateľov</p>
+              <p className="feed-empty-subtext">Ak chceš vidieť obsah, pridaj si priateľov, alebo popros priateľa, aby pridal video.</p>
             </div>
-          </div>
+          ) : (
+            posts.map((post, idx) => (
+              <div key={post.id} className="feed-post-fullscreen">
+                {post.mediaType === 'video' ? (
+                  <video
+                    src={`${API_BASE_URL}${post.mediaUrl}`}
+                    className="feed-video"
+                    loop
+                    playsInline
+                    ref={(el) => (videoRefs.current[post.id] = el)}
+                  />
+                ) : (
+                  <img src={`${API_BASE_URL}${post.mediaUrl}`} alt={post.challengeTitle || 'Photo'} className="feed-image" loading="lazy"/>
+                )}
+
+                {/* Mute button overlay */}
+                {post.mediaType === 'video' && currentIndex === idx && (
+                  <button
+                    className="feed-mute-button"
+                    onClick={() => setIsMuted((prev) => !prev)}
+                  >
+                    {isMuted ? <VolumeX /> : <Volume2 />}
+                  </button>
+                )}
+
+                <div className="feed-overlay">
+                  <div className="feed-post-info">
+                    <div className="feed-post-user-info">
+                      {post.avatarUrl && <img src={post.avatarUrl} alt="User avatar" className="feed-avatar" />}
+                      <span className="feed-post-username">@{post.username}</span>
+                    </div>
+                    <p className="feed-post-caption">{post.challengeTitle}</p>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+
+          {isLoading && hasMore && <div className="feed-loading-more"><Loader2 className="h-6 w-6 text-white animate-spin"/></div>}
+          {!hasMore && posts.length > 0 && <div className="feed-end-of-feed"><p>You reached the end</p></div>}
         </div>
       </div>
     </div>
   );
 };
 
-export default Feed; 
+export default Feed;

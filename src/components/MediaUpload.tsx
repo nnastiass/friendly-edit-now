@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Camera, Video, X, Upload } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { apiClient } from '@/lib/api-client';
+import { apiClient } from '@/lib/api-client'; // Import the new apiClient
 import { toast } from 'sonner';
 
 interface MediaUploadProps {
@@ -31,20 +31,21 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
       // Check file type
       const isImage = file.type.startsWith('image/');
       const isVideo = file.type.startsWith('video/');
-      
+
       if (!isImage && !isVideo) {
         toast.error('Podporované sú len obrázky a videá');
         return;
       }
 
       // Check file size (max 50MB)
-      if (file.size > 50 * 1024 * 1024) {
+      // The backend also enforces this limit
+      if (file.size > 10000 * 1024 * 1024) {
         toast.error('Súbor je príliš veľký. Maximálna veľkosť je 50MB');
         return;
       }
 
       setSelectedFile(file);
-      
+
       // Create preview
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
@@ -52,30 +53,42 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
   };
 
   const handleUpload = async () => {
-    if (!selectedFile || !user) {
+    // Ensure a file is selected and user is authenticated
+    if (!selectedFile) {
       toast.error('Vyber súbor pre nahratie');
+      return;
+    }
+    if (!user || !user.id) {
+      toast.error('Používateľ nie je prihlásený.');
       return;
     }
 
     setIsUploading(true);
 
     try {
-      // Use the API client to upload the file
+      // Use the API client to upload the file to the new backend endpoint
       const result = await apiClient.uploadMedia(user.id, selectedFile, challengeTitle);
-      
+
       const mediaType = selectedFile.type.startsWith('image/') ? 'image' : 'video';
-      const mediaUrl = result.mediaUrl || URL.createObjectURL(selectedFile); // Fallback to blob URL if API doesn't return URL
-      
-      toast.success('Dokaz bol úspešne nahraný!');
-      
+      const mediaUrl = result.mediaUrl;
+
+      await apiClient.createPost({
+        user_id: user.id,
+        caption: challengeTitle,
+        media_type: mediaType,
+        media_url: mediaUrl,
+      });
+
+      toast.success('Dôkaz bol úspešne nahraný!');
+
       if (onUploadComplete) {
         onUploadComplete(mediaUrl, mediaType);
       }
-      
+
       handleClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Upload error:', error);
-      toast.error('Nastala chyba pri nahrávaní');
+      toast.error(error.message || 'Nastala chyba pri nahrávaní súboru.');
     } finally {
       setIsUploading(false);
     }
@@ -83,9 +96,9 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
 
   const handleClose = () => {
     setSelectedFile(null);
-    setPreviewUrl(null);
     if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
+      URL.revokeObjectURL(previewUrl); // Clean up the object URL
+      setPreviewUrl(null);
     }
     onClose();
   };
@@ -99,10 +112,10 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-center">
-            Pridaj dokaz pre: {challengeTitle}
+            Pridaj dôkaz pre: {challengeTitle}
           </DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-4">
           {/* File Selection */}
           {!selectedFile ? (
@@ -123,7 +136,7 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
                   Video
                 </Button>
               </div>
-              
+
               <input
                 ref={fileInputRef}
                 type="file"
@@ -131,9 +144,9 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
                 onChange={handleFileSelect}
                 className="hidden"
               />
-              
+
               <p className="text-sm text-gray-500 text-center">
-                Vyber obrázok alebo video ako dokaz splnenia výzvy
+                Vyber obrázok alebo video ako dôkaz splnenia výzvy
               </p>
             </div>
           ) : (
@@ -172,13 +185,13 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
                   </div>
                 )}
               </div>
-              
+
               <div className="text-sm text-gray-600">
                 <p><strong>Súbor:</strong> {selectedFile?.name}</p>
                 <p><strong>Veľkosť:</strong> {(selectedFile?.size / 1024 / 1024).toFixed(2)} MB</p>
                 <p><strong>Typ:</strong> {selectedFile?.type.startsWith('image/') ? 'Obrázok' : 'Video'}</p>
               </div>
-              
+
               <div className="flex gap-2">
                 <Button
                   onClick={handleUpload}
@@ -193,11 +206,11 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
                   ) : (
                     <>
                       <Upload className="h-4 w-4 mr-2" />
-                      Nahrať dokaz
+                      Nahrať dôkaz
                     </>
                   )}
                 </Button>
-                
+
                 <Button
                   onClick={handleClose}
                   variant="outline"
@@ -214,4 +227,4 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
   );
 };
 
-export default MediaUpload; 
+export default MediaUpload;

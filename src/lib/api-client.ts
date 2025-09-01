@@ -4,7 +4,7 @@
 // This should be your development machine's IP address and the port your Docker API exposes
 // For example: 'http://192.168.0.138:3000' or 'http://localhost:3000' if running on web browser dev server
 // Remember to change this when building for production!
-const API_BASE_URL = 'http://192.168.1.8:3000';
+export const API_BASE_URL = 'http://192.168.0.138:3000';
 
 // A generic helper function for making API requests
 async function apiFetch<T>(
@@ -121,15 +121,27 @@ export const apiClient = {
     formData.append('userId', userId);
     formData.append('challengeTitle', challengeTitle);
     formData.append('mediaType', file.type.startsWith('image/') ? 'image' : 'video');
-    
+
     return uploadFile<any>('/api/media/upload', formData);
   },
-  
-  getFeed: (userId: string) => apiFetch<any[]>(`/api/feed/${userId}`),
-  
+
+  // NEW: getFeed now supports pagination
+  getFeed: (userId: string, page: number) => apiFetch<any[]>(`/api/feed/${userId}?page=${page}`),
+
   getUserPosts: (userId: string) => apiFetch<any[]>(`/api/posts/user/${userId}`),
-  
+
   deletePost: (postId: string) => apiFetch<void>(`/api/posts/${postId}`, {
     method: 'DELETE',
   }),
+    // Posts
+    createPost: (postData: {
+      user_id: string;
+      caption: string;
+      media_type: 'image' | 'video';
+      media_url: string;
+    }) =>
+      apiFetch<any>('/api/posts', {
+        method: 'POST',
+        body: JSON.stringify(postData),
+      }),
 };
