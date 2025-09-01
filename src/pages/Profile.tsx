@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/lib/api-client';
 import { toast } from 'sonner';
-import { Home, User, Settings, Plus, Edit, ArrowLeft, UserPlus, Info } from 'lucide-react'; // Added Info icon
+import { Home, User, Settings, Plus, Edit, ArrowLeft, UserPlus, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import './Profile.css';
 
@@ -39,7 +39,10 @@ interface Friend {
 }
 
 const Profile = () => {
-  const { user, signOut } = useAuth();
+  // Cast to any so we can optionally call setUser if your context exposes it
+  const authAny = useAuth() as any;
+  const { user, signOut } = authAny;
+
   const navigate = useNavigate();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [friends, setFriends] = useState<Friend[]>([]);
@@ -62,6 +65,12 @@ const Profile = () => {
     confirmPassword: '',
   });
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  // --- NEW: Local UI state for conference toggle ---
+  const [enableDialogOpen, setEnableDialogOpen] = useState(false);
+  const [disableConfirmOpen, setDisableConfirmOpen] = useState(false);
+  const [codeInput, setCodeInput] = useState('');
+  const [toggleBusy, setToggleBusy] = useState(false);
 
 
   useEffect(() => {
@@ -215,10 +224,71 @@ const Profile = () => {
     return name.split(' ').map(n => n.charAt(0)).join('').toUpperCase();
   };
 
+  // --- NEW: helper to merge updated user from API and keep camelCase flag available
+  function mergeUserFromServer(patch: any) {
+    if (!user) return;
+    const normalized = {
+      ...user,
+      ...patch,
+      isConferenceParticipant:
+        patch?.isConferenceParticipant ?? patch?.is_conference_participant ?? user.isConferenceParticipant ?? user.is_conference_participant ?? false,
+      is_conference_participant:
+        patch?.is_conference_participant ?? (patch?.isConferenceParticipant ?? user.isConferenceParticipant ?? user.is_conference_participant ?? false),
+    };
+    localStorage.setItem('user', JSON.stringify(normalized));
+    // If your AuthContext exposes setUser, update it so the whole app reacts immediately
+    authAny.setUser?.(normalized);
+  }
+
+  // --- NEW: enable conference (requires code)
+  const handleEnableConference = async () => {
+    if (!user?.id) return;
+    if (!codeInput.trim()) {
+      toast.error('Please enter a code.');
+      return;
+    }
+    try {
+      setToggleBusy(true);
+      // Optional: pre-verify for nicer error messages
+      await apiClient.verifyConferenceCode(codeInput.trim());
+      const updated = await apiClient.setConferenceParticipation(user.id, true, codeInput.trim());
+      mergeUserFromServer(updated);
+      toast.success('Testing United mode enabled!');
+      setEnableDialogOpen(false);
+      setCodeInput('');
+    } catch (e: any) {
+      toast.error(e.message || 'Invalid code');
+    } finally {
+      setToggleBusy(false);
+    }
+  };
+
+  // --- NEW: disable conference (no code; requires confirm)
+  const handleDisableConference = async () => {
+    if (!user?.id) return;
+    const ok = window.confirm(
+      "IF you switch to normal version, you will need to enter the code again next time. Are you sure?"
+    );
+    if (!ok) return;
+
+    try {
+      setToggleBusy(true);
+      const updated = await apiClient.setConferenceParticipation(user.id, false);
+      mergeUserFromServer(updated);
+      toast.success('Switched to normal version.');
+      setDisableConfirmOpen(false);
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to switch');
+    } finally {
+      setToggleBusy(false);
+    }
+  };
+
   if (!user) return null;
 
   const isFormView = ['edit', 'changeEmail', 'changePassword'].includes(view);
   const isSettingsView = ['settings', 'account'].includes(view);
+  const isParticipant = !!(user as any)?.isConferenceParticipant || !!(user as any)?.is_conference_participant;
 
   return (
     <div className={`profile-container ${isFormView || isSettingsView ? 'edit-mode' : ''}`}>
@@ -300,38 +370,88 @@ const Profile = () => {
             </div>
         )}
 
-        {/* 4. UPDATE Account view to include Change Password button */}
+        {/* Account view */}
         {view === 'account' && (
-            <div className="profile-settings-section">
-                <div className="settings-card">
-                    <h3 className="settings-card-title">Account Management</h3>
-                    <Button onClick={() => setView('changeEmail')} className="settings-button">
-                        Change Email Address
-                    </Button>
-                    <Button onClick={() => setView('changePassword')} className="settings-button">
-                        Change Password
-                    </Button>
-                </div>
-
-                 <Button onClick={handleSignOut} className="profile-signout-button">
-                    Sign Out
-                </Button>
-
-                <div className="profile-danger-zone">
-                    <h3 className="danger-zone-title">Danger Zone</h3>
-                    <p className="danger-zone-description">
-                        Deleting your account is a permanent action and cannot be undone.
-                    </p>
-                    <Button
-                        variant="destructive"
-                        onClick={handleDeleteAccount}
-                        disabled={isDeleting}
-                        className="profile-delete-button"
-                    >
-                        {isDeleting ? 'Deleting...' : 'Delete My Account'}
-                    </Button>
-                </div>
+          <div className="profile-settings-section">
+            <div className="settings-card">
+              <h3 className="settings-card-title">Account Management</h3>
+              <Button onClick={() => setView('changeEmail')} className="settings-button">
+                Change Email Address
+              </Button>
+              <Button onClick={() => setView('changePassword')} className="settings-button">
+                Change Password
+              </Button>
             </div>
+
+            {/* NEW: Testing United Mode card */}
+            <div className="settings-card" style={{ marginTop: 16 }}>
+              <h3 className="settings-card-title">Testing United Mode</h3>
+
+              {isParticipant ? (
+                <>
+                  <p className="text-sm opacity-80 mb-2">
+                    You are currently in the Testing United conference version.
+                  </p>
+                  <Button
+                    variant="destructive"
+                    onClick={handleDisableConference}
+                    disabled={toggleBusy}
+                  >
+                    {toggleBusy ? 'Switching...' : 'Switch to normal version'}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm opacity-80 mb-2">
+                    Enable conference features with your Testing United code.
+                  </p>
+
+                  {/* Simple inline "dialog": an input + button appears when you click Enable */}
+                  {!enableDialogOpen ? (
+                    <Button onClick={() => setEnableDialogOpen(true)} disabled={toggleBusy}>
+                      Switch to Testing United version
+                    </Button>
+                  ) : (
+                    <div className="auth-field-code" style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                      <Input
+                        type="text"
+                        value={codeInput}
+                        onChange={(e) => setCodeInput(e.target.value)}
+                        placeholder="Enter conference code"
+                        className="profile-edit-input"
+                        disabled={toggleBusy}
+                      />
+                      <Button type="button" onClick={handleEnableConference} disabled={toggleBusy}>
+                        {toggleBusy ? 'Enabling...' : 'Enable'}
+                      </Button>
+                      <Button type="button" variant="ghost" onClick={() => { setEnableDialogOpen(false); setCodeInput(''); }} disabled={toggleBusy}>
+                        Cancel
+                      </Button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            <Button onClick={handleSignOut} className="profile-signout-button" style={{ marginTop: 16 }}>
+              Sign Out
+            </Button>
+
+            <div className="profile-danger-zone">
+              <h3 className="danger-zone-title">Danger Zone</h3>
+              <p className="danger-zone-description">
+                Deleting your account is a permanent action and cannot be undone.
+              </p>
+              <Button
+                variant="destructive"
+                onClick={handleDeleteAccount}
+                disabled={isDeleting}
+                className="profile-delete-button"
+              >
+                {isDeleting ? 'Deleting...' : 'Delete My Account'}
+              </Button>
+            </div>
+          </div>
         )}
 
         {view === 'changeEmail' && (
@@ -364,11 +484,11 @@ const Profile = () => {
                     <Button type="submit" disabled={isChangingEmail} className="profile-save-button">
                         {isChangingEmail ? 'Sending...' : 'Request Change'}
                     </Button>
+
                 </form>
             </div>
         )}
 
-        {/* 5. CREATE the new 'Change Password' view */}
         {view === 'changePassword' && (
           <div className="profile-edit-section">
             <form onSubmit={handleChangePassword} className="settings-form">
@@ -464,32 +584,29 @@ const Profile = () => {
       </div>
 
       <div className="profile-bottom-nav">
-              <div className="profile-nav-container">
-                <button className="profile-nav-button profile-nav-button-inactive" onClick={() => navigate('/')}>
-                  <Home className="profile-nav-icon" />
-                </button>
+        <div className="profile-nav-container">
+          <button className="profile-nav-button profile-nav-button-inactive" onClick={() => navigate('/')}>
+            <Home className="profile-nav-icon" />
+          </button>
 
-                {/* Conditionally render the Info button for conference participants */}
-                {/* Conditionally render the Info button for conference participants */}
-                    {user?.isConferenceParticipant && (
-                      <button className="profile-nav-button profile-nav-button-inactive" onClick={() => navigate('/info')}>
-                        <Info className="profile-nav-icon" />
-                      </button>
-                    )}
+          {/* Info button only for conference participants */}
+          {isParticipant && (
+            <button className="profile-nav-button profile-nav-button-inactive" onClick={() => navigate('/info')}>
+              <Info className="profile-nav-icon" />
+            </button>
+          )}
 
+          <button className="info-page-nav-button info-page-nav-button-inactive" onClick={() => navigate('/')}>
+            <Plus className="info-page-nav-icon" />
+          </button>
 
-                <button className="info-page-nav-button info-page-nav-button-inactive" onClick={() => navigate('/')}>
-                            <Plus className="info-page-nav-icon" />
-                          </button>
+          <button className="profile-nav-button profile-nav-button-active">
+            <User className="profile-nav-icon" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
-                <button className="profile-nav-button profile-nav-button-active">
-                  <User className="profile-nav-icon" />
-                </button>
-              </div>
-            </div>
-          </div>
-        );
-      };
-
-      export default Profile;
-
+export default Profile;

@@ -18,10 +18,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
 
-  // signIn stays the same
   signIn: (email: string, password: string) => Promise<{ error?: Error }>;
-
-  // signUp now accepts the 5th param used by your Auth.tsx
   signUp: (
     email: string,
     password: string,
@@ -29,41 +26,49 @@ interface AuthContextType {
     agreedToTerms: boolean,
     isConferenceParticipant?: boolean
   ) => Promise<{ error?: Error }>;
-
   signOut: () => Promise<void>;
+
+  // NEW: expose setter so other pages can update the user immediately (e.g., TU toggle)
+  setUser?: (u: User | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// --- Normalizer: make sure we always have camelCase available on the frontend
+// Normalize backend user into a stable camelCase flag (but keep snake_case too)
 function normalizeUser(u: any): User | null {
   if (!u) return null;
   const isConferenceParticipant =
     u.isConferenceParticipant ?? u.is_conference_participant ?? false;
 
-  // return a user object that contains BOTH keys (harmless) and a stable camelCase
   return {
     ...u,
-    is_conference_participant: u.is_conference_participant ?? isConferenceParticipant,
+    is_conference_participant:
+      u.is_conference_participant ?? isConferenceParticipant,
     isConferenceParticipant,
   };
 }
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [_user, _setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // unified setter that also normalizes + persists
+  const setUser = (u: User | null) => {
+    const normalized = normalizeUser(u);
+    _setUser(normalized);
+    if (normalized) {
+      localStorage.setItem('user', JSON.stringify(normalized));
+    } else {
+      localStorage.removeItem('user');
+    }
+  };
 
   // Load user from localStorage on initial load (and normalize)
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       try {
-        const raw = JSON.parse(storedUser);
-        const normalized = normalizeUser(raw);
-        setUser(normalized);
-        if (normalized) {
-          localStorage.setItem('user', JSON.stringify(normalized));
-        }
+        setUser(JSON.parse(storedUser));
       } catch (e) {
         console.error('Failed to parse user from localStorage', e);
         localStorage.removeItem('user');
@@ -87,9 +92,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error(data.message || 'Login failed');
       }
 
-      const normalized = normalizeUser(data);
-      setUser(normalized);
-      localStorage.setItem('user', JSON.stringify(normalized));
+      setUser(data); // will normalize & persist
       return {};
     } catch (error: any) {
       console.error('Sign In Error:', error);
@@ -111,7 +114,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // send BOTH keys so your backend can read either style
+        // send BOTH keys so your backend can read either style if needed
         body: JSON.stringify({
           email,
           password,
@@ -128,12 +131,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error(data.message || 'Signup failed');
       }
 
-      // Most flows send users to login after signup. If you ever decide to store the
-      // returned user here, normalize first:
-      // const normalized = normalizeUser(data.user);
-      // setUser(normalized);
-      // localStorage.setItem('user', JSON.stringify(normalized));
-
+      // After signup you verify via email, then log in
       return {};
     } catch (error: any) {
       console.error('Sign Up Error:', error);
@@ -145,12 +143,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     setUser(null);
-    localStorage.removeItem('user');
     localStorage.removeItem('authToken');
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider
+      value={{
+        user: _user,
+        loading,
+        signIn,
+        signUp,
+        signOut,
+        setUser, // expose so Profile (and others) can update immediately
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

@@ -15,6 +15,7 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const isParticipant = !!(user?.isConferenceParticipant || user?.is_conference_participant);
 
   useEffect(() => {
       console.log("Index: useEffect triggered. authLoading:", authLoading, "user:", user ? user.id : "null");
@@ -87,14 +88,14 @@ console.log("Index: Displaying main content.");
 
               {/* 2. New Info Button */}
 {/* Info Button — visible only for conference participants */}
-{user?.isConferenceParticipant && (
-  <button
-    className="index-nav-button index-nav-button-inactive"
-    onClick={() => navigate('/info')}
-  >
-    <Info className="index-nav-icon" />
-  </button>
-)}
+  {isParticipant && (
+    <button
+      className="index-nav-button index-nav-button-inactive"
+      onClick={() => navigate('/info')}
+    >
+      <Info className="index-nav-icon" />
+    </button>
+  )}
 
               {/* Middle Button (Challenge Page - Active) */}
               <button className="index-nav-button index-nav-button-active">
