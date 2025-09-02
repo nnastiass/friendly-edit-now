@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Loader2, Volume2, VolumeX } from 'lucide-react';
+import { ArrowLeft, Loader2, Volume2, VolumeX, Home, User, Plus, Info } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { apiClient, API_BASE_URL } from '@/lib/api-client';
 import './Feed.css';
+import './Index.css'; // reuse bottom-nav styles from Index
 
 interface Post {
   id: string;
@@ -22,11 +23,16 @@ const Feed = () => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isMuted, setIsMuted] = useState(true); // Default muted
+  const [isMuted, setIsMuted] = useState(true);
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const feedRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef<{ [key: string]: HTMLVideoElement | null }>({});
+
+  // Same participant flag as Profile/Index
+  const isParticipant =
+    !!(user as any)?.isConferenceParticipant ||
+    !!(user as any)?.is_conference_participant;
 
   const fetchPosts = async (currentPage: number) => {
     if (!user) return;
@@ -94,22 +100,36 @@ const Feed = () => {
     });
   }, [currentIndex, posts, isMuted]);
 
-  if (authLoading) return <div className="flex items-center justify-center min-h-screen bg-black"><Loader2 className="h-8 w-8 text-white animate-spin" /></div>;
+  if (authLoading)
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-black">
+        <Loader2 className="h-8 w-8 text-white animate-spin" />
+      </div>
+    );
   if (!user) { navigate('/auth'); return null; }
 
   return (
     <div className="feed-container">
-      <div className="feed-mobile-frame" ref={feedRef}>
+      {/* Scrollable content area */}
+      <div
+        className="feed-mobile-frame"
+        ref={feedRef}
+        style={{ paddingBottom: '64px' }} // keep content above the fixed nav
+      >
         <div className="feed-layout">
           <div className="feed-overlay-header">
-            <button className="feed-back-button" onClick={() => navigate(-1)}><ArrowLeft className="h-5 w-5" /></button>
+            <button className="feed-back-button" onClick={() => navigate(-1)}>
+              <ArrowLeft className="h-5 w-5" />
+            </button>
             <h1 className="feed-title">Feed</h1>
           </div>
 
           {posts.length === 0 && !isLoading ? (
             <div className="feed-empty">
               <p className="feed-empty-text">Zatiaľ žiadne video príspevky od priateľov</p>
-              <p className="feed-empty-subtext">Ak chceš vidieť obsah, pridaj si priateľov, alebo popros priateľa, aby pridal video.</p>
+              <p className="feed-empty-subtext">
+                Ak chceš vidieť obsah, pridaj si priateľov, alebo popros priateľa, aby pridal video.
+              </p>
             </div>
           ) : (
             posts.map((post, idx) => (
@@ -123,15 +143,17 @@ const Feed = () => {
                     ref={(el) => (videoRefs.current[post.id] = el)}
                   />
                 ) : (
-                  <img src={`${API_BASE_URL}${post.mediaUrl}`} alt={post.challengeTitle || 'Photo'} className="feed-image" loading="lazy"/>
+                  <img
+                    src={`${API_BASE_URL}${post.mediaUrl}`}
+                    alt={post.challengeTitle || 'Photo'}
+                    className="feed-image"
+                    loading="lazy"
+                  />
                 )}
 
                 {/* Mute button overlay */}
                 {post.mediaType === 'video' && currentIndex === idx && (
-                  <button
-                    className="feed-mute-button"
-                    onClick={() => setIsMuted((prev) => !prev)}
-                  >
+                  <button className="feed-mute-button" onClick={() => setIsMuted((prev) => !prev)}>
                     {isMuted ? <VolumeX /> : <Volume2 />}
                   </button>
                 )}
@@ -149,8 +171,55 @@ const Feed = () => {
             ))
           )}
 
-          {isLoading && hasMore && <div className="feed-loading-more"><Loader2 className="h-6 w-6 text-white animate-spin"/></div>}
-          {!hasMore && posts.length > 0 && <div className="feed-end-of-feed"><p>You reached the end</p></div>}
+          {isLoading && hasMore && (
+            <div className="feed-loading-more">
+              <Loader2 className="h-6 w-6 text-white animate-spin" />
+            </div>
+          )}
+          {!hasMore && posts.length > 0 && (
+            <div className="feed-end-of-feed">
+              <p>You reached the end</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Fixed Bottom Navigation Bar (outside scroll area) */}
+      <div className="index-bottom-nav">
+        <div className="index-nav-container">
+          {/* Left Button (Feed page - active here) */}
+          <button
+            className="index-nav-button index-nav-button-active"
+            onClick={() => navigate('/feed')}
+          >
+            <Home className="index-nav-icon" />
+          </button>
+
+          {/* Info button only for conference participants */}
+          {isParticipant && (
+            <button
+              className="index-nav-button index-nav-button-inactive"
+              onClick={() => navigate('/info')}
+            >
+              <Info className="index-nav-icon" />
+            </button>
+          )}
+
+          {/* Middle Button (Challenge/Main) */}
+          <button
+            className="index-nav-button index-nav-button-inactive"
+            onClick={() => navigate('/')}
+          >
+            <Plus className="index-nav-icon" />
+          </button>
+
+          {/* Right Button (Profile) */}
+          <button
+            className="index-nav-button index-nav-button-inactive"
+            onClick={() => navigate('/profile')}
+          >
+            <User className="index-nav-icon" />
+          </button>
         </div>
       </div>
     </div>

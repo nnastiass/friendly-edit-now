@@ -115,6 +115,7 @@
 .info-page-main-content {
   flex: 1;
   overflow-y: auto;
+  padding-bottom: 5rem;           /* equal to bar height */
 }
 
 .info-hero-section {

@@ -82,13 +82,13 @@ const InfoPage = () => {
       {/* Bottom Navigation */}
       <div className="info-page-bottom-nav">
         <div className="info-page-nav-container">
-          <button className="info-page-nav-button info-page-nav-button-inactive" onClick={() => { /* TODO */ }}>
+          <button className="info-page-nav-button info-page-nav-button-inactive" onClick={() => navigate('/feed')}>
             <Home className="info-page-nav-icon" />
           </button>
           <button className="info-page-nav-button info-page-nav-button-active">
             <Info className="info-page-nav-icon" />
           </button>
-          <button className="info-page-nav-button info-page-nav-button-inactive" onClick={() => navigate('/')}>
+          <button className="info-page-nav-button info-page-nav-button-inactive" onClick={() => navigate('/feed')}>
             <Plus className="info-page-nav-icon" />
           </button>
           <button className="info-page-nav-button info-page-nav-button-inactive" onClick={() => navigate('/profile')}>

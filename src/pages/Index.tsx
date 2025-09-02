@@ -18,23 +18,21 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const isParticipant =
+    !!(user as any)?.isConferenceParticipant ||
+    !!(user as any)?.is_conference_participant;
+
 
   useEffect(() => {
-      console.log("Index: useEffect triggered. authLoading:", authLoading, "user:", user ? user.id : "null");
-      if (!authLoading) {
-        if (!user) {
-          console.log("Index: No user found, navigating to /auth.");
-          navigate('/auth');
-        } else {
-          console.log("Index: User found, starting 1.5s content loading timer.");
-          const timer = setTimeout(() => {
-            setIsLoading(false);
-            console.log("Index: Content loading timer finished. isLoading set to false.");
-          }, 1500);
-          return () => clearTimeout(timer);
-        }
+    if (!authLoading) {
+      if (!user) {
+        navigate('/auth');
+      } else {
+        setIsLoading(false); // 🚀 no delay
       }
-    }, [user, authLoading, navigate]);
+    }
+  }, [user, authLoading, navigate]);
+
 
     console.log("Index: Rendering. authLoading:", authLoading, "isLoading:", isLoading, "user:", user ? user.id : "null");
 
@@ -114,12 +112,17 @@ console.log("Index: Displaying main content.");
               </button>
 
               {/* 2. New Info Button */}
-                                          <button
-                                            className="index-nav-button index-nav-button-inactive"
-                                            onClick={() => navigate('/info')}
-                                          >
-                                            <Info className="index-nav-icon" />
-                                          </button>
+{/* Info button only for conference participants */}
+{isParticipant && (
+  <button
+    className="index-nav-button index-nav-button-inactive"
+    onClick={() => navigate('/info')}
+  >
+    <Info className="index-nav-icon" />
+  </button>
+)}
+
+
 
               {/* Middle Button (Challenge Page - Active) */}
               <button className="index-nav-button index-nav-button-active">

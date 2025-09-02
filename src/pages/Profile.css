@@ -43,11 +43,24 @@
 .profile-container:has(.settings-list) { /* Simplified selector */
   background-image: radial-gradient(ellipse 50% 45% at 50% 45%, var(--primary-accent), transparent);
   background-repeat: no-repeat;
+  min-height: 100vh;
 }
 
 .profile-container.edit-mode {
-    background-image: none !important;
+  /* your exact gradient */
+  background-image: radial-gradient(
+    ellipse 50% 45% at 50% 45%,
+    rgba(255, 0, 70, 0.6),   /* 60% opacity red */
+    transparent
+  );
+  background-color: #000;          /* base fill */
+  background-repeat: no-repeat;
+  background-position: center;      /* keep focal point centered */
+  background-size: cover;           /* cover the viewport */
+  /* optional: pin the gradient to the viewport for smoother feel */
+  background-attachment: fixed;
 }
+
 
 .profile-main-content {
   flex: 1;
@@ -182,13 +195,65 @@
 /* ========================================
    SETTINGS & EDIT VIEWS
    ======================================== */
+/* Subpage header (match FriendRequests) */
+.profile-subpage-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  position: relative;
+  text-align: center;
+}
+
+.profile-subpage-back-button {
+  position: absolute;
+  left: 1.25rem;  /* adjust to taste */
+  top: 1.25rem;
+  color: var(--primary-accent) !important; /* same red you use */
+  background: transparent !important;
+}
+
+.profile-subpage-back-button svg {
+  width: 24px;
+  height: 24px;
+  stroke-width: 2.5;
+}
+
+.profile-subpage-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+/* ensure content doesn't hide under fixed bottom bar */
+.profile-main-content {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 5rem; /* matches your fixed nav height */
+}
+.view-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: center;
+
+}
+/* Hide the gradient header on subpages (edit/settings/account/etc.) */
+.edit-mode .profile-header-gradient {
+  display: none;
+}
+
+/* Optional: if you need to pull content up a bit on subpages */
+.edit-mode .profile-main-content {
+  padding-top: 1rem; /* adjust or remove if not needed */
+}
 
 .profile-settings-section,
 .profile-edit-section {
-    padding: 2rem 1.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem; /* Reduced gap for tighter button list */
+
+  padding: 1.5rem;
+  border-radius: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .view-title {
@@ -227,6 +292,14 @@
     width: 18vh !important;
     margin: 1rem auto 0;
 }
+/* Apply full-screen gradient background to all subpages (edit/settings/account/etc.) */
+.edit-mode {
+  background-image: radial-gradient(ellipse 50% 45% at 50% 45%, #FF0046, transparent);
+  background-color: #000; /* fallback base color */
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
 
 /* Settings List Styles */
 .settings-list {
@@ -235,33 +308,20 @@
     gap: 1rem;
 }
 
-.settings-button {
-    width: 100%;
-    padding: 1rem 1.5rem !important;
-    background-color: var(--background-button-translucent) ;
-    color: var(--text-light) !important;
-    border: none !important;
-    border-radius: 1rem !important;
-    text-align: left ;
-    justify-content: flex-start !important;
-    font-size: 1rem !important;
-    transition: background-color 0.2s ease;
+.settings-button,
+.profile-signout-button,
+.profile-delete-button,
+.settings-card button {
+  background-color: rgba(255, 0, 70, 0.3) !important;
+  color: #fff;
+  width: 100%;
+  border-radius: 999rem;
+  text-align: center;
+  font-weight: 500;
+  transition: background 0.2s ease;
 }
 
 /* === UPDATED RULES FOR CENTERING === */
-.profile-signout-button,
-.profile-delete-button {
-    width: 100%;
-    padding: 1rem 1.5rem !important;
-    background-color: var(--background-button-translucent) ;
-    color: var(--text-light) !important;
-    border: none !important;
-    border-radius: 1rem !important;
-    text-align: center !important; /* Center text */
-    justify-content: center !important; /* Center content */
-    font-size: 1rem !important;
-    transition: background-color 0.2s ease;
-}
 
 .profile-delete-button{
     background: transparent !important;
@@ -273,12 +333,22 @@
     background-color: var(--background-hover-light) !important;
 }
 
+
 /* Make delete button text red */
 .profile-delete-button {
     color: var(--danger-red-bright) !important;
 }
 
-
+.settings-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;     /* ⬅ center horizontally */
+  justify-content: center;
+  text-align: center;
+  gap: 1rem;
+  width: 100%;
+  margin: 1rem 0;
+}
 /* Friends List */
 .friends-list-section {
   padding: 1vh 0.2rem;

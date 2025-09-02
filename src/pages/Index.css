@@ -153,56 +153,64 @@ html, body, #root {
 
 
 /* Bottom Navigation */
+/* Bottom Navigation — unified across pages (black variant) */
 .index-bottom-nav {
-  height: 10vh; /* Responsive height */
-  min-height: 5rem; /* Ensure it's not too small */
-  flex-shrink: 0;
-  background-color: black;
-  padding: 0; /* Removed padding */
+  position: fixed;
+  bottom: 0;              /* stick to the very bottom */
+  left: 0;
+  right: 0;
+  height: 5rem;           /* match InfoPage height */
+  background: #000;       /* black for non-Info pages */
+  z-index: 100;
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
 }
 
 .index-nav-container {
-  display: flex;
-  justify-content: space-evenly; /* Changed for better spacing */
   width: 100%;
+  max-width: 26rem;       /* same phone-frame width as Index */
+  margin: 0 auto;
+  height: 100%;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   align-items: center;
+  gap: 8px;
+  padding: 0 12px;
 }
 
 .index-nav-button {
-  background: none;
+  width: 100%;
+  height: 44px;
+  border-radius: 9999px;
   border: none;
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  padding: 1.3rem;
 }
 
-/* Style for the active middle button */
+/* Active / inactive states */
 .index-nav-button-active {
-    color: #FF0046; /* Pink color for the '+' */
-}
+  color: #FF0046;                /* active icon tint for non-Info pages */
 
-/* Style for inactive, outlined icons */
+}
 .index-nav-button-inactive {
   color: white;
   transition: color 0.2s ease;
 }
-
 .index-nav-button-inactive:hover {
-  color: #a1a1aa; /* A light gray for hover */
+  color: #a1a1aa;
 }
 
-/* General icon styling */
+/* Icons — unified sizing */
 .index-nav-icon {
   height: 1.8rem;
   width: 1.8rem;
   stroke-width: 1.5;
 }
-.index-nav-container > .index-nav-button:nth-child(2) .index-nav-icon {
-  height: 2.2rem;
-  width: 2.2rem;
-}
+
 /* Loading State (from your old file, kept for consistency) */
 .index-loading {
   height: 100vh;

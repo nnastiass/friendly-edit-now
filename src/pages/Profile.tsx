@@ -9,6 +9,8 @@ import { toast } from 'sonner';
 import { Home, User, Settings, Plus, Edit, ArrowLeft, UserPlus, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import './Profile.css';
+import './Index.css';
+
 
 // --- HELPER FUNCTION ---
 const pastelColors = [
@@ -47,7 +49,10 @@ const Profile = () => {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [friends, setFriends] = useState<Friend[]>([]);
   const [friendCount, setFriendCount] = useState(0);
-  const [view, setView] = useState<'profile' | 'edit' | 'settings' | 'account' | 'changeEmail' | 'changePassword'>('profile');
+  const [view, setView] = useState<
+    'profile' | 'edit' | 'settings' | 'account' | 'changeEmail' | 'changePassword' | 'conference'
+  >('profile');
+
   const [loading, setLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -71,6 +76,7 @@ const Profile = () => {
   const [disableConfirmOpen, setDisableConfirmOpen] = useState(false);
   const [codeInput, setCodeInput] = useState('');
   const [toggleBusy, setToggleBusy] = useState(false);
+const [showTUSettings, setShowTUSettings] = useState(false);
 
 
   useEffect(() => {
@@ -209,15 +215,17 @@ const Profile = () => {
   }
 
   const getTitleForView = () => {
-    switch(view) {
-        case 'edit': return 'Edit Profile';
-        case 'settings': return 'Settings';
-        case 'account': return 'Account';
-        case 'changeEmail': return 'Change Email';
-        case 'changePassword': return 'Change Password';
-        default: return '';
+    switch (view) {
+      case 'edit': return 'Edit Profile';
+      case 'settings': return 'Settings';
+      case 'account': return 'Account';
+      case 'changeEmail': return 'Change Email';
+      case 'changePassword': return 'Change Password';
+      case 'conference': return 'Testing United';
+      default: return '';
     }
-  }
+  };
+
 
   const getInitials = (name: string | null) => {
     if (!name) return user?.email?.charAt(0).toUpperCase() || 'U';
@@ -294,7 +302,7 @@ const Profile = () => {
     <div className={`profile-container ${isFormView || isSettingsView ? 'edit-mode' : ''}`}>
       <div className="profile-main-content">
         <div className="profile-header-gradient">
-          {view === 'profile' ? (
+          {view === 'profile' && (
             <>
               <Button variant="ghost" size="icon" className="profile-edit-button" onClick={() => setView('edit')}>
                 <Edit className="h-6 w-6" />
@@ -303,34 +311,35 @@ const Profile = () => {
                 <Settings className="h-6 w-6" />
               </Button>
             </>
-          ) : (
-            <Button variant="ghost" size="icon" className="profile-back-button" onClick={handleBackNavigation}>
-              <ArrowLeft className="h-6 w-6" />
-            </Button>
           )}
+
 
           {view === 'profile' && (
             <>
               <Avatar className="profile-avatar">
-                <AvatarImage src={profile?.avatar_url || ''} />
-                <AvatarFallback
-                  className="profile-avatar-fallback"
-                  style={{ backgroundColor: generatePastelColor(profile?.id || '') }}
-                >
-                  {getInitials(profile?.full_name)}
-                </AvatarFallback>
-              </Avatar>
+                    <AvatarImage src={profile?.avatar_url || ''} />
+                    <AvatarFallback
+                      className="profile-avatar-fallback"
+                      style={{ backgroundColor: generatePastelColor(profile?.id || '') }}
+                    >
+                      {getInitials(profile?.full_name)}
+                    </AvatarFallback>
+                  </Avatar>
               <h1 className="profile-name">{profile?.full_name || 'Your Name'}</h1>
               <p className="profile-username">@{profile?.username || 'username'}</p>
             </>
           )}
-
-          {view !== 'profile' && (
-             <h1 className="view-title">
-              {getTitleForView()}
-            </h1>
-          )}
         </div>
+        {view !== 'profile' && (
+          <div className="friend-requests-page-header">
+            <Button onClick={handleBackNavigation} variant="ghost" size="icon" className="friend-requests-page-back-button">
+              <ArrowLeft />
+            </Button>
+            <h1 className="friend-requests-page-title">{getTitleForView()}</h1>
+          </div>
+        )}
+
+
 
         {view === 'edit' && (
           <div className="profile-edit-section">
@@ -361,87 +370,101 @@ const Profile = () => {
         )}
 
         {view === 'settings' && (
-            <div className="profile-settings-section">
-                <div className="settings-list">
-                    <Button onClick={() => setView('account')} className="settings-button">
-                        Account
-                    </Button>
-                </div>
+          <div className="profile-settings-section">
+            <div className="settings-list">
+              <Button onClick={() => setView('account')} className="settings-button">
+                Account
+              </Button>
+
+              {/* NEW: Testing United toggle button */}
+              <Button
+                onClick={() => setShowTUSettings((v) => !v)}
+                className="settings-button"
+              >
+                Testing United
+              </Button>
             </div>
+
+            {/* NEW: Testing United panel (same content as was in Account) */}
+            {showTUSettings && (
+              <div className="settings-card" style={{ marginTop: 16, textAlign: 'center' }}>
+                {isParticipant ? (
+                  <>
+                    <p className="text-sm opacity-80 mb-2">
+                      You are currently in the Testing United conference version.
+                    </p>
+                    <Button
+                      onClick={handleDisableConference}
+                      disabled={toggleBusy}
+                      className="settings-button"
+                    >
+                      {toggleBusy ? 'Switching...' : 'Switch to normal version'}
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm opacity-80 mb-2">
+                      Enable conference features with your Testing United code.
+                    </p>
+
+                    {!enableDialogOpen ? (
+                      <Button onClick={() => setEnableDialogOpen(true)} disabled={toggleBusy} className="settings-button">
+                        Switch to Testing United version
+                      </Button>
+                    ) : (
+                      <div className="auth-field-code" style={{ display: 'flex', gap: 8, marginTop: 8, justifyContent: 'center' }}>
+                        <Input
+                          type="text"
+                          value={codeInput}
+                          onChange={(e) => setCodeInput(e.target.value)}
+                          placeholder="Enter conference code"
+                          className="profile-edit-input"
+                          disabled={toggleBusy}
+                          style={{ maxWidth: 260 }}
+                        />
+                        <Button type="button" onClick={handleEnableConference} disabled={toggleBusy} className="settings-button">
+                          {toggleBusy ? 'Enabling...' : 'Enable'}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => { setEnableDialogOpen(false); setCodeInput(''); }}
+                          disabled={toggleBusy}
+                          className="settings-button"
+                          style={{ maxWidth: 180 }}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         )}
 
         {/* Account view */}
         {view === 'account' && (
           <div className="profile-settings-section">
             <div className="settings-card">
-              <h3 className="settings-card-title">Account Management</h3>
               <Button onClick={() => setView('changeEmail')} className="settings-button">
                 Change Email Address
               </Button>
               <Button onClick={() => setView('changePassword')} className="settings-button">
                 Change Password
               </Button>
+
+<Button onClick={handleSignOut} className="profile-signout-button">
+                              Sign Out
+                            </Button>
             </div>
 
-            {/* NEW: Testing United Mode card */}
-            <div className="settings-card" style={{ marginTop: 16 }}>
-              <h3 className="settings-card-title">Testing United Mode</h3>
 
-              {isParticipant ? (
-                <>
-                  <p className="text-sm opacity-80 mb-2">
-                    You are currently in the Testing United conference version.
-                  </p>
-                  <Button
-                    variant="destructive"
-                    onClick={handleDisableConference}
-                    disabled={toggleBusy}
-                  >
-                    {toggleBusy ? 'Switching...' : 'Switch to normal version'}
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <p className="text-sm opacity-80 mb-2">
-                    Enable conference features with your Testing United code.
-                  </p>
-
-                  {/* Simple inline "dialog": an input + button appears when you click Enable */}
-                  {!enableDialogOpen ? (
-                    <Button onClick={() => setEnableDialogOpen(true)} disabled={toggleBusy}>
-                      Switch to Testing United version
-                    </Button>
-                  ) : (
-                    <div className="auth-field-code" style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                      <Input
-                        type="text"
-                        value={codeInput}
-                        onChange={(e) => setCodeInput(e.target.value)}
-                        placeholder="Enter conference code"
-                        className="profile-edit-input"
-                        disabled={toggleBusy}
-                      />
-                      <Button type="button" onClick={handleEnableConference} disabled={toggleBusy}>
-                        {toggleBusy ? 'Enabling...' : 'Enable'}
-                      </Button>
-                      <Button type="button" variant="ghost" onClick={() => { setEnableDialogOpen(false); setCodeInput(''); }} disabled={toggleBusy}>
-                        Cancel
-                      </Button>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-
-            <Button onClick={handleSignOut} className="profile-signout-button" style={{ marginTop: 16 }}>
-              Sign Out
-            </Button>
 
             <div className="profile-danger-zone">
-              <h3 className="danger-zone-title">Danger Zone</h3>
-              <p className="danger-zone-description">
-                Deleting your account is a permanent action and cannot be undone.
-              </p>
+
+
               <Button
                 variant="destructive"
                 onClick={handleDeleteAccount}
@@ -583,28 +606,39 @@ const Profile = () => {
         )}
       </div>
 
-      <div className="profile-bottom-nav">
-        <div className="profile-nav-container">
-          <button className="profile-nav-button profile-nav-button-inactive" onClick={() => navigate('/')}>
-            <Home className="profile-nav-icon" />
+      {/* Bottom Navigation — shared structure */}
+      <div className="index-bottom-nav">
+        <div className="index-nav-container">
+          <button
+            className="index-nav-button index-nav-button-inactive"
+            onClick={() => navigate('/feed')}
+          >
+            <Home className="index-nav-icon" />
           </button>
 
-          {/* Info button only for conference participants */}
+          {/* Info only for Testing United participants */}
           {isParticipant && (
-            <button className="profile-nav-button profile-nav-button-inactive" onClick={() => navigate('/info')}>
-              <Info className="profile-nav-icon" />
+            <button
+              className="index-nav-button index-nav-button-inactive"
+              onClick={() => navigate('/info')}
+            >
+              <Info className="index-nav-icon" />
             </button>
           )}
 
-          <button className="info-page-nav-button info-page-nav-button-inactive" onClick={() => navigate('/')}>
-            <Plus className="info-page-nav-icon" />
+          <button
+            className="index-nav-button index-nav-button-inactive"
+            onClick={() => navigate('/')}
+          >
+            <Plus className="index-nav-icon" />
           </button>
 
-          <button className="profile-nav-button profile-nav-button-active">
-            <User className="profile-nav-icon" />
+          <button className="index-nav-button index-nav-button-active">
+            <User className="index-nav-icon" />
           </button>
         </div>
       </div>
+
     </div>
   );
 };
