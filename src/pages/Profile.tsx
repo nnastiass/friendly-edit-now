@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/lib/api-client'; // Import the centralized API client
 import { toast } from 'sonner';
-import { Home, User, Settings, Plus, Edit, ArrowLeft, UserPlus } from 'lucide-react';
+import { Home, User, Settings, Plus, Edit, ArrowLeft, UserPlus, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import './Profile.css';
 
@@ -267,6 +267,13 @@ const Profile = () => {
           <button className="profile-nav-button profile-nav-button-inactive" onClick={() => navigate('/feed')}>
             <Home className="profile-nav-icon" />
           </button>
+            {/* 2. New Info Button */}
+                                                      <button
+                                                        className="index-nav-button index-nav-button-inactive"
+                                                        onClick={() => navigate('/info')}
+                                                      >
+                                                        <Info className="index-nav-icon" />
+                                                      </button>
           <button className="profile-nav-button profile-nav-button-inactive" onClick={() => navigate('/')}>
             <Plus className="profile-nav-icon" />
           </button>

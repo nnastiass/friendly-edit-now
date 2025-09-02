@@ -12,7 +12,9 @@ import AddFriends from './pages/AddFriends';
 import FriendsList from './pages/FriendsList';
 import FriendRequests from './pages/FriendRequests';
 import Feed from './pages/Feed';
-
+import InfoPage from "./pages/InfoPage"; // 1. Import the new page
+import ProgramPage from "./pages/ProgramPage"; // 1. Import the new page
+import SpeakersPage from "./pages/SpeakersPage"; //
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -30,6 +32,9 @@ const App = () => (
             <Route path="/add-friends" element={<AddFriends />} />
             <Route path="/friends" element={<FriendsList />} />
             <Route path="/friend-requests" element={<FriendRequests />} />
+            <Route path="/info" element={<InfoPage />} />
+            <Route path="/program" element={<ProgramPage />} />
+            <Route path="/speakers" element={<SpeakersPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
