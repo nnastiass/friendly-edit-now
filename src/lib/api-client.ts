@@ -4,7 +4,7 @@
 // This should be your development machine's IP address and the port your Docker API exposes
 // For example: 'http://192.168.0.138:3000' or 'http://localhost:3000' if running on web browser dev server
 // Remember to change this when building for production!
-export const API_BASE_URL = 'http://10.2.8.191:3000';
+export const API_BASE_URL = 'http://192.168.5.81:3000';
 
 // A generic helper function for making API requests
 async function apiFetch<T>(
@@ -16,26 +16,21 @@ async function apiFetch<T>(
     headers: {
       'Content-Type': 'application/json',
       ...options?.headers,
-      // Add Authorization header here if your API requires it (e.g., Bearer Token)
-      // 'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
     },
   });
 
   if (!response.ok) {
     let errorData: any = {};
     try {
-      // Try to parse JSON error response
       errorData = await response.json();
     } catch (e) {
-      // If not JSON, use response text or default message
       errorData.message = await response.text();
     }
-    throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    throw new Error(errorData.message || `HTTP error ${response.status}`);
   }
 
-  // Handle cases where the API might return no content (e.g., DELETE requests)
   if (response.status === 204) {
-    return {} as T; // Return an empty object for no-content responses
+    return {} as T;
   }
 
   return response.json();
@@ -69,30 +64,71 @@ async function uploadFile<T>(
   return response.json();
 }
 
+
 // Define specific API client methods
 export const apiClient = {
-  // Profiles
-  getProfile: (userId: string) => apiFetch<any>(`/api/profiles/${userId}`),
-  updateProfile: (userId: string, data: { full_name?: string; username?: string; streak?: number }) =>
-    apiFetch<any>(`/api/profiles/${userId}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    }),
-
   // Authentication
   signIn: (email: string, password: string) =>
     apiFetch<any>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     }),
-  signUp: (email: string, password: string, username: string) =>
+  signUp: (email: string, password: string, username: string, agreedToTerms: boolean, isConferenceParticipant: boolean) =>
     apiFetch<any>('/api/auth/signup', {
       method: 'POST',
-      body: JSON.stringify({ email, password, username }),
+      body: JSON.stringify({ email, password, username, agreedToTerms, isConferenceParticipant }),
+    }),
+  verifyEmail: (token: string) =>
+    apiFetch<any>(`/api/auth/verify?token=${token}`),
+  forgotPassword: (email: string) =>
+    apiFetch<any>('/api/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    }),
+  resetPassword: (token: string, newPassword: string, confirmPassword: string) =>
+    apiFetch<any>('/api/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token, newPassword, confirmPassword }),
+    }),
+
+  // Profiles & Settings
+  getProfile: (userId: string) => apiFetch<any>(`/api/profiles/${userId}`),
+  updateProfile: (userId: string, data: { full_name?: string; username?: string; streak?: number; daily_challenge_index?: number }) =>
+    apiFetch<any>(`/api/profiles/${userId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  deleteProfile: (userId: string) =>
+    apiFetch<void>(`/api/profiles/${userId}`, {
+      method: 'DELETE',
+    }),
+  changePassword: (userId: string, currentPassword: string, newPassword: string, confirmPassword: string) =>
+    apiFetch<any>('/api/profiles/${userId}/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
+    }),
+  requestEmailChange: (userId: string, newEmail: string, currentPassword: string) =>
+    apiFetch<any>(`/api/profiles/${userId}/change-email`, {
+      method: 'POST',
+      body: JSON.stringify({ newEmail, currentPassword }),
+    }),
+  confirmEmailChange: (token: string) =>
+    apiFetch<any>(`/api/profiles/confirm-email-change?token=${token}`),
+  searchUsers: () => apiFetch<any[]>('/api/profiles'),
+
+  // Conference
+  verifyConferenceCode: (code: string) =>
+    apiFetch<any>('/api/auth/verify-conference-code', {
+      method: 'POST',
+      body: JSON.stringify({ code }),
+    }),
+  setConferenceParticipation: (userId: string, enable: boolean, code?: string) =>
+    apiFetch<any>('/api/conference/participation', {
+      method: 'POST',
+      body: JSON.stringify({ userId, enable, code }),
     }),
 
   // Friends & Friend Requests
-  searchUsers: () => apiFetch<any[]>('/api/profiles'), // Assumes /api/profiles returns all users for client-side filtering
   getFriends: (userId: string) => apiFetch<any[]>(`/api/friends/${userId}`),
   deleteFriend: (userId: string, friendId: string) =>
     apiFetch<void>(`/api/friends/${userId}/${friendId}`, {
@@ -100,7 +136,7 @@ export const apiClient = {
     }),
   getFriendRequests: (userId: string) => apiFetch<any[]>(`/api/friend-requests/${userId}`),
   sendFriendRequest: (senderId: string, receiverId: string) =>
-    apiFetch<any>('/api/friend-requests/send', { // Assuming this endpoint exists
+    apiFetch<any>('/api/friend-requests/send', {
       method: 'POST',
       body: JSON.stringify({ sender_id: senderId, receiver_id: receiverId }),
     }),
@@ -109,12 +145,41 @@ export const apiClient = {
       method: 'POST',
       body: JSON.stringify({ requestId, action }),
     }),
-  getSentFriendRequests: (userId: string) => apiFetch<any[]>(`/api/friend-requests/sent/${userId}`), // Assuming this endpoint exists
+  getSentFriendRequests: (userId: string) => apiFetch<any[]>(`/api/friend-requests/sent/${userId}`),
 
   // Leaderboard
   getLeaderboard: (userId: string) => apiFetch<any[]>(`/api/leaderboard/${userId}`),
 
-  // Media Upload & Feed
+  // Posts
+  createPost: (postData: { user_id: string; caption: string; media_type: 'image' | 'video'; media_url: string }) =>
+    apiFetch<any>('/api/posts', {
+      method: 'POST',
+      body: JSON.stringify(postData),
+    }),
+  getUserPosts: (userId: string) => apiFetch<any[]>(`/api/posts/${userId}`),
+  deletePost: (postId: string) =>
+    apiFetch<void>(`/api/posts/${postId}`, {
+      method: 'DELETE',
+    }),
+  getFeed: (userId: string, page: number) => apiFetch<any[]>(`/api/feed/${userId}?page=${page}`),
+
+  // Comments
+  addComment: (postId: string, userId: string, content: string) =>
+    apiFetch<any>('/api/comments', {
+      method: 'POST',
+      body: JSON.stringify({ post_id: postId, user_id: userId, content }),
+    }),
+  getComments: (postId: string) => apiFetch<any[]>(`/api/posts/${postId}/comments`),
+
+  // Approvals
+  addApproval: (postId: string, userId: string, status: string) =>
+    apiFetch<any>('/api/approvals', {
+      method: 'POST',
+      body: JSON.stringify({ post_id: postId, user_id: userId, status }),
+    }),
+  getApprovals: (postId: string) => apiFetch<any>(`/api/posts/${postId}/approvals`),
+
+  // Media Upload
   uploadMedia: (userId: string, file: File, challengeTitle: string) => {
     const formData = new FormData();
     formData.append('file', file);
@@ -124,24 +189,4 @@ export const apiClient = {
 
     return uploadFile<any>('/api/media/upload', formData);
   },
-
-  // NEW: getFeed now supports pagination
-  getFeed: (userId: string, page: number) => apiFetch<any[]>(`/api/feed/${userId}?page=${page}`),
-
-  getUserPosts: (userId: string) => apiFetch<any[]>(`/api/posts/user/${userId}`),
-
-  deletePost: (postId: string) => apiFetch<void>(`/api/posts/${postId}`, {
-    method: 'DELETE',
-  }),
-    // Posts
-    createPost: (postData: {
-      user_id: string;
-      caption: string;
-      media_type: 'image' | 'video';
-      media_url: string;
-    }) =>
-      apiFetch<any>('/api/posts', {
-        method: 'POST',
-        body: JSON.stringify(postData),
-      }),
 };
