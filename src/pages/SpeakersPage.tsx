@@ -113,21 +113,26 @@ const SpeakersPage = () => {
 
       {/* Header */}
       <header className="speakers-page-header">
-        <Button onClick={handleBack} variant="ghost" size="icon" className="speakers-page-back-button">
-          <ArrowLeft />
-        </Button>
+        {/* Back button stays absolute on the left */}
+
+
+        {/* Real logo, same as other pages */}
         <div className="logo-placeholder">
-          <svg width="150" height="30" viewBox="0 0 150 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <text x="10" y="20" fontFamily="Arial, sans-serif" fontSize="16" fill="white">Your Logo</text>
-          </svg>
+          <img
+            src="/images/logo/testing united.webp"
+            alt="Testing United Logo"
+            className="speakers-page-logo"
+          />
         </div>
+
         <Button variant="ghost" size="icon" onClick={handleMenuToggle} className="menu-toggle-button">
-            <div className={`menu-icon-wrapper ${isMenuOpen ? 'open' : ''}`}>
-                <Menu className="menu-hamburger-icon" />
-                <X className="menu-close-icon" />
-            </div>
+          <div className={`menu-icon-wrapper ${isMenuOpen ? 'open' : ''}`}>
+            <Menu className="menu-hamburger-icon" />
+            <X className="menu-close-icon" />
+          </div>
         </Button>
       </header>
+
 
       {/* Main Content */}
       <div className="speakers-page-main-content">
@@ -158,22 +163,36 @@ const SpeakersPage = () => {
       </div>
 
       {/* Bottom Navigation */}
-      <div className="speakers-page-bottom-nav">
-        <div className="speakers-page-nav-container">
-          <button className="speakers-page-nav-button" onClick={() => navigate('/info')}>
-            <Home className="speakers-page-nav-icon" />
+      {/* Bottom Navigation */}
+      <div className="info-page-bottom-nav">
+        <div className="info-page-nav-container">
+          <button
+            className="info-page-nav-button info-page-nav-button-inactive"
+            onClick={() => navigate('/feed')}
+          >
+            <Home className="info-page-nav-icon" />
           </button>
-          <button className="speakers-page-nav-button speakers-page-nav-button-active">
-            <Info className="speakers-page-nav-icon" />
+          <button
+            className="info-page-nav-button info-page-nav-button-active"
+            onClick={() => navigate('/info')}
+          >
+            <Info className="info-page-nav-icon" />
           </button>
-          <button className="speakers-page-nav-button" onClick={() => navigate('/')}>
-            <Plus className="speakers-page-nav-icon" />
+          <button
+            className="info-page-nav-button info-page-nav-button-inactive"
+            onClick={() => navigate('/')}
+          >
+            <Plus className="info-page-nav-icon" />
           </button>
-          <button className="speakers-page-nav-button" onClick={() => navigate('/profile')}>
-            <User className="speakers-page-nav-icon" />
+          <button
+            className="info-page-nav-button info-page-nav-button-inactive"
+            onClick={() => navigate('/profile')}
+          >
+            <User className="info-page-nav-icon" />
           </button>
         </div>
       </div>
+
     </div>
   );
 };

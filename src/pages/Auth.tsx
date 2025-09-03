@@ -64,14 +64,31 @@ const Auth = () => {
           navigate('/');
         }
       } else {
-        // Pass the isParticipant flag (only if the code is also verified)
+        // If the user claims participant, verify code here before signUp
+        if (isParticipant) {
+          if (!conferenceCode.trim()) {
+            toast.error('Please enter your conference code.');
+            setLoading(false);
+            return;
+          }
+          try {
+            await apiClient.verifyConferenceCode(conferenceCode.trim());
+            // ok, continue to signUp
+          } catch (err: any) {
+            toast.error(err?.message || 'Invalid conference code.');
+            setLoading(false);
+            return; // stop submission
+          }
+        }
+
         const { error } = await signUp(
           email,
           password,
           username,
           agreedToTerms,
-          isParticipant && isCodeVerified
+          isParticipant // true only if they ticked and it passed verification above
         );
+
         if (error) {
           toast.error(error.message || 'An unexpected error occurred during signup.');
         } else {
@@ -80,15 +97,16 @@ const Auth = () => {
         }
       }
     } catch (error) {
-      console.error("Auth handleSubmit error:", error);
+      console.error('Auth handleSubmit error:', error);
       toast.error('An unexpected error occurred');
     } finally {
       setLoading(false);
     }
   };
 
-  const isSignUpDisabled =
-    loading || !agreedToTerms || (isParticipant && !isCodeVerified);
+
+const isSignUpDisabled = loading || !agreedToTerms;
+
 
   return (
     <div
@@ -200,20 +218,8 @@ const Auth = () => {
                       value={conferenceCode}
                       onChange={(e) => setConferenceCode(e.target.value)}
                       placeholder="Enter conference code"
-                      className="auth-input"
-                      disabled={isCodeVerified}
+                      className="auth-input auth-code-input"
                     />
-                    <Button
-                      type="button"
-                      onClick={handleVerifyCode}
-                      disabled={isCodeVerified || verifyingCode}
-                    >
-                      {verifyingCode
-                        ? 'Verifying...'
-                        : isCodeVerified
-                        ? 'Verified'
-                        : 'Verify'}
-                    </Button>
                   </div>
                 )}
               </>

@@ -128,19 +128,7 @@ const FriendsList = () => {
       </div>
 
       {/* Bottom Navigation */}
-      <div className="friends-list-bottom-nav">
-        <div className="friends-list-nav-container">
-          <button className="friends-list-nav-button friends-list-nav-button-inactive" onClick={() => { /* TODO */ }}>
-            <Home className="friends-list-nav-icon" />
-          </button>
-          <button className="friends-list-nav-button friends-list-nav-button-inactive" onClick={() => navigate('/')}>
-            <Plus className="friends-list-nav-icon" />
-          </button>
-          <button className="friends-list-nav-button friends-list-nav-button-active" onClick={() => navigate('/profile')}>
-            <User className="friends-list-nav-icon" />
-          </button>
-        </div>
-      </div>
+
     </div>
   );
 };

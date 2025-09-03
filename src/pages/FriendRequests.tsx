@@ -157,19 +157,7 @@ const FriendRequestsPage = () => {
       </div>
 
       {/* Bottom Navigation */}
-      <div className="friend-requests-page-bottom-nav">
-        <div className="friend-requests-page-nav-container">
-          <button className="friend-requests-page-nav-button friend-requests-page-nav-button-inactive" onClick={() => navigate('/')}>
-            <Home className="friend-requests-page-nav-icon" />
-          </button>
-          <button className="friend-requests-page-nav-button friend-requests-page-nav-button-inactive" onClick={() => navigate('/add-friends')}>
-            <Plus className="friend-requests-page-nav-icon" />
-          </button>
-          <button className="friend-requests-page-nav-button friend-requests-page-nav-button-active" onClick={() => navigate('/profile')}>
-            <User className="friend-requests-page-nav-icon" />
-          </button>
-        </div>
-      </div>
+
     </div>
   );
 };

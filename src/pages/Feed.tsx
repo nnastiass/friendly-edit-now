@@ -274,22 +274,17 @@ const Feed = () => {
       >
         <div className="feed-layout">
           <div className="feed-overlay-header">
-            <button
-              className="feed-back-button"
-              onClick={() => navigate(-1)}
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </button>
+
             <h1 className="feed-title">Feed</h1>
           </div>
 
           {posts.length === 0 && !isLoading ? (
             <div className="feed-empty">
               <p className="feed-empty-text">
-                Zatiaľ žiadne video príspevky od priateľov
+                No posts from friends yet
               </p>
               <p className="feed-empty-subtext">
-                Ak chceš vidieť obsah, pridaj si priateľov, alebo popros priateľa, aby pridal video alebo foto.
+                If you want to see content, add friends, or ask a friend to add a video or photo.
               </p>
             </div>
           ) : (

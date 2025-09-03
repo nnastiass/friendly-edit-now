@@ -1,0 +1,163 @@
+/* MediaUpload.css */
+:root {
+  --app-bg: #000000;
+  --card-bg: #0a0a0a;          /* slightly lighter than pure black */
+  --muted:  #1a1a1a;
+  --text:   #ffffff;
+  --subtle: #d1d5db;
+  --accent: #FF0046;           /* your neon pink */
+  --ring:   rgba(255, 0, 70, 0.5);
+  --shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 40px rgba(255,0,70,0.12);
+  --primary-accent: #FF0046;
+}
+/* MediaUpload.css */
+
+/* This rule targets the dialog's background overlay.
+  The escaped slash `\/` is used to correctly target the Tailwind class "bg-black/80".
+*/
+/* Hide the default shadcn close "X" inside any open dialog */
+[role="dialog"] button:has(svg[data-lucide="x"]) {
+  display: none !important;
+}
+
+[data-state="open"] > .fixed.inset-0.bg-black\/80 {
+  /* 1. Set a solid black base color */
+  background-color: #000000 !important;
+
+  /* 2. Apply your radial gradient on top of the black color */
+  background-image: radial-gradient(ellipse 40% 20% at 50% 20%, var(--primary-accent), transparent) !important;
+
+  /* 3. Ensure the gradient does not tile or repeat */
+  background-repeat: no-repeat !important;
+}
+.mu-btn--ghost {
+  background: transparent !important;
+  color: #fff;
+  border: 2px solid #fff;
+  border-radius: 9999px;
+}
+
+
+/* Override shadcn Dialog content look (keeps it responsive) */
+.mu-content {
+  background: var(--card-bg) !important;
+  color: var(--text);
+  border: 1px solid #151515;
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  padding: 0 !important;                 /* we’ll pad inner sections */
+  width: min(92vw, 28rem);
+}
+
+/* Header */
+.mu-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--muted);
+}
+.mu-title {
+  text-align: center;
+  font-weight: 600;
+}
+
+/* Body wrapper */
+.mu-body {
+  padding: 16px;
+}
+
+/* “Pick files” empty state button area */
+.mu-empty {
+  display: flex;
+  justify-content: center;
+  margin: 8px 0 4px;
+}
+
+/* Grid of chosen gallery files */
+.mu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 10px;
+  align-items: start;
+  justify-items: center;
+}
+
+.mu-thumb {
+  width: 96px;
+  height: 96px;
+  border: 2px solid #2a2a2a;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  background: #0f0f0f;
+  transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease;
+}
+.mu-thumb:hover {
+  transform: translateY(-1px);
+  border-color: #3a3a3a;
+}
+.mu-thumb.is-selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+/* Preview */
+.mu-preview {
+  margin-top: 14px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #0f0f0f;
+  border: 1px solid #161616;
+  max-height: 40vh;            /* mobile friendly */
+}
+.mu-preview > img,
+.mu-preview > video {
+  width: 100%;
+  height: 320px;
+  object-fit: cover;
+}
+
+/* Actions (bottom row) */
+.mu-actions {
+  display: flex;
+  gap: 10px;
+  padding: 16px;
+  border-top: 1px solid var(--muted);
+}
+
+/* Optional: unify the shadcn <Button> look in this dialog without touching global theme */
+.mu-actions .mu-primary {
+  background: var(--accent);
+}
+.mu-actions .mu-primary:hover {
+  filter: brightness(0.97);
+}
+.mu-actions .mu-secondary {
+  background: transparent;
+  border: 1px solid #2a2a2a;
+}
+.mu-actions .mu-secondary:hover {
+  border-color: #3a3a3a;
+}
+/* MediaUpload.css */
+[data-state="open"] > .fixed.inset-0.bg-black/80 {
+  background: transparent !important;
+}
+
+.mu-btn {
+  /* base button shape/size/typography here */
+}
+.mu-btn--grow { flex: 1; }
+
+.mu-btn--primary,
+.mu-btn--secondary {
+  background: #ff0046;
+  color: #fff;
+  border: none;
+}
+.mu-btn--primary:hover,
+.mu-btn--secondary:hover {
+  background: #e60040;
+}
+
+
+/* Dialog overlay tweak (if you want stronger blur, uncomment):
+.radix-dialog-overlay { backdrop-filter: blur(4px); } */

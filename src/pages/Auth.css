@@ -78,6 +78,56 @@ body {
 .auth-label {
     display: none;
 }
+/* Bigger, round custom checkbox */
+.auth-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;          /* full round */
+  border: 2px solid #ffffff;
+  background: transparent;
+  display: inline-block;
+  position: relative;
+  cursor: pointer;
+  vertical-align: middle;
+  margin-right: 10px;
+}
+
+.auth-checkbox:checked {
+  background-color: #FF0046;
+  border-color: #FF0046;
+}
+
+/* white dot inside when checked */
+.auth-checkbox:checked::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  background: #ffffff;
+  border-radius: 9999px;
+  transform: translate(-50%, -50%);
+}
+
+/* align the checkbox + label nicely */
+.auth-field-terms {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.auth-field-code {
+  display: flex;
+  justify-content: center;
+  margin-top: 0.5rem;
+}
+
+.auth-code-input {
+  width: 70%;              /* narrower than full width */
+  max-width: 16rem;        /* cap the width */
+}
 
 
 /* Form styling */

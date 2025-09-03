@@ -25,20 +25,7 @@ const AddFriends = () => {
       </div>
 
       {/* Bottom Navigation */}
-      <div className="add-friends-bottom-nav">
-        <div className="add-friends-nav-container">
-          <button className="add-friends-nav-button add-friends-nav-button-inactive" onClick={() => { /* TODO */ }}>
-            <Home className="add-friends-nav-icon" />
-          </button>
-          {/* The middle button is now the active one on this page */}
-          <button className="add-friends-nav-button add-friends-nav-button-active"  onClick={() => navigate('/')}>
-            <Plus className="add-friends-nav-icon" />
-          </button>
-          <button className="add-friends-nav-button add-friends-nav-button-inactive" onClick={() => navigate('/profile')}>
-            <User className="add-friends-nav-icon" />
-          </button>
-        </div>
-      </div>
+
     </div>
   );
 };

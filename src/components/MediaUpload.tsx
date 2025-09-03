@@ -1,10 +1,12 @@
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogOverlay } from '@/components/ui/dialog';
+
 import { X, Upload } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/lib/api-client';
 import { toast } from 'sonner';
+import '@/components/MediaUpload.css';   // <-- add this
 
 interface MediaUploadProps {
   isOpen: boolean;
@@ -78,18 +80,36 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md p-0">
-        <DialogHeader className="px-4 py-2">
-          <DialogTitle className="text-center">Pridaj dôkaz: {challengeTitle}</DialogTitle>
-        </DialogHeader>
+  <Dialog open={isOpen} onOpenChange={handleClose}>
+    {/* This is the new part that creates the black background */}
+    <DialogOverlay className="fixed inset-0 bg-black" />
+
+    <DialogContent
+      className="sm:max-w-md bg-black text-white border-neutral-800"
+      hideClose
+      // Your inline styles can be kept or moved to CSS/className
+      style={{
+              border: '0px solid #222',
+        borderRadius: '20px',
+        width: '95%',
+        maxWidth: '26rem',
+      }}
+    >
+      {/* ... the rest of your dialog content remains the same ... */}
+
+      <DialogHeader className="px-4 py-2">
+        <DialogTitle className="text-center">
+          Pridaj dôkaz: {challengeTitle}
+        </DialogTitle>
+      </DialogHeader>
 
         <div className="p-4 flex flex-wrap gap-2 justify-center">
           {galleryFiles.length === 0 && !selectedFile && (
-            <Button onClick={openGallery} className="bg-gray-200 text-black">
+            <Button onClick={openGallery} className="mu-btn--ghost">
               Vybrať súbory z galérie
             </Button>
           )}
+
 
           {galleryFiles.map((file, idx) => (
             <div
@@ -146,15 +166,29 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
         <div className="flex gap-2 p-4">
           <Button
             onClick={handleUpload}
-            className="flex-1 bg-pink-500 hover:bg-pink-600"
+            className="flex-1"
+            style={{
+              backgroundColor: '#ff0046',
+              color: '#ffffff',
+              border: 'none',
+            }}
             disabled={!selectedFile || isUploading}
           >
             {isUploading ? 'Nahrávam...' : 'Nahrať dôkaz'}
           </Button>
-          <Button onClick={handleClose} className="flex-1 border border-gray-300">
+          <Button
+            onClick={handleClose}
+            className="flex-1"
+            style={{
+              backgroundColor: '#ff0046',
+              color: '#ffffff',
+              border: 'none',
+            }}
+          >
             Zrušiť
           </Button>
         </div>
+
       </DialogContent>
     </Dialog>
   );

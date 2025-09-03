@@ -14,21 +14,22 @@
 .info-page-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-end;
   padding: 1rem 1.5rem;
   background-color: #444EC9; /* Blue header from design */
   color: white;
   flex-shrink: 0;
-  height: 5rem; /* Set a fixed height */
+  height: 7rem; /* Set a fixed height */
   box-sizing: border-box; /* Ensure padding is included in the height */
   position: relative; /* Added for z-index */
   z-index: 51; /* Ensure header is on top of the menu */
+
 }
 
 /* --- UPDATED MOBILE MENU STYLES --- */
 .info-page-mobile-menu {
   position: fixed;
-  top: 5rem; /* Position it to start below the header */
+  top: 7rem; /* Position it to start below the header */
   left: 0;
   width: 100%;
   height: 23.33vh; /* Changed to 1/3 of the screen height */
@@ -52,8 +53,15 @@
 }
 
 
+
 .menu-toggle-button {
-  color: white !important;
+ color: white !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  width: 44px;
+  margin-bottom: -15px;      /* 👈 same offset so it matches logo */
 }
 
 .menu-icon-wrapper {
@@ -124,9 +132,9 @@
   height: 200px; /* Adjust height as needed */
 }
 .info-page-logo {
-  height: 32px;   /* small size */
-  width: auto;    /* keeps aspect ratio */
+  height: 40px;
   object-fit: contain;
+  margin-bottom: 2px;      /* 👈 fine-tune vertical offset */
 }
 .hero-image {
   width: 100%;
@@ -177,13 +185,18 @@ left: 1rem;
   flex-shrink: 0;
   background-color: #444EC9; /* Blue nav bar */
 }
+
 .info-page-nav-container {
   display: flex;
-  justify-content: space-around;
-  width: 100%;
+  justify-content: center;   /* center group instead of space-evenly */
   align-items: center;
+  gap: 3.75rem;                  /* 👈 controls spacing between buttons */
+  width: 100%;
+  max-width: 26rem;
+  margin: 0 auto;
   height: 100%;
 }
+
 .info-page-nav-button {
   background: none;
   border: none;

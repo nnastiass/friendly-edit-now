@@ -65,11 +65,20 @@ const challenges = [
 ];
 
 interface DailyChallengeProps {
-  onComplete?: (points: number) => void;
+  onComplete?: (points: number) => void;                  // legacy: immediate completion callback
   onChallengeLoaded?: (challengeTitle: string) => void;
+  deferCompletion?: boolean;                              // NEW: let parent confirm after upload
+  onCompleteRequested?: () => void;                       // NEW: fire when button is pressed
 }
 
-const DailyChallenge: React.FC<DailyChallengeProps> = ({ onComplete, onChallengeLoaded }) => {
+const DailyChallenge: React.FC<DailyChallengeProps> = ({
+  onComplete,
+  onChallengeLoaded,
+  deferCompletion = false,
+  onCompleteRequested,
+}) => {
+
+
   const { user } = useAuth();
   const [todaysChallenge, setTodaysChallenge] = useState(challenges[0]);
   const [isCompleted, setIsCompleted] = useState(false);
@@ -119,11 +128,12 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ onComplete, onChallenge
     }
 
     // Check if challenge was already completed today from localStorage
-    const completedToday = localStorage.getItem(`challenge-${today}`);
-    if (completedToday) {
-      setIsCompleted(true);
-      // setProgress(100); // Removed as progress state is removed
-    }
+// Only mark completed from localStorage when NOT deferring
+const completedToday = localStorage.getItem(`challenge-${today}`);
+if (completedToday && !deferCompletion) {
+  setIsCompleted(true);
+}
+
 
     // Set up and update countdown timer to midnight
     const updateTimeLeft = () => {
@@ -186,36 +196,27 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ onComplete, onChallenge
 
   // Handles the completion of a daily challenge
   const handleCompleteChallenge = async () => {
-    if (isCompleted) return; // Prevent multiple completions
+    // 🔒 Defer mode: DO NOT mark as complete here. Just tell parent to open upload dialog.
+    if (deferCompletion) {
+      onCompleteRequested?.();
+      return;
+    }
 
-    setIsCompleted(true); // Mark as completed
+    // Legacy / immediate mode:
+    if (isCompleted) return;
 
-    // Removed progress bar animation
-    // let currentProgress = 0;
-    // const interval = setInterval(() => {
-    //   currentProgress += 5;
-    //   setProgress(currentProgress);
-    //   if (currentProgress >= 100) {
-    //     clearInterval(interval);
-    //   }
-    // }, 50);
+    setIsCompleted(true);
 
-
-    // Store completion status in local storage for the current day
     const today = new Date();
     localStorage.setItem(`challenge-${today.toDateString()}`, 'completed');
 
-    // Update streak in the backend
     const newStreak = currentStreak + 1;
     await updateStreak(newStreak);
 
-    toast.success(`Challenge completed! Streak: ${newStreak} days`); // Show success toast
-
-    // Call onComplete callback if provided
-    if (onComplete) {
-      onComplete(todaysChallenge.points);
-    }
+    toast.success(`Challenge completed! Streak: ${newStreak} days`);
+    onComplete?.(todaysChallenge.points);
   };
+
 
   // Development helper to reset/generate a new challenge
   const handleDevReset = () => {
@@ -253,11 +254,12 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({ onComplete, onChallenge
           {/* Complete Challenge Button */}
           <Button
             onClick={handleCompleteChallenge}
-            disabled={isCompleted}
-            className={`daily-challenge-button px-10 py-7 ${isCompleted ? 'daily-challenge-complete' : ''}`}
+            disabled={!deferCompletion && isCompleted}  // in deferred mode, allow clicking to open upload
+            className={`daily-challenge-button px-10 py-7 ${(!deferCompletion && isCompleted) ? 'daily-challenge-complete' : ''}`}
           >
-            {isCompleted ? `Completed!` : 'Complete Challenge'}
+            {(!deferCompletion && isCompleted) ? 'Completed!' : 'Complete Challenge'}
           </Button>
+
 
           {/* Progress Bar (removed) */}
           {/* {isCompleted && (

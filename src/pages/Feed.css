@@ -93,20 +93,43 @@
   left: 0;
   z-index: 20;
 }
-
+/* Back button — same as friend-requests */
 .feed-back-button {
   position: absolute;
-  left: 16px;
-  top: 16px;
-  color: white;
-  background: none;
+  top: 4vh;
+  left: 2rem;
+  color: #FF0046 !important;
+  background: transparent !important;
   border: none;
   z-index: 30;
 }
 
+.feed-back-button svg {
+  width: 3vh !important;
+  height: 3vh !important;
+  stroke-width: 3 !important;
+}
+
+
+/* Title — same as friend-requests */
 .feed-title {
-  font-size: 1.25rem;
-  font-weight: bold;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-top: 3.5rem; /* 👈 pushes title further down */
+}
+
+.feed-overlay-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;               /* ensure full width */
+  display: flex;
+  align-items: center;
+  justify-content: center;/* center the title */
+  width: 100%;
+  z-index: 20;
+  pointer-events: none;
+     /* header itself non-interactive... */
 }
 
 .feed-post-info {
@@ -135,11 +158,13 @@
 .feed-post-username {
   font-size: 1rem;
   font-weight: bold;
+  margin-bottom: 1vh;
 }
 
 .feed-post-caption {
   font-size: 0.9rem;
   line-height: 1.2;
+  margin-bottom: 2vh;
 }
 
 .feed-empty {
@@ -154,13 +179,13 @@
 }
 
 .feed-empty-text {
-  font-size: 1.5rem;
+  font-size: 1rem;
   font-weight: bold;
   margin-bottom: 8px;
 }
 
 .feed-empty-subtext {
-  font-size: 1rem;
+  font-size: 0.9rem;
   color: #a0a0a0;
 }
 
@@ -197,7 +222,7 @@
 .feed-history-button {
 background:blue;
   position: fixed;
-  top: 16px;
+  top: 3.5rem;
   right: 16px;
   width: 60px;
   height: 60px;
@@ -219,6 +244,7 @@ background:blue;
 }
 
 .feed-history-icon {
+
   position: absolute;
   bottom: 4px;
   right: 4px;
@@ -229,6 +255,7 @@ background:blue;
   display: flex;
   align-items: center;
   justify-content: center;
+
 }
 
 
@@ -314,7 +341,7 @@ background:blue;
 .feed-comments-button {
   position: absolute;
   right: 16px;
-  bottom: 100px;
+  bottom: 2rem;
   background: rgba(0, 0, 0, 0.6);
   border-radius: 50%;
   padding: 10px;

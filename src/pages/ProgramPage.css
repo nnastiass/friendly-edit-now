@@ -14,25 +14,48 @@
 .program-page-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-end;
   padding: 1rem 1.5rem;
-  background-color: #444EC9;
+  background-color: #444EC9; /* Blue header from design */
+  color: white;
   flex-shrink: 0;
-  height: 5rem;
-  box-sizing: border-box;
+  height: 7rem; /* Set a fixed height */
+  box-sizing: border-box; /* Ensure padding is included in the height */
+  position: relative; /* Added for z-index */
+  z-index: 51; /* Ensure header is on top of the menu */            /* 👈 new: ensure full width */
+}
+
+
+.program-page-logo {
+  height: 40px;              /* same as info-page-logo */
+  object-fit: contain;
+  margin-bottom: 2px;        /* fine-tune distance from bottom */
+}
+
+.menu-toggle-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  width: 44px;
+  margin-bottom: 2px;        /* align with logo baseline */
+}
+
+/* Optional: keep z-index above main content if needed */
+.program-page-header {
   position: relative;
-  z-index: 51;
+  z-index: 5;
 }
 
 /* --- MOBILE MENU STYLES --- */
 .program-page-mobile-menu {
   position: fixed;
-  top: 5rem; /* Position it to start below the header */
+  top: 7rem; /* Position it to start below the header */
   left: 0;
   width: 100%;
   height: 23.33vh; /* Changed to 1/3 of the screen height */
   background-color: #444EC9; /* Same blue as header */
-  z-index: 50;
+
   display: flex;
   flex-direction: column;
   align-items: center;

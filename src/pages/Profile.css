@@ -87,9 +87,9 @@
   background-color: transparent !important;
 }
 
-.profile-settings-button { right: 2rem; }
-.profile-edit-button { left: 2rem; }
-.profile-back-button { left: 2rem; }
+.profile-settings-button { right: 2rem; margin-top:2.5rem;}
+.profile-edit-button { left: 2rem; margin-top:2.5rem;}
+.profile-back-button { left: 2rem; margin-top:2.5rem;}
 
 .profile-requests-button{
   color: var(--primary-accent) !important;
@@ -100,11 +100,12 @@
 .profile-edit-button svg,
 .profile-back-button svg,
 .profile-requests-button svg {
+
   height: 3vh !important;
   width: 3vh !important;
 }
 
-.profile-back-button svg { stroke-width: 3 !important; }
+.profile-back-button svg { stroke-width: 3 !important; margin-top:2rem;}
 .profile-requests-button svg { stroke-width: 2.5 !important; }
 
 .profile-avatar {
@@ -203,9 +204,11 @@
   padding: 1.5rem;
   position: relative;
   text-align: center;
+
 }
 
 .profile-subpage-back-button {
+
   position: absolute;
   left: 1.25rem;  /* adjust to taste */
   top: 1.25rem;
@@ -244,6 +247,7 @@
 /* Optional: if you need to pull content up a bit on subpages */
 .edit-mode .profile-main-content {
   padding-top: 1rem; /* adjust or remove if not needed */
+  margin-top: 2rem;
 }
 
 .profile-settings-section,

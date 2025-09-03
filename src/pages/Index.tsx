@@ -77,9 +77,10 @@ console.log("Index: Displaying main content.");
             {/* Daily Challenge Component */}
             <DailyChallenge
               onComplete={(points) => {
-                // These callbacks are here if you need to update Index's state
-                // based on DailyChallenge completion, e.g., for a global score.
-                // DailyChallenge now updates the streak directly in the backend.
+                // Open the upload dialog when challenge is completed
+                setIsUploadOpen(true);
+
+                // Keep your counters if you still want them
                 setCurrentStreak(prev => prev + 1);
                 setTotalChallenges(prev => prev + 1);
               }}
@@ -87,17 +88,10 @@ console.log("Index: Displaying main content.");
                 setCurrentChallenge(challengeTitle);
               }}
             />
-            
+
+
             {/* Pridat dokaz Button */}
-            <div className="mt-6 flex justify-center">
-              <Button
-                onClick={() => setIsUploadOpen(true)}
-                className="bg-pink-500 hover:bg-pink-600 text-white px-8 py-3 rounded-lg flex items-center gap-2"
-              >
-                <Upload className="h-5 w-5" />
-                Pridat dokaz
-              </Button>
-            </div>
+
           </div>
 
           {/* Bottom Navigation Bar */}
