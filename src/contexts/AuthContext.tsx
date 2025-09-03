@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 // *** IMPORTANT: REPLACE WITH YOUR ACTUAL API BASE URL ***
-const API_BASE_URL = 'http://192.168.0.102:3000';
+const API_BASE_URL = 'http://192.168.0.138:3000';
 
 interface User {
   id: string;

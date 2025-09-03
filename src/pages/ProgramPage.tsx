@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Home, User, Plus, Info, Menu, Users, Clock, X } from 'lucide-react';
+import { Home, User, Plus, Info, Menu, Users, Clock, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { conferenceApiClient } from '@/lib/conference-api-client'; // Import the new API client
+import { conferenceApiClient } from '@/lib/conference-api-client';
 import './ProgramPage.css';
 
-// Interface to match the API response for schedule entries
 interface ScheduleEntry {
   id: number;
   day: number;
@@ -17,7 +16,7 @@ interface ScheduleEntry {
   session_type: string;
   speaker_id: number;
   conference_id: number;
-  speaker_name: string; // The speaker's name from the JOIN in your API
+  speaker_name: string;
 }
 
 const ProgramPage = () => {
@@ -29,7 +28,7 @@ const ProgramPage = () => {
   const [loading, setLoading] = useState(true);
 
   // You will likely have a way to get the conference ID, e.g., from a URL parameter or global state
-  const conferenceId = '1'; // Placeholder conference ID
+  const conferenceId = '123'; // Placeholder conference ID
 
   useEffect(() => {
     fetchSchedule(conferenceId);
@@ -68,6 +67,21 @@ const ProgramPage = () => {
       navigate(path);
       handleMenuClose();
   }
+
+  // Helper function to format time string to hours and minutes
+  const formatTime = (timeString: string): string => {
+    try {
+      const [time, period] = timeString.split(' ');
+      const [hours, minutes] = time.split(':');
+      const date = new Date();
+      date.setHours(parseInt(hours, 10) + (period === 'PM' ? 12 : 0));
+      date.setMinutes(parseInt(minutes, 10));
+      return date.toLocaleTimeString('sk-SK', { hour: '2-digit', minute: '2-digit' });
+    } catch (e) {
+      console.error("Failed to parse time string:", timeString, e);
+      return timeString;
+    }
+  };
 
   // Filter schedule for the active day
   const filteredSchedule = schedule.filter(entry => entry.day === activeDay);
@@ -129,7 +143,7 @@ const ProgramPage = () => {
                 <div className="schedule-icon-container">
                   {/* Assuming you want a specific icon for a session type */}
                   {item.session_type === 'talk' ? <Clock /> : <Users />}
-                  <span className="schedule-time">{item.start_time} - {item.end_time}</span>
+                  <span className="schedule-time">{formatTime(item.start_time)} - {formatTime(item.end_time)}</span>
                 </div>
                 <div className="schedule-title-container">
                   <p className="schedule-title">{item.title}</p>

@@ -1,9 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Camera, Video, X, Upload } from 'lucide-react';
+import { X, Upload } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { apiClient } from '@/lib/api-client'; // Import the new apiClient
+import { apiClient } from '@/lib/api-client';
 import { toast } from 'sonner';
 
 interface MediaUploadProps {
@@ -17,210 +17,143 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
   isOpen,
   onClose,
   challengeTitle,
-  onUploadComplete
+  onUploadComplete,
 }) => {
   const { user } = useAuth();
+  const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // Check file type
-      const isImage = file.type.startsWith('image/');
-      const isVideo = file.type.startsWith('video/');
-
-      if (!isImage && !isVideo) {
-        toast.error('Podporované sú len obrázky a videá');
-        return;
-      }
-
-      // Check file size (max 50MB)
-      // The backend also enforces this limit
-      if (file.size > 10000 * 1024 * 1024) {
-        toast.error('Súbor je príliš veľký. Maximálna veľkosť je 50MB');
-        return;
-      }
-
-      setSelectedFile(file);
-
-      // Create preview
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
+  const openGallery = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.accept = 'image/*,video/*';
+      fileInputRef.current.click();
     }
   };
 
+  const handleFilesSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    setGalleryFiles(files);
+    setSelectedFile(files[0] || null);
+  };
+
   const handleUpload = async () => {
-    // Ensure a file is selected and user is authenticated
     if (!selectedFile) {
       toast.error('Vyber súbor pre nahratie');
       return;
     }
-    if (!user || !user.id) {
+    if (!user) {
       toast.error('Používateľ nie je prihlásený.');
       return;
     }
 
     setIsUploading(true);
-
     try {
-      // Use the API client to upload the file to the new backend endpoint
       const result = await apiClient.uploadMedia(user.id, selectedFile, challengeTitle);
-
       const mediaType = selectedFile.type.startsWith('image/') ? 'image' : 'video';
-      const mediaUrl = result.mediaUrl;
 
       await apiClient.createPost({
         user_id: user.id,
         caption: challengeTitle,
         media_type: mediaType,
-        media_url: mediaUrl,
+        media_url: result.mediaUrl,
       });
 
       toast.success('Dôkaz bol úspešne nahraný!');
-
-      if (onUploadComplete) {
-        onUploadComplete(mediaUrl, mediaType);
-      }
-
+      onUploadComplete?.(result.mediaUrl, mediaType);
       handleClose();
-    } catch (error: any) {
-      console.error('Upload error:', error);
-      toast.error(error.message || 'Nastala chyba pri nahrávaní súboru.');
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || 'Nastala chyba pri nahrávaní súboru.');
     } finally {
       setIsUploading(false);
     }
   };
 
   const handleClose = () => {
+    setGalleryFiles([]);
     setSelectedFile(null);
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl); // Clean up the object URL
-      setPreviewUrl(null);
-    }
     onClose();
-  };
-
-  const openFileInput = () => {
-    fileInputRef.current?.click();
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="text-center">
-            Pridaj dôkaz pre: {challengeTitle}
-          </DialogTitle>
+      <DialogContent className="sm:max-w-md p-0">
+        <DialogHeader className="px-4 py-2">
+          <DialogTitle className="text-center">Pridaj dôkaz: {challengeTitle}</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
-          {/* File Selection */}
-          {!selectedFile ? (
-            <div className="space-y-4">
-              <div className="flex gap-4">
-                <Button
-                  onClick={openFileInput}
-                  className="flex-1 bg-blue-500 hover:bg-blue-600"
-                >
-                  <Camera className="h-4 w-4 mr-2" />
-                  Fotka
-                </Button>
-                <Button
-                  onClick={openFileInput}
-                  className="flex-1 bg-purple-500 hover:bg-purple-600"
-                >
-                  <Video className="h-4 w-4 mr-2" />
-                  Video
-                </Button>
-              </div>
+        <div className="p-4 flex flex-wrap gap-2 justify-center">
+          {galleryFiles.length === 0 && !selectedFile && (
+            <Button onClick={openGallery} className="bg-gray-200 text-black">
+              Vybrať súbory z galérie
+            </Button>
+          )}
 
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*,video/*"
-                onChange={handleFileSelect}
-                className="hidden"
-              />
-
-              <p className="text-sm text-gray-500 text-center">
-                Vyber obrázok alebo video ako dôkaz splnenia výzvy
-              </p>
+          {galleryFiles.map((file, idx) => (
+            <div
+              key={idx}
+              className={`w-24 h-24 border-2 rounded-lg overflow-hidden cursor-pointer ${
+                selectedFile === file ? 'border-pink-500' : 'border-gray-300'
+              }`}
+              onClick={() => setSelectedFile(file)}
+            >
+              {file.type.startsWith('image/') ? (
+                <img
+                  src={URL.createObjectURL(file)}
+                  className="w-full h-full object-cover"
+                  alt={file.name}
+                />
+              ) : (
+                <video
+                  src={URL.createObjectURL(file)}
+                  className="w-full h-full object-cover"
+                  muted
+                />
+              )}
             </div>
-          ) : (
-            /* Preview and Upload */
-            <div className="space-y-4">
-              <div className="relative">
-                {previewUrl && (
-                  <div className="relative">
-                    {selectedFile?.type.startsWith('image/') ? (
-                      <img
-                        src={previewUrl}
-                        alt="Preview"
-                        className="w-full h-48 object-cover rounded-lg"
-                      />
-                    ) : (
-                      <video
-                        src={previewUrl}
-                        controls
-                        className="w-full h-48 object-cover rounded-lg"
-                      />
-                    )}
-                    <Button
-                      onClick={() => {
-                        setSelectedFile(null);
-                        setPreviewUrl(null);
-                        if (previewUrl) {
-                          URL.revokeObjectURL(previewUrl);
-                        }
-                      }}
-                      size="sm"
-                      variant="destructive"
-                      className="absolute top-2 right-2"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                )}
-              </div>
+          ))}
 
-              <div className="text-sm text-gray-600">
-                <p><strong>Súbor:</strong> {selectedFile?.name}</p>
-                <p><strong>Veľkosť:</strong> {(selectedFile?.size / 1024 / 1024).toFixed(2)} MB</p>
-                <p><strong>Typ:</strong> {selectedFile?.type.startsWith('image/') ? 'Obrázok' : 'Video'}</p>
-              </div>
-
-              <div className="flex gap-2">
-                <Button
-                  onClick={handleUpload}
-                  disabled={isUploading}
-                  className="flex-1 bg-green-500 hover:bg-green-600"
-                >
-                  {isUploading ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Nahrávam...
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="h-4 w-4 mr-2" />
-                      Nahrať dôkaz
-                    </>
-                  )}
-                </Button>
-
-                <Button
-                  onClick={handleClose}
-                  variant="outline"
-                  disabled={isUploading}
-                >
-                  Zrušiť
-                </Button>
-              </div>
+          {selectedFile && (
+            <div className="w-full mt-4">
+              {selectedFile.type.startsWith('image/') ? (
+                <img
+                  src={URL.createObjectURL(selectedFile)}
+                  className="w-full h-64 object-cover rounded-lg"
+                  alt="Preview"
+                />
+              ) : (
+                <video
+                  src={URL.createObjectURL(selectedFile)}
+                  controls
+                  className="w-full h-64 object-cover rounded-lg"
+                />
+              )}
             </div>
           )}
+        </div>
+
+        <input
+          type="file"
+          multiple
+          ref={fileInputRef}
+          className="hidden"
+          onChange={handleFilesSelected}
+          accept="image/*,video/*"
+        />
+
+        <div className="flex gap-2 p-4">
+          <Button
+            onClick={handleUpload}
+            className="flex-1 bg-pink-500 hover:bg-pink-600"
+            disabled={!selectedFile || isUploading}
+          >
+            {isUploading ? 'Nahrávam...' : 'Nahrať dôkaz'}
+          </Button>
+          <Button onClick={handleClose} className="flex-1 border border-gray-300">
+            Zrušiť
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

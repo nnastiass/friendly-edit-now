@@ -1,0 +1,56 @@
+/* FriendProfile.css */
+.friend-profile-container {
+  width: 100%; height: 100vh; background-color: #000; color: white;
+  display: flex; flex-direction: column; overflow: hidden; font-family: 'Poppins', sans-serif;
+  background-image: radial-gradient(ellipse 40% 20% at 50% 20%, #FF0046, transparent);
+}
+
+.friend-profile-main-content { flex: 1; overflow-y: auto; padding-bottom: 2rem; }
+
+.friend-profile-header { position: relative; padding: 2vh 1.5rem 1.5vh; display: flex; flex-direction: column; align-items: center; background-repeat: no-repeat; min-height: 10vh; }
+
+.friend-profile-back-button { position: absolute; top: 2.5vh; left: 2rem; color: #FF0046; background-color: transparent; }
+
+.friend-profile-avatar { width: 12vh; height: 12vh; border: 4px solid white; margin-bottom: 1rem; margin-top: 5rem; }
+
+.friend-profile-avatar-fallback { font-size: 4vh; color: #333; }
+
+.friend-profile-name { font-size: 2.5vh; font-weight: 500; }
+
+.friend-profile-username { color: white; font-size: 1.8vh; }
+
+.friend-profile-streak-section { text-align: center; padding: 1.5vh 1rem; }
+
+.friend-profile-streak-number, .friend-profile-streak-label { font-size: 2vh; color: #FF0046; display: inline-block; vertical-align: baseline; }
+
+.friend-profile-streak-number { margin-right: 0.5rem; }
+
+.friend-profile-streak-line { width: 40%; height: 4px; background-color: white; margin: 0.5vh auto 0; border-radius: 9999px; }
+
+.friend-profile-posts-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; margin-top: 2rem; padding: 0 16px; }
+
+.friend-profile-post-item { position: relative; width: 100%; padding-top: 100%; overflow: hidden; background-color: #333; cursor: pointer; border-radius: 8px; }
+
+.friend-profile-post-media { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+
+.friend-profile-empty { text-align: center; color: #a0a0a0; margin-top: 2rem; }
+
+/* Fullscreen modal */
+.friend-profile-modal {
+  position: fixed; inset: 0; z-index: 50; display: flex; justify-content: center; align-items: center;
+  background-color: rgba(0,0,0,0.95);
+}
+
+.friend-profile-modal-video, .friend-profile-modal-image {
+  width: 100%; height: 100%; object-fit: contain;
+}
+
+.friend-profile-modal-overlay {
+  position: absolute; bottom: 40px; left: 16px; right: 16px; color: white;
+  font-size: 1.2rem; text-align: center;
+}
+
+.friend-profile-modal-close {
+  position: absolute; top: 16px; right: 16px; color: white; background: none; border: none; font-size: 1.5rem;
+  cursor: pointer;
+}
