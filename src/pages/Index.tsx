@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+// src/pages/Index.tsx
+import React, { useEffect, useMemo, useState } from 'react';
 import { Home, User, Plus, Info, RotateCcw } from 'lucide-react';
-import DailyChallenge, { CHALLENGES, type Challenge } from '@/components/DailyChallenge';
+import DailyChallenge from '@/components/DailyChallenge';
 import MediaUpload from '@/components/MediaUpload';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -8,39 +9,73 @@ import { apiClient } from '@/lib/api-client';
 import { toast } from 'sonner';
 import './Index.css';
 
-const todayKey = () => new Date().toDateString();
-const LS_CURRENT_CHALLENGE = (d: string) => `current-challenge-${d}`;
-const LS_COMPLETED_TODAY = (d: string) => `challenge-completed-${d}`;
+import {
+  type Challenge,
+  MAIN_CHALLENGES,
+  CONF_CHALLENGES,
+  pickInitialChallenge,
+  pickNextChallenge,
+  storageKeys,
+  todayKey,
+} from '@/lib/challengeSets';
 
-function pickInitialChallenge(): Challenge {
-  const today = todayKey();
-  const savedId = localStorage.getItem(LS_CURRENT_CHALLENGE(today));
-  if (savedId) {
-    const found = CHALLENGES.find(c => c.id === Number(savedId));
-    if (found) return found;
-  }
-  // default: deterministic "rotate by day" (or change to random if you prefer)
-  const idx = new Date().getDate() % CHALLENGES.length;
-  const chosen = CHALLENGES[idx];
-  localStorage.setItem(LS_CURRENT_CHALLENGE(today), String(chosen.id));
-  return chosen;
-}
+// Detect variant:
+// 1) Build-time env (Vite: VITE_APP_VARIANT=conference | CRA: REACT_APP_VARIANT=conference)
+// 2) URL path starts with /conference
+// 3) Fallback to user flag (isConferenceParticipant)
+function detectInitialVariant(): 'main' | 'conf' {
+  const envVariant =
+    (import.meta as any)?.env?.VITE_APP_VARIANT ??
+    (typeof process !== 'undefined' ? (process as any)?.env?.REACT_APP_VARIANT : '');
 
-function pickNextChallenge(prevId: number): Challenge {
-  const idx = CHALLENGES.findIndex(c => c.id === prevId);
-  const next = CHALLENGES[(idx + 1) % CHALLENGES.length];
-  return next;
+  if (String(envVariant).toLowerCase() === 'conference') return 'conf';
+  if (typeof window !== 'undefined' && window.location.pathname.startsWith('/conference')) return 'conf';
+  return 'main';
 }
 
 const Index: React.FC = () => {
-  const [currentStreak, setCurrentStreak] = useState(0);
-  const [isUploadOpen, setIsUploadOpen] = useState(false);
-  const [challenge, setChallenge] = useState<Challenge>(() => pickInitialChallenge());
-  const [hasUploadedToday, setHasUploadedToday] = useState(false);
-
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
+  // Which flavor of the app are we in?
+  const [variantKey, setVariantKey] = useState<'main' | 'conf'>(detectInitialVariant());
+
+  // Choose the correct list for the current variant
+  const challengeList = useMemo(
+    () => (variantKey === 'conf' ? CONF_CHALLENGES : MAIN_CHALLENGES),
+    [variantKey]
+  );
+
+  // Challenge + state
+  const [challenge, setChallenge] = useState<Challenge>(() =>
+    pickInitialChallenge(challengeList, variantKey)
+  );
+  const [currentStreak, setCurrentStreak] = useState(0);
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [hasUploadedToday, setHasUploadedToday] = useState(false);
+
+  // If the logged-in user is a conference participant, force conference list
+  useEffect(() => {
+    if (user) {
+      const isParticipant =
+        !!(user as any)?.isConferenceParticipant || !!(user as any)?.is_conference_participant;
+      if (isParticipant && variantKey !== 'conf') {
+        setVariantKey('conf');
+      }
+    }
+  }, [user, variantKey]);
+
+  // When variant changes (or on first mount), (re)hydrate challenge + today's completion
+  useEffect(() => {
+    const today = todayKey();
+    const keys = storageKeys(variantKey);
+
+    setHasUploadedToday(!!localStorage.getItem(keys.completed(today)));
+    setChallenge(pickInitialChallenge(challengeList, variantKey));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [variantKey]);
+
+  // Load streak from backend
   useEffect(() => {
     if (!authLoading && !user) {
       navigate('/auth');
@@ -56,24 +91,21 @@ const Index: React.FC = () => {
           toast.error('Failed to load streak.');
         });
     }
-
-    const today = todayKey();
-    setHasUploadedToday(!!localStorage.getItem(LS_COMPLETED_TODAY(today)));
   }, [user, authLoading, navigate]);
 
   const openUpload = () => setIsUploadOpen(true);
 
   const handleUploadComplete = async (_mediaUrl: string) => {
-    // Only after successful upload we:
-    // 1) mark completed today
-    // 2) increment streak
-    // 3) rotate to the next challenge (but keep the button disabled today)
     if (!user?.id) return;
 
     const today = todayKey();
-    localStorage.setItem(LS_COMPLETED_TODAY(today), '1');
+    const keys = storageKeys(variantKey);
+
+    // mark completed today for this variant
+    localStorage.setItem(keys.completed(today), '1');
     setHasUploadedToday(true);
 
+    // increment streak on server + UI
     try {
       const newStreak = currentStreak + 1;
       await apiClient.updateProfile(user.id, { streak: newStreak });
@@ -84,18 +116,19 @@ const Index: React.FC = () => {
       toast.error('Failed to update streak.');
     }
 
-    // Rotate to the next challenge right away (UI shows next, but still locked today)
-    const next = pickNextChallenge(challenge.id);
+    // rotate to next challenge within the same list, but keep today locked
+    const next = pickNextChallenge(challengeList, challenge.id);
     setChallenge(next);
-    localStorage.setItem(LS_CURRENT_CHALLENGE(today), String(next.id));
+    localStorage.setItem(keys.current(today), String(next.id));
 
     setIsUploadOpen(false);
   };
 
-  // Dev button to reset today’s upload lock
+  // Dev reset for today (per variant)
   const handleDevResetUpload = () => {
     const today = todayKey();
-    localStorage.removeItem(LS_COMPLETED_TODAY(today));
+    const keys = storageKeys(variantKey);
+    localStorage.removeItem(keys.completed(today));
     setHasUploadedToday(false);
     toast.success('Dev: You can upload again today!');
   };
@@ -131,27 +164,18 @@ const Index: React.FC = () => {
 
           <div className="index-bottom-nav">
             <div className="index-nav-container">
-              <button
-                className="index-nav-button index-nav-button-inactive"
-                onClick={() => navigate('/feed')}
-              >
+              <button className="index-nav-button index-nav-button-inactive" onClick={() => navigate('/feed')}>
                 <Home className="index-nav-icon" />
               </button>
               {isParticipant && (
-                <button
-                  className="index-nav-button index-nav-button-inactive"
-                  onClick={() => navigate('/info')}
-                >
+                <button className="index-nav-button index-nav-button-inactive" onClick={() => navigate('/info')}>
                   <Info className="index-nav-icon" />
                 </button>
               )}
               <button className="index-nav-button index-nav-button-active">
                 <Plus className="index-nav-icon" />
               </button>
-              <button
-                className="index-nav-button index-nav-button-inactive"
-                onClick={() => navigate('/profile')}
-              >
+              <button className="index-nav-button index-nav-button-inactive" onClick={() => navigate('/profile')}>
                 <User className="index-nav-icon" />
               </button>
             </div>
@@ -162,7 +186,7 @@ const Index: React.FC = () => {
       <MediaUpload
         isOpen={isUploadOpen}
         onClose={() => setIsUploadOpen(false)}
-        challengeTitle={challenge.title}      // pass the current challenge title
+        challengeTitle={challenge.title}
         onUploadComplete={handleUploadComplete}
       />
     </div>

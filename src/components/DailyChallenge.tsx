@@ -1,30 +1,16 @@
+// src/components/DailyChallenge.tsx
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import StreakCounter from './StreakCounter';
+import { Challenge } from '@/lib/challengeSets';
 import './DailyChallenge.css';
-
-export type Challenge = {
-  id: number;
-  title: string;
-  description: string;
-  points: number;
-  emoji?: string;
-};
-
-// Export the list so the parent can pick/rotate challenges.
-export const CHALLENGES: Challenge[] = [
-  { id: 1, title: 'Say hi to a stranger', description: 'Greet someone you don’t know with a smile and a friendly hello', points: 10, emoji: '👋' },
-  { id: 2, title: 'Compliment someone', description: 'Give someone a genuine compliment today', points: 10, emoji: '😊' },
-  { id: 3, title: 'Start a conversation', description: 'Initiate a conversation with someone new', points: 15, emoji: '💬' },
-  // ... add the rest of your challenges here ...
-];
 
 interface DailyChallengeProps {
   challenge: Challenge;
-  onStartUpload: () => void;       // open upload modal
+  onStartUpload: () => void;
   currentStreak: number;
-  hasUploadedToday: boolean;       // lock button if already uploaded today
+  hasUploadedToday: boolean;
 }
 
 const DailyChallenge: React.FC<DailyChallengeProps> = ({
@@ -35,7 +21,6 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({
 }) => {
   const [timeLeft, setTimeLeft] = React.useState({ hours: '00', minutes: '00', seconds: '00' });
 
-  // Just the countdown. No localStorage / picking here anymore.
   React.useEffect(() => {
     const updateTimeLeft = () => {
       const now = new Date();
