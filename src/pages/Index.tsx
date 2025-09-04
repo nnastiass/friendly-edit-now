@@ -66,7 +66,7 @@ const Index = () => {
           <div className="index-main-content">
             <DailyChallenge
               deferCompletion={true}
-              currentStreak={currentStreak}   // pass streak down
+              currentStreak={currentStreak}   //pass streak down
               onCompleteRequested={() => {
                 setIsUploadOpen(true);
               }}
