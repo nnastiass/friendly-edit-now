@@ -1,12 +1,10 @@
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogOverlay } from '@/components/ui/dialog';
-
-import { X, Upload } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/lib/api-client';
 import { toast } from 'sonner';
-import '@/components/MediaUpload.css';   // <-- add this
+import '@/components/MediaUpload.css';
 
 interface MediaUploadProps {
   isOpen: boolean;
@@ -80,28 +78,23 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
   };
 
   return (
-  <Dialog open={isOpen} onOpenChange={handleClose}>
-    {/* This is the new part that creates the black background */}
-    <DialogOverlay className="fixed inset-0 bg-black" />
-
-    <DialogContent
-      className="sm:max-w-md bg-black text-white border-neutral-800"
-      hideClose
-      // Your inline styles can be kept or moved to CSS/className
-      style={{
-              border: '0px solid #222',
-        borderRadius: '20px',
-        width: '95%',
-        maxWidth: '26rem',
-      }}
-    >
-      {/* ... the rest of your dialog content remains the same ... */}
-
-      <DialogHeader className="px-4 py-2">
-        <DialogTitle className="text-center">
-          Pridaj dôkaz: {challengeTitle}
-        </DialogTitle>
-      </DialogHeader>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogOverlay className="fixed inset-0 bg-black" />
+      <DialogContent
+        className="sm:max-w-md bg-black text-white border-neutral-800"
+        hideClose
+        style={{
+          border: '0px solid #222',
+          borderRadius: '20px',
+          width: '95%',
+          maxWidth: '26rem',
+        }}
+      >
+        <DialogHeader className="px-4 py-2">
+          <DialogTitle className="text-center">
+            Pridaj dôkaz: {challengeTitle}
+          </DialogTitle>
+        </DialogHeader>
 
         <div className="p-4 flex flex-wrap gap-2 justify-center">
           {galleryFiles.length === 0 && !selectedFile && (
@@ -109,7 +102,6 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
               Vybrať súbory z galérie
             </Button>
           )}
-
 
           {galleryFiles.map((file, idx) => (
             <div
@@ -188,7 +180,6 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
             Zrušiť
           </Button>
         </div>
-
       </DialogContent>
     </Dialog>
   );
