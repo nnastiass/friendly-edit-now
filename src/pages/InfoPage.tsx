@@ -66,7 +66,7 @@ const InfoPage = () => {
               Speakers
             </button>
             <button className="menu-button" onClick={() => handleNavAndClose('/')}>
-                          Challanges
+                          Challenges
             </button>
           </nav>
         </div>

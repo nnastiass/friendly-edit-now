@@ -97,7 +97,7 @@ const ProgramPage = () => {
             <button className="menu-button" onClick={() => handleNavAndClose('/program')}>Program</button>
             <button className="menu-button" onClick={() => handleNavAndClose('/speakers')}>Speakers</button>
             <button className="menu-button" onClick={() => handleNavAndClose('/')}>
-                                      Challanges
+                                      Challenges
                         </button>
           </nav>
         </div>
