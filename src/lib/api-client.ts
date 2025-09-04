@@ -4,7 +4,36 @@
 // This should be your development machine's IP address and the port your Docker API exposes
 // For example: 'http://192.168.0.138:3000' or 'http://localhost:3000' if running on web browser dev server
 // Remember to change this when building for production!
-export const API_BASE_URL = 'http://192.168.0.138:3000';
+export const API_BASE_URL = 'http://192.168.0.102:3000';
+
+// --- MODERATION ---
+export const moderationClient = {
+  getPending: async (moderatorId: string, page = 1) => {
+    const res = await fetch(`${API_BASE_URL}/api/moderation/posts/pending?page=${page}`, {
+      headers: { "x-user-id": moderatorId },
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+  approvePost: async (moderatorId: string, postId: string) => {
+    const res = await fetch(`${API_BASE_URL}/api/moderation/posts/${postId}/approve`, {
+      method: "POST",
+      headers: { "x-user-id": moderatorId, "Content-Type": "application/json" },
+      body: "{}",
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+  rejectPost: async (moderatorId: string, postId: string, reason?: string) => {
+    const res = await fetch(`${API_BASE_URL}/api/moderation/posts/${postId}/reject`, {
+      method: "POST",
+      headers: { "x-user-id": moderatorId, "Content-Type": "application/json" },
+      body: JSON.stringify({ reason }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+};
 
 // A generic helper function for making API requests
 async function apiFetch<T>(
@@ -37,32 +66,26 @@ async function apiFetch<T>(
 }
 
 // Helper function for file uploads
-async function uploadFile<T>(
-  endpoint: string,
-  formData: FormData
-): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+// Generic helper for multipart/form-data uploads
+async function uploadForm<T>(endpoint: string, formData: FormData): Promise<T> {
+  const res = await fetch(`${API_BASE_URL}${endpoint}`, {
     method: 'POST',
-    body: formData,
-    // Don't set Content-Type for FormData, let the browser set it with boundary
-    headers: {
-      // Add Authorization header here if your API requires it (e.g., Bearer Token)
-      // 'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-    },
+    body: formData, // DO NOT set Content-Type; browser sets boundary
   });
 
-  if (!response.ok) {
-    let errorData: any = {};
+  if (!res.ok) {
+    let err: any = {};
     try {
-      errorData = await response.json();
-    } catch (e) {
-      errorData.message = await response.text();
+      err = await res.json();
+    } catch {
+      err.message = await res.text();
     }
-    throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    throw new Error(err?.message || `HTTP error ${res.status}`);
   }
 
-  return response.json();
+  return res.json();
 }
+
 
 
 // Define specific API client methods
@@ -102,11 +125,12 @@ export const apiClient = {
     apiFetch<void>(`/api/profiles/${userId}`, {
       method: 'DELETE',
     }),
-  changePassword: (userId: string, currentPassword: string, newPassword: string, confirmPassword: string) =>
-    apiFetch<any>('/api/profiles/${userId}/change-password', {
-      method: 'POST',
-      body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
-    }),
+ changePassword: (userId: string, currentPassword: string, newPassword: string, confirmPassword: string) =>
+   apiFetch<any>(`/api/profiles/${userId}/change-password`, {
+     method: 'POST',
+     body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
+   }),
+
   requestEmailChange: (userId: string, newEmail: string, currentPassword: string) =>
     apiFetch<any>(`/api/profiles/${userId}/change-email`, {
       method: 'POST',
@@ -180,13 +204,18 @@ export const apiClient = {
   getApprovals: (postId: string) => apiFetch<any>(`/api/posts/${postId}/approvals`),
 
   // Media Upload
-  uploadMedia: (userId: string, file: File, challengeTitle: string) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('userId', userId);
-    formData.append('challengeTitle', challengeTitle);
-    formData.append('mediaType', file.type.startsWith('image/') ? 'image' : 'video');
+// Media Upload
+uploadMedia: (userId: string, file: File, challengeTitle: string) => {
+  const title = (challengeTitle ?? '').trim() || 'daily-challenge';
 
-    return uploadFile<any>('/api/media/upload', formData);
-  },
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('userId', userId);
+  formData.append('challengeTitle', title);
+  formData.append('mediaType', file.type.startsWith('image/') ? 'image' : 'video'); // optional
+
+  return uploadForm<any>('/api/media/upload', formData);
+},
+
+
 };

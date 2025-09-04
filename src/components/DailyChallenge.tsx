@@ -1,53 +1,42 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import StreakCounter from './StreakCounter';
-import { useAuth } from '@/contexts/AuthContext';
-import { apiClient } from '@/lib/api-client';
-import { toast } from 'sonner';
-import { RotateCcw } from 'lucide-react';
 import './DailyChallenge.css';
 
-const challenges = [
+export type Challenge = {
+  id: number;
+  title: string;
+  description: string;
+  points: number;
+  emoji?: string;
+};
+
+// Export the list so the parent can pick/rotate challenges.
+export const CHALLENGES: Challenge[] = [
   { id: 1, title: 'Say hi to a stranger', description: 'Greet someone you don’t know with a smile and a friendly hello', points: 10, emoji: '👋' },
   { id: 2, title: 'Compliment someone', description: 'Give someone a genuine compliment today', points: 10, emoji: '😊' },
   { id: 3, title: 'Start a conversation', description: 'Initiate a conversation with someone new', points: 15, emoji: '💬' },
-  // ... keep the rest of your challenges ...
+  // ... add the rest of your challenges here ...
 ];
 
 interface DailyChallengeProps {
-  onCompleteRequested?: () => void;
-  onChallengeLoaded?: (challengeTitle: string) => void;
-  deferCompletion?: boolean;
+  challenge: Challenge;
+  onStartUpload: () => void;       // open upload modal
   currentStreak: number;
-  hasUploadedToday: boolean;
+  hasUploadedToday: boolean;       // lock button if already uploaded today
 }
 
 const DailyChallenge: React.FC<DailyChallengeProps> = ({
-  onCompleteRequested,
-  onChallengeLoaded,
-  deferCompletion = false,
+  challenge,
+  onStartUpload,
   currentStreak,
   hasUploadedToday,
 }) => {
-  const { user } = useAuth();
-  const [todaysChallenge, setTodaysChallenge] = useState(challenges[0]);
-  const [timeLeft, setTimeLeft] = useState({ hours: '00', minutes: '00', seconds: '00' });
+  const [timeLeft, setTimeLeft] = React.useState({ hours: '00', minutes: '00', seconds: '00' });
 
-  useEffect(() => {
-    const today = new Date().toDateString();
-    const storedChallengeId = localStorage.getItem(`daily-challenge-${today}`);
-    if (storedChallengeId) {
-      const found = challenges.find(c => c.id === Number(storedChallengeId));
-      if (found) onChallengeLoaded?.(found.title);
-      setTodaysChallenge(found || challenges[0]);
-    } else {
-      const selected = challenges[new Date().getDate() % challenges.length];
-      setTodaysChallenge(selected);
-      onChallengeLoaded?.(selected.title);
-      localStorage.setItem(`daily-challenge-${today}`, selected.id.toString());
-    }
-
+  // Just the countdown. No localStorage / picking here anymore.
+  React.useEffect(() => {
     const updateTimeLeft = () => {
       const now = new Date();
       const tomorrow = new Date();
@@ -63,33 +52,22 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({
     updateTimeLeft();
     const interval = setInterval(updateTimeLeft, 1000);
     return () => clearInterval(interval);
-  }, [onChallengeLoaded]);
-
-  const handleClick = async () => {
-    if (!user?.id) return;
-    if (hasUploadedToday) return; // prevent multiple uploads
-
-    onCompleteRequested?.();
-
-    try {
-      const newStreak = currentStreak + 1;
-      await apiClient.updateProfile(user.id, { streak: newStreak });
-      toast.success(`Streak updated: ${newStreak} days`);
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to update streak.');
-    }
-  };
+  }, []);
 
   return (
     <div className="daily-challenge-container">
       <Card className="daily-challenge-card">
         <CardContent className="daily-challenge-content">
-          {todaysChallenge.emoji && <div className="daily-challenge-emoji" style={{ fontSize: '3em' }}>{todaysChallenge.emoji}</div>}
-          <h3 className="daily-challenge-text">{todaysChallenge.title}</h3>
-          <p className="daily-challenge-description">{todaysChallenge.description}</p>
+          {challenge.emoji && (
+            <div className="daily-challenge-emoji" style={{ fontSize: '3em' }}>
+              {challenge.emoji}
+            </div>
+          )}
+          <h3 className="daily-challenge-text">{challenge.title}</h3>
+          <p className="daily-challenge-description">{challenge.description}</p>
+
           <Button
-            onClick={handleClick}
+            onClick={onStartUpload}
             disabled={hasUploadedToday}
             className={`daily-challenge-button px-10 py-7 ${hasUploadedToday ? 'daily-challenge-complete' : ''}`}
           >
@@ -103,7 +81,10 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({
           const value = i === 0 ? timeLeft.hours : i === 1 ? timeLeft.minutes : timeLeft.seconds;
           return (
             <div key={label} className="flex flex-col items-center">
-              <div className="bg-black text-white rounded-xl px-6 py-4 text-2xl font-bold border-white border-solid" style={{ borderWidth: '3px' }}>
+              <div
+                className="bg-black text-white rounded-xl px-6 py-4 text-2xl font-bold border-white border-solid"
+                style={{ borderWidth: '3px' }}
+              >
                 {value}
               </div>
               <span className="text-sm text-gray-400 mt-1">{label}</span>

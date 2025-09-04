@@ -55,16 +55,21 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
       return;
     }
 
+    // Normalize: never send empty caption
+    const title = (challengeTitle ?? '').trim() || 'daily-challenge';
+
     setIsUploading(true);
     try {
-      const result = await apiClient.uploadMedia(user.id, selectedFile, challengeTitle);
+      // 1) upload to MinIO
+      const result = await apiClient.uploadMedia(user.id, selectedFile, title);
       const mediaType = selectedFile.type.startsWith('image/') ? 'image' : 'video';
 
+      // 2) create the post (use the SAME title)
       await apiClient.createPost({
         user_id: user.id,
-        caption: challengeTitle,
+        caption: title,            // <= IMPORTANT
         media_type: mediaType,
-        media_url: result.mediaUrl,
+        media_url: result.mediaUrl // if this is relative, render with API_BASE_URL prefix
       });
 
       toast.success('Dôkaz bol úspešne nahraný!');
@@ -77,6 +82,7 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
       setIsUploading(false);
     }
   };
+
 
   const handleClose = () => {
     setGalleryFiles([]);

@@ -16,6 +16,8 @@ import Feed from "./pages/Feed";
 import InfoPage from "./pages/InfoPage";
 import ProgramPage from "./pages/ProgramPage";
 import SpeakersPage from "./pages/SpeakersPage";
+import ModerationQueue from "./components/ModerationQueue"; // adjust path
+
 
 const queryClient = new QueryClient();
 
@@ -48,6 +50,7 @@ const App = () => (
             <Route path="/info" element={<InfoPage />} />
             <Route path="/program" element={<ProgramPage />} />
             <Route path="/speakers" element={<SpeakersPage />} />
+
 
             {/* Protected routes */}
             <Route

@@ -173,6 +173,10 @@ const Feed = () => {
     });
   }, [currentIndex, posts, isMuted]);
 
+  // --- DEBUGGING LOG ---
+  // This will log the posts array to your browser console every time it updates.
+  console.log("Current posts state:", posts);
+
   if (authLoading)
     return (
       <div className="flex items-center justify-center min-h-screen bg-black">
@@ -299,30 +303,37 @@ const Feed = () => {
             posts.map((post, idx) => (
               <div key={post.id} className="feed-post-fullscreen">
                 {post.mediaType === 'video' ? (
-                  <video
-                    src={`${API_BASE_URL}${post.mediaUrl}`}
-                    className="feed-video"
-                    loop
-                    autoPlay
-                    playsInline
-                    ref={(el) => (videoRefs.current[post.id] = el)}
-                  />
+                  <>
+                    <video
+                      src={`${API_BASE_URL}${post.mediaUrl}`}
+                      className="feed-video"
+                      loop
+                      autoPlay
+                      playsInline
+                      ref={(el) => (videoRefs.current[post.id] = el)}
+                    />
+                    {/* The mute button is now inside the video's render block */}
+                    {currentIndex === idx && (
+                      <button
+                        className="feed-mute-button"
+                        onClick={() => setIsMuted((prev) => !prev)}
+                      >
+                        {isMuted ? <VolumeX /> : <Volume2 />}
+                      </button>
+                    )}
+                  </>
                 ) : (
                   <img
                     src={`${API_BASE_URL}${post.mediaUrl}`}
                     alt={post.challengeTitle || 'Photo'}
                     className="feed-image"
                     loading="lazy"
+                    // --- DEBUGGING HANDLER ---
+                    // This will log an error to the console if the image URL fails to load.
+                    onError={(e) => {
+                      console.error(`Failed to load image for post ID ${post.id}. URL: ${e.currentTarget.src}`);
+                    }}
                   />
-                )}
-
-                {post.mediaType === 'video' && currentIndex === idx && (
-                  <button
-                    className="feed-mute-button"
-                    onClick={() => setIsMuted((prev) => !prev)}
-                  >
-                    {isMuted ? <VolumeX /> : <Volume2 />}
-                  </button>
                 )}
 
                 <button
@@ -437,3 +448,5 @@ const Feed = () => {
 };
 
 export default Feed;
+
+
