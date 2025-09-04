@@ -346,7 +346,7 @@ background:blue;
   border-radius: 50%;
   padding: 10px;
   color: white;
-  z-index: 2000;
+  z-index: 100;
   cursor: pointer;
 }
 

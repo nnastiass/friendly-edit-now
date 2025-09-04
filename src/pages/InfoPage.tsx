@@ -65,6 +65,9 @@ const InfoPage = () => {
             <button className="menu-button" onClick={() => handleNavAndClose('/speakers')}>
               Speakers
             </button>
+            <button className="menu-button" onClick={() => handleNavAndClose('/')}>
+                          Challanges
+            </button>
           </nav>
         </div>
       )}
