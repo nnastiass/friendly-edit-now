@@ -12,44 +12,37 @@ const challenges = [
   { id: 1, title: 'Say hi to a stranger', description: 'Greet someone you don’t know with a smile and a friendly hello', points: 10, emoji: '👋' },
   { id: 2, title: 'Compliment someone', description: 'Give someone a genuine compliment today', points: 10, emoji: '😊' },
   { id: 3, title: 'Start a conversation', description: 'Initiate a conversation with someone new', points: 15, emoji: '💬' },
-  // ... keep rest of your challenges ...
+  // ... keep the rest of your challenges ...
 ];
 
 interface DailyChallengeProps {
-  onComplete?: (points: number) => void;
+  onCompleteRequested?: () => void;
   onChallengeLoaded?: (challengeTitle: string) => void;
   deferCompletion?: boolean;
-  onCompleteRequested?: () => void;
+  currentStreak: number;
+  hasUploadedToday: boolean;
 }
 
 const DailyChallenge: React.FC<DailyChallengeProps> = ({
-  onComplete,
+  onCompleteRequested,
   onChallengeLoaded,
   deferCompletion = false,
-  onCompleteRequested,
+  currentStreak,
+  hasUploadedToday,
 }) => {
   const { user } = useAuth();
   const [todaysChallenge, setTodaysChallenge] = useState(challenges[0]);
-  const [isCompleted, setIsCompleted] = useState(false);
   const [timeLeft, setTimeLeft] = useState({ hours: '00', minutes: '00', seconds: '00' });
-  const [currentStreak, setCurrentStreak] = useState(0);
 
   useEffect(() => {
-    if (user) {
-      fetchUserProfile();
-    }
-
     const today = new Date().toDateString();
     const storedChallengeId = localStorage.getItem(`daily-challenge-${today}`);
     if (storedChallengeId) {
       const found = challenges.find(c => c.id === Number(storedChallengeId));
-      if (found) {
-        setTodaysChallenge(found);
-        onChallengeLoaded?.(found.title);
-      }
+      if (found) onChallengeLoaded?.(found.title);
+      setTodaysChallenge(found || challenges[0]);
     } else {
-      const challengeIndex = new Date().getDate() % challenges.length;
-      const selected = challenges[challengeIndex];
+      const selected = challenges[new Date().getDate() % challenges.length];
       setTodaysChallenge(selected);
       onChallengeLoaded?.(selected.title);
       localStorage.setItem(`daily-challenge-${today}`, selected.id.toString());
@@ -60,85 +53,47 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({
       const tomorrow = new Date();
       tomorrow.setDate(now.getDate() + 1);
       tomorrow.setHours(0, 0, 0, 0);
-
       const diff = tomorrow.getTime() - now.getTime();
       const hours = String(Math.floor(diff / (1000 * 60 * 60))).padStart(2, '0');
       const minutes = String(Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))).padStart(2, '0');
       const seconds = String(Math.floor((diff % (1000 * 60)) / 1000)).padStart(2, '0');
-
       setTimeLeft({ hours, minutes, seconds });
     };
 
     updateTimeLeft();
     const interval = setInterval(updateTimeLeft, 1000);
     return () => clearInterval(interval);
-  }, [user, onChallengeLoaded]);
+  }, [onChallengeLoaded]);
 
-  const fetchUserProfile = async () => {
+  const handleClick = async () => {
     if (!user?.id) return;
+    if (hasUploadedToday) return; // prevent multiple uploads
+
+    onCompleteRequested?.();
+
     try {
-      const data = await apiClient.getProfile(user.id);
-      setCurrentStreak(data?.streak || 0);
-    } catch (error) {
-      console.error('DailyChallenge: Error fetching user profile:', error);
-      toast.error("Failed to load user streak.");
-    }
-  };
-
-  const handleCompleteChallenge = async () => {
-    if (deferCompletion) {
-      onCompleteRequested?.();
-      return;
-    }
-
-    if (isCompleted) return;
-
-    setIsCompleted(true);
-    const today = new Date();
-    localStorage.setItem(`challenge-${today.toDateString()}`, 'completed');
-
-    const newStreak = currentStreak + 1;
-    try {
+      const newStreak = currentStreak + 1;
       await apiClient.updateProfile(user.id, { streak: newStreak });
-      setCurrentStreak(newStreak);
-      toast.success(`Challenge completed! Streak: ${newStreak} days`);
-      onComplete?.(todaysChallenge.points);
-    } catch (error) {
-      console.error('DailyChallenge: Error updating streak:', error);
-      toast.error("Failed to update streak.");
+      toast.success(`Streak updated: ${newStreak} days`);
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to update streak.');
     }
-  };
-
-  const handleDevReset = () => {
-    const randomIndex = Math.floor(Math.random() * challenges.length);
-    const newChallenge = challenges[randomIndex];
-    setTodaysChallenge(newChallenge);
-    const today = new Date().toDateString();
-    localStorage.setItem(`daily-challenge-${today}`, newChallenge.id.toString());
-    localStorage.removeItem(`challenge-${today}`);
-    setIsCompleted(false);
-    toast.success('New challenge generated!');
   };
 
   return (
     <div className="daily-challenge-container">
       <Card className="daily-challenge-card">
         <CardContent className="daily-challenge-content">
-          {todaysChallenge.emoji && (
-            <div className="daily-challenge-emoji" style={{ fontSize: '3em' }}>
-              {todaysChallenge.emoji}
-            </div>
-          )}
-
+          {todaysChallenge.emoji && <div className="daily-challenge-emoji" style={{ fontSize: '3em' }}>{todaysChallenge.emoji}</div>}
           <h3 className="daily-challenge-text">{todaysChallenge.title}</h3>
           <p className="daily-challenge-description">{todaysChallenge.description}</p>
-
           <Button
-            onClick={handleCompleteChallenge}
-            disabled={!deferCompletion && isCompleted}
-            className={`daily-challenge-button px-10 py-7 ${(!deferCompletion && isCompleted) ? 'daily-challenge-complete' : ''}`}
+            onClick={handleClick}
+            disabled={hasUploadedToday}
+            className={`daily-challenge-button px-10 py-7 ${hasUploadedToday ? 'daily-challenge-complete' : ''}`}
           >
-            {(!deferCompletion && isCompleted) ? 'Completed!' : 'Complete Challenge'}
+            {hasUploadedToday ? 'Completed Today' : 'Complete Challenge'}
           </Button>
         </CardContent>
       </Card>
@@ -158,18 +113,6 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({
       </div>
 
       <StreakCounter streak={currentStreak} />
-
-      <div className="flex justify-center mt-4">
-        <Button
-          onClick={handleDevReset}
-          variant="outline"
-          size="sm"
-          className="text-gray-400 border-gray-600 hover:bg-gray-800"
-        >
-          <RotateCcw className="h-4 w-4 mr-2" />
-          Dev: New Challenge
-        </Button>
-      </div>
     </div>
   );
 };

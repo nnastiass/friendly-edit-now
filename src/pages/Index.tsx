@@ -1,117 +1,108 @@
 import React, { useState, useEffect } from 'react';
-import { Home, User, Plus, Info } from 'lucide-react';
+import { Home, User, Plus, Info, RotateCcw } from 'lucide-react';
 import DailyChallenge from '@/components/DailyChallenge';
 import MediaUpload from '@/components/MediaUpload';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { apiClient } from '@/lib/api-client';
+import { toast } from 'sonner';
 import './Index.css';
 
 const Index = () => {
   const [currentStreak, setCurrentStreak] = useState(0);
-  const [totalChallenges, setTotalChallenges] = useState(0);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [currentChallenge, setCurrentChallenge] = useState('');
+  const [hasUploadedToday, setHasUploadedToday] = useState(false);
 
-  const [isLoading, setIsLoading] = useState(true);
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
-  const isParticipant =
-    !!(user as any)?.isConferenceParticipant ||
-    !!(user as any)?.is_conference_participant;
-
   useEffect(() => {
-    if (!authLoading) {
-      if (!user) {
-        navigate('/auth');
-      } else {
-        setIsLoading(false);
-      }
+    if (!authLoading && !user) {
+      navigate('/auth');
+      return;
     }
+
+    if (user?.id) {
+      apiClient.getProfile(user.id)
+        .then(data => setCurrentStreak(data?.streak || 0))
+        .catch(err => {
+          console.error('Error fetching streak:', err);
+          toast.error('Failed to load streak.');
+        });
+    }
+
+    const today = new Date().toDateString();
+    setHasUploadedToday(!!localStorage.getItem(`challenge-${today}`));
   }, [user, authLoading, navigate]);
 
-  if (authLoading || isLoading) {
-    return (
-      <div className="index-loading">
-        <div className="index-loading-frame">
-          <div className="index-loading-content">
-            <div className="index-loading-inner">
-              <div className="index-loading-spinner"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const handleUploadComplete = async (mediaUrl: string) => {
+    if (!user?.id || !currentChallenge) return;
 
-  if (!user) {
-    return null;
-  }
+    const today = new Date().toDateString();
+    localStorage.setItem(`challenge-${today}`, 'completed');
+    setHasUploadedToday(true);
 
-  // ✅ streak now updates only after upload is done
-  const handleUploadComplete = (mediaUrl: string, mediaType: 'image' | 'video') => {
-    console.log('Upload completed:', { mediaUrl, mediaType });
-
-    setCurrentStreak(prev => prev + 1);
-    setTotalChallenges(prev => prev + 1);
+    try {
+      const newStreak = currentStreak + 1;
+      await apiClient.updateProfile(user.id, { streak: newStreak });
+      setCurrentStreak(newStreak);
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to update streak.');
+    }
 
     setIsUploadOpen(false);
   };
+
+  // Dev button to reset today’s upload
+  const handleDevResetUpload = () => {
+    const today = new Date().toDateString();
+    localStorage.removeItem(`challenge-${today}`);
+    setHasUploadedToday(false);
+    toast.success('Dev: You can upload again today!');
+  };
+
+  if (authLoading || !user) return <div>Loading...</div>;
+
+  const isParticipant = !!(user as any)?.isConferenceParticipant || !!(user as any)?.is_conference_participant;
 
   return (
     <div className="index-container">
       <div className="index-mobile-frame">
         <div className="index-layout">
-          {/* Main Content */}
           <div className="index-main-content">
             <DailyChallenge
               deferCompletion={true}
-              currentStreak={currentStreak}   //pass streak down
-              onCompleteRequested={() => {
-                setIsUploadOpen(true);
-              }}
-              onChallengeLoaded={(challengeTitle) => {
-                setCurrentChallenge(challengeTitle);
-              }}
+              currentStreak={currentStreak}
+              hasUploadedToday={hasUploadedToday}
+              onCompleteRequested={() => setIsUploadOpen(true)}
+              onChallengeLoaded={setCurrentChallenge}
             />
 
+            {/* Dev button */}
+            <div className="flex justify-center mt-4">
+              <button
+                onClick={handleDevResetUpload}
+                className="flex items-center gap-2 px-4 py-2 border rounded text-sm text-gray-200 border-gray-500 hover:bg-gray-800"
+              >
+                <RotateCcw className="h-4 w-4" />
+                Dev: Reset Upload
+              </button>
+            </div>
           </div>
 
-          {/* Bottom Navigation */}
           <div className="index-bottom-nav">
             <div className="index-nav-container">
-              <button
-                className="index-nav-button index-nav-button-inactive"
-                onClick={() => navigate('/feed')}
-              >
-                <Home className="index-nav-icon" />
-              </button>
-
-              {isParticipant && (
-                <button
-                  className="index-nav-button index-nav-button-inactive"
-                  onClick={() => navigate('/info')}
-                >
-                  <Info className="index-nav-icon" />
-                </button>
-              )}
-
-              <button className="index-nav-button index-nav-button-active">
-                <Plus className="index-nav-icon" />
-              </button>
-
-              <button
-                className="index-nav-button index-nav-button-inactive"
-                onClick={() => navigate('/profile')}
-              >
-                <User className="index-nav-icon" />
-              </button>
+              <button className="index-nav-button index-nav-button-inactive" onClick={() => navigate('/feed')}><Home className="index-nav-icon" /></button>
+              {isParticipant && <button className="index-nav-button index-nav-button-inactive" onClick={() => navigate('/info')}><Info className="index-nav-icon" /></button>}
+              <button className="index-nav-button index-nav-button-active"><Plus className="index-nav-icon" /></button>
+              <button className="index-nav-button index-nav-button-inactive" onClick={() => navigate('/profile')}><User className="index-nav-icon" /></button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Media Upload Modal */}
       <MediaUpload
         isOpen={isUploadOpen}
         onClose={() => setIsUploadOpen(false)}

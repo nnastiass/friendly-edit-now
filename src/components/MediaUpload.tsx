@@ -48,6 +48,13 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
       return;
     }
 
+    // 🔒 prevent more than one proof per day
+    const today = new Date().toDateString();
+    if (localStorage.getItem(`challenge-${today}`) === 'completed') {
+      toast.error('Už si splnil dnešnú výzvu!');
+      return;
+    }
+
     setIsUploading(true);
     try {
       const result = await apiClient.uploadMedia(user.id, selectedFile, challengeTitle);
