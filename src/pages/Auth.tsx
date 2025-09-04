@@ -12,6 +12,7 @@ const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [username, setUsername] = useState('');
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -64,6 +65,23 @@ const Auth = () => {
           navigate('/');
         }
       } else {
+        // Confirm password validation
+        if (password !== confirmPassword) {
+          toast.error("Passwords don't match.");
+          setLoading(false);
+          return;
+        }
+
+        // Password strength validation
+        const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).{8,}$/;
+        if (!passwordPattern.test(password)) {
+          toast.error(
+            'Password must be at least 8 characters long and include uppercase, lowercase, and a number.'
+          );
+          setLoading(false);
+          return;
+        }
+
         // If the user claims participant, verify code here before signUp
         if (isParticipant) {
           if (!conferenceCode.trim()) {
@@ -104,9 +122,7 @@ const Auth = () => {
     }
   };
 
-
-const isSignUpDisabled = loading || !agreedToTerms;
-
+  const isSignUpDisabled = loading || !agreedToTerms;
 
   return (
     <div
@@ -129,18 +145,20 @@ const isSignUpDisabled = loading || !agreedToTerms;
 
           <form onSubmit={handleSubmit} className="auth-form">
             {!isLogin && (
-              <div className="auth-field">
-                <Label htmlFor="username" className="auth-label">Username</Label>
-                <Input
-                  id="username"
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required={!isLogin}
-                  className="auth-input"
-                  placeholder="Choose a username"
-                />
-              </div>
+              <>
+                <div className="auth-field">
+                  <Label htmlFor="username" className="auth-label">Username</Label>
+                  <Input
+                    id="username"
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    required
+                    className="auth-input"
+                    placeholder="Choose a username"
+                  />
+                </div>
+              </>
             )}
 
             <div className="auth-field">
@@ -168,6 +186,21 @@ const isSignUpDisabled = loading || !agreedToTerms;
                 placeholder="Enter your password"
               />
             </div>
+
+            {!isLogin && (
+              <div className="auth-field">
+                <Label htmlFor="confirmPassword" className="auth-label">Confirm Password</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  className="auth-input"
+                  placeholder="Re-enter your password"
+                />
+              </div>
+            )}
 
             {!isLogin && (
               <>
