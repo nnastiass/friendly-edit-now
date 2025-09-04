@@ -231,12 +231,20 @@ const Feed = () => {
         user.id,
         commentInput
       );
-      setCurrentComments((prev) => [...prev, newComment]);
+
+      // Enrich locally so it shows immediately
+      const enrichedComment: Comment = {
+        ...newComment,
+        username: user.username,   // add from current user
+      };
+
+      setCurrentComments((prev) => [...prev, enrichedComment]);
       setCommentInput('');
     } catch (err) {
       console.error('Failed to post comment', err);
     }
   };
+
 
   return (
     <div className="feed-container">
