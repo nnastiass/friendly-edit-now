@@ -70,7 +70,8 @@ const Index: React.FC = () => {
     const today = todayKey();
     const keys = storageKeys(variantKey);
 
-    setHasUploadedToday(!!localStorage.getItem(keys.completed(today)));
+    setHasUploadedToday(!!localStorage.getItem(`${user?.id}_${keys.completed(today)}`));
+
     setChallenge(pickInitialChallenge(challengeList, variantKey));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [variantKey]);
@@ -102,7 +103,7 @@ const Index: React.FC = () => {
     const keys = storageKeys(variantKey);
 
     // mark completed today for this variant
-    localStorage.setItem(keys.completed(today), '1');
+    localStorage.setItem(`${user.id}_${keys.completed(today)}`, '1');
     setHasUploadedToday(true);
 
     // increment streak on server + UI
@@ -119,7 +120,7 @@ const Index: React.FC = () => {
     // rotate to next challenge within the same list, but keep today locked
     const next = pickNextChallenge(challengeList, challenge.id);
     setChallenge(next);
-    localStorage.setItem(keys.current(today), String(next.id));
+    localStorage.setItem(`${user.id}_${keys.current(today)}`, String(next.id));
 
     setIsUploadOpen(false);
   };
@@ -128,7 +129,8 @@ const Index: React.FC = () => {
   const handleDevResetUpload = () => {
     const today = todayKey();
     const keys = storageKeys(variantKey);
-    localStorage.removeItem(keys.completed(today));
+    localStorage.removeItem(`${user.id}_${keys.completed(today)}`);
+
     setHasUploadedToday(false);
     toast.success('Dev: You can upload again today!');
   };
