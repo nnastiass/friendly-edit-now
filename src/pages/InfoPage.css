@@ -29,10 +29,10 @@
 /* --- UPDATED MOBILE MENU STYLES --- */
 .info-page-mobile-menu {
   position: fixed;
-  top: 7rem; /* Position it to start below the header */
+  top: 6.8rem; /* Position it to start below the header */
   left: 0;
   width: 100%;
-  height: 28.33vh; /* Changed to 1/3 of the screen height */
+    height: 30vh; /* Changed to 1/3 of the screen height */
   background-color: #444EC9; /* Same blue as header */
   z-index: 50;
   display: flex;

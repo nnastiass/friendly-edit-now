@@ -16,13 +16,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { apiClient, API_BASE_URL } from '@/lib/api-client';
 import './Feed.css';
-import './Index.css'; // bottom-nav styles
+import './Index.css';
 
 interface Post {
   id: string;
   userId: string;
   username: string;
-  avatarUrl: string;
+  avatarUrl: string | null;
   mediaUrl: string;
   mediaType: 'image' | 'video';
   challengeTitle: string;
@@ -44,7 +44,6 @@ const Feed = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isMuted, setIsMuted] = useState(true);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
-  const [isClosingComments, setIsClosingComments] = useState(false);
   const [currentComments, setCurrentComments] = useState<Comment[]>([]);
   const [commentInput, setCommentInput] = useState('');
 
@@ -52,37 +51,29 @@ const Feed = () => {
   const navigate = useNavigate();
   const feedRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef<{ [key: string]: HTMLVideoElement | null }>({});
-  const commentsRef = useRef<HTMLDivElement>(null);
-  const startY = useRef(0);
 
   const isParticipant =
     !!(user as any)?.isConferenceParticipant ||
     !!(user as any)?.is_conference_participant;
 
-  // Disable background scroll when comments are open
   useEffect(() => {
-    if (isCommentsOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
+    document.body.style.overflow = isCommentsOpen ? 'hidden' : '';
   }, [isCommentsOpen]);
 
-  // Fetch feed posts
   const fetchPosts = async (currentPage: number) => {
     if (!user) return;
     setIsLoading(true);
     try {
-      const newPosts = await apiClient.getFeed(user.id, currentPage);
-      const transformedPosts = newPosts.map((post: any) => ({
-        id: post.id,
-        userId: post.user_id ?? post.userId,
-        username: post.username,
-        avatarUrl: post.avatar_url,
-        mediaUrl: post.media_url,
-        mediaType: post.media_type,
-        challengeTitle: post.caption,
-        createdAt: post.created_at,
+      const feedPosts = await apiClient.getFeed(user.id, currentPage);
+      const transformedPosts = feedPosts.map((p: any) => ({
+        id: p.id,
+        userId: p.user_id ?? p.userId,
+        username: p.username,
+        avatarUrl: p.avatar_url,
+        mediaUrl: p.media_url,
+        mediaType: p.media_type,
+        challengeTitle: p.caption,
+        createdAt: p.created_at,
       }));
       setPosts((prev) => {
         const unique = transformedPosts.filter(
@@ -90,7 +81,7 @@ const Feed = () => {
         );
         return [...prev, ...unique];
       });
-      if (newPosts.length < 10) setHasMore(false);
+      if (feedPosts.length < 10) setHasMore(false);
     } catch (err) {
       console.error(err);
       setHasMore(false);
@@ -99,24 +90,33 @@ const Feed = () => {
     }
   };
 
-  // Fetch latest user post
   const fetchLatestUserPost = async () => {
     if (!user) return;
     try {
-      const userPosts: any[] = await apiClient.getUserPosts(user.id);
-      if (userPosts.length > 0) {
-        const latest = userPosts[userPosts.length - 1];
-        setLatestUserPost({
-          id: latest.id,
-          userId: user.id,
-          username: user.username,
-          avatarUrl: user.avatar_url,
-          mediaUrl: latest.media_url,
-          mediaType: latest.media_type,
-          challengeTitle: latest.caption,
-          createdAt: latest.created_at,
-        });
-      }
+      // Fetch first feed page
+      const feedPosts = await apiClient.getFeed(user.id, 1);
+
+      // Include only current user's posts
+      const myPosts = feedPosts.filter((p: any) => p.user_id === user.id);
+
+      if (myPosts.length === 0) return;
+
+      // Pick the latest by createdAt
+      const latest = myPosts.sort(
+        (a: any, b: any) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      )[0];
+
+      setLatestUserPost({
+        id: latest.id,
+        userId: user.id,
+        username: user.username,
+        avatarUrl: latest.avatar_url,
+        mediaUrl: latest.media_url,
+        mediaType: latest.media_type,
+        challengeTitle: latest.caption,
+        createdAt: latest.created_at,
+      });
     } catch (err) {
       console.error('Failed to fetch latest user post', err);
     }
@@ -133,7 +133,6 @@ const Feed = () => {
     if (page > 1) fetchPosts(page);
   }, [page]);
 
-  // Scroll handling
   useEffect(() => {
     const handleScroll = () => {
       if (!feedRef.current || isCommentsOpen) return;
@@ -143,8 +142,7 @@ const Feed = () => {
       if (newIndex !== currentIndex) setCurrentIndex(newIndex);
 
       if (
-        scrollTop + clientHeight >=
-          feedRef.current.scrollHeight - clientHeight &&
+        scrollTop + clientHeight >= feedRef.current.scrollHeight - clientHeight &&
         !isLoading &&
         hasMore
       ) {
@@ -158,7 +156,6 @@ const Feed = () => {
     }
   }, [currentIndex, isLoading, hasMore, isCommentsOpen]);
 
-  // Video playback
   useEffect(() => {
     Object.entries(videoRefs.current).forEach(([id, video]) => {
       if (!video) return;
@@ -189,65 +186,40 @@ const Feed = () => {
     navigate(`/profile/${posterId}`);
   };
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    startY.current = e.touches[0].clientY;
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    const deltaY = e.touches[0].clientY - startY.current;
-    if (deltaY > 100) {
-      closeComments();
-    }
-  };
-
-  // Open / close comments
   const openComments = async (postId: string) => {
-    if (!user) return;
     setIsCommentsOpen(true);
     try {
       const comments = await apiClient.getComments(postId);
       setCurrentComments(comments);
-    } catch (err) {
-      console.error(err);
+    } catch {
       setCurrentComments([]);
     }
   };
 
   const closeComments = () => {
-    setIsClosingComments(true);
-    setTimeout(() => {
-      setIsCommentsOpen(false);
-      setIsClosingComments(false);
-      setCurrentComments([]);
-      setCommentInput('');
-    }, 300); // match CSS animation duration
+    setIsCommentsOpen(false);
+    setCurrentComments([]);
+    setCommentInput('');
   };
 
   const handleAddComment = async () => {
-    if (!commentInput.trim() || !user) return;
+    if (!commentInput.trim()) return;
     try {
       const newComment = await apiClient.addComment(
         posts[currentIndex].id,
         user.id,
         commentInput
       );
-
-      // Enrich locally so it shows immediately
-      const enrichedComment: Comment = {
-        ...newComment,
-        username: user.username,   // add from current user
-      };
-
-      setCurrentComments((prev) => [...prev, enrichedComment]);
+      setCurrentComments((prev) => [...prev, { ...newComment, username: user.username }]);
       setCommentInput('');
     } catch (err) {
       console.error('Failed to post comment', err);
     }
   };
 
-
   return (
     <div className="feed-container">
+      {/* Latest User Post (History) */}
       {latestUserPost && (
         <div
           className="feed-history-button"
@@ -260,6 +232,7 @@ const Feed = () => {
               className="feed-history-video"
               muted
               loop
+              autoPlay
               playsInline
             />
           ) : (
@@ -275,22 +248,16 @@ const Feed = () => {
         </div>
       )}
 
-      <div
-        className="feed-mobile-frame"
-        ref={feedRef}
-        style={{ paddingBottom: '64px' }}
-      >
+      {/* Feed posts */}
+      <div className="feed-mobile-frame" ref={feedRef} style={{ paddingBottom: '64px' }}>
         <div className="feed-layout">
           <div className="feed-overlay-header">
-
             <h1 className="feed-title">Feed</h1>
           </div>
 
           {posts.length === 0 && !isLoading ? (
             <div className="feed-empty">
-              <p className="feed-empty-text">
-                No posts from friends yet
-              </p>
+              <p className="feed-empty-text">No posts from friends yet</p>
               <p className="feed-empty-subtext">
                 If you want to see content, add friends, or ask a friend to add a video or photo.
               </p>
@@ -299,55 +266,36 @@ const Feed = () => {
             posts.map((post, idx) => (
               <div key={post.id} className="feed-post-fullscreen">
                 {post.mediaType === 'video' ? (
-                  <video
-                    src={`${API_BASE_URL}${post.mediaUrl}`}
-                    className="feed-video"
-                    loop
-                    autoPlay
-                    playsInline
-                    ref={(el) => (videoRefs.current[post.id] = el)}
-                  />
+                  <>
+                    <video
+                      src={`${API_BASE_URL}${post.mediaUrl}`}
+                      className="feed-video"
+                      loop
+                      autoPlay
+                      playsInline
+                      ref={(el) => (videoRefs.current[post.id] = el)}
+                    />
+                    {currentIndex === idx && (
+                      <button className="feed-mute-button" onClick={() => setIsMuted((prev) => !prev)}>
+                        {isMuted ? <VolumeX /> : <Volume2 />}
+                      </button>
+                    )}
+                  </>
                 ) : (
                   <img
                     src={`${API_BASE_URL}${post.mediaUrl}`}
                     alt={post.challengeTitle || 'Photo'}
                     className="feed-image"
-                    loading="lazy"
                   />
                 )}
 
-                {post.mediaType === 'video' && currentIndex === idx && (
-                  <button
-                    className="feed-mute-button"
-                    onClick={() => setIsMuted((prev) => !prev)}
-                  >
-                    {isMuted ? <VolumeX /> : <Volume2 />}
-                  </button>
-                )}
-
-                <button
-                  className="feed-comments-button"
-                  onClick={() => openComments(post.id)}
-                >
+                <button className="feed-comments-button" onClick={() => openComments(post.id)}>
                   <MessageCircle />
                 </button>
 
                 <div className="feed-overlay">
-                  <div
-                    className="feed-post-info"
-                    onClick={() => handleProfileClick(post.userId)}
-                  >
-                    {post.avatarUrl && (
-                      <img
-                        src={post.avatarUrl}
-                        alt="User avatar"
-                        className="feed-avatar"
-                      />
-                    )}
-                    <span className="feed-post-username">
-                      @{post.username}
-                    </span>
-                  </div>
+                  {post.avatarUrl && <img src={post.avatarUrl} alt="User avatar" className="feed-avatar" />}
+                  <span className="feed-post-username" onClick={() => handleProfileClick(post.userId)}>@{post.username}</span>
                   <p className="feed-post-caption">{post.challengeTitle}</p>
                 </div>
               </div>
@@ -359,34 +307,18 @@ const Feed = () => {
               <Loader2 className="h-6 w-6 text-white animate-spin" />
             </div>
           )}
-          {!hasMore && posts.length > 0 && (
-            <div className="feed-end-of-feed">
-              <p>You reached the end</p>
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Comments Modal + Backdrop */}
+      {/* Comments modal */}
       {isCommentsOpen && (
-        <div
-          className={`feed-comments-backdrop ${isClosingComments ? 'closing' : ''}`}
-          onClick={closeComments}
-        >
-          <div
-            className="feed-comments-modal"
-            ref={commentsRef}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div className="feed-comments-backdrop" onClick={closeComments}>
+          <div className="feed-comments-modal" onClick={(e) => e.stopPropagation()}>
             <div className="feed-comments-drag-handle"></div>
             <h3 className="feed-comments-title">Comments</h3>
             <div className="feed-comments-list">
               {currentComments.map((c) => (
-                <p key={c.id} className="feed-comment">
-                  {c.username}: {c.content}
-                </p>
+                <p key={c.id} className="feed-comment">{c.username}: {c.content}</p>
               ))}
             </div>
             <div className="feed-comments-input">
@@ -401,35 +333,13 @@ const Feed = () => {
         </div>
       )}
 
-      {/* Bottom Navigation */}
+      {/* Bottom navigation */}
       <div className="index-bottom-nav">
         <div className="index-nav-container">
-          <button
-            className="index-nav-button index-nav-button-active"
-            onClick={() => navigate('/feed')}
-          >
-            <Home className="index-nav-icon" />
-          </button>
-          {isParticipant && (
-            <button
-              className="index-nav-button index-nav-button-inactive"
-              onClick={() => navigate('/info')}
-            >
-              <Info className="index-nav-icon" />
-            </button>
-          )}
-          <button
-            className="index-nav-button index-nav-button-inactive"
-            onClick={() => navigate('/')}
-          >
-            <Plus className="index-nav-icon" />
-          </button>
-          <button
-            className="index-nav-button index-nav-button-inactive"
-            onClick={() => navigate('/profile')}
-          >
-            <User className="index-nav-icon" />
-          </button>
+          <button className="index-nav-button index-nav-button-active" onClick={() => navigate('/feed')}><Home className="index-nav-icon"/></button>
+          {isParticipant && <button className="index-nav-button index-nav-button-inactive" onClick={() => navigate('/info')}><Info className="index-nav-icon"/></button>}
+          <button className="index-nav-button index-nav-button-inactive" onClick={() => navigate('/')}><Plus className="index-nav-icon"/></button>
+          <button className="index-nav-button index-nav-button-inactive" onClick={() => navigate('/profile')}><User className="index-nav-icon"/></button>
         </div>
       </div>
     </div>
