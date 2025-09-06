@@ -55,6 +55,55 @@ const Feed = () => {
   const isParticipant =
     !!(user as any)?.isConferenceParticipant ||
     !!(user as any)?.is_conference_participant;
+  // --- NEW state & refs near your other useState/useRef lines ---
+  const [sheetOffset, setSheetOffset] = useState(0);       // px dragged down
+  const [isDragging, setIsDragging] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+  const dragStartY = useRef(0);
+  const sheetRef = useRef<HTMLDivElement>(null);
+
+  // --- helper: animate close then unmount ---
+  const animateAndClose = () => {
+    if (isClosing) return;
+    setIsClosing(true);
+    setSheetOffset(window.innerHeight); // slide sheet down offscreen
+  };
+
+  // When the transform transition finishes, actually close (unmount)
+  const handleTransitionEnd = (e: React.TransitionEvent<HTMLDivElement>) => {
+    if (e.target !== sheetRef.current) return;
+    if (isClosing) {
+      setIsClosing(false);
+      setSheetOffset(0);
+      closeComments();
+    }
+  };
+
+
+  // --- pointer/drag handlers ---
+  const onDragStart = (e: React.PointerEvent) => {
+    setIsDragging(true);
+    dragStartY.current = e.clientY;
+    (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+  };
+
+  const onDragMove = (e: React.PointerEvent) => {
+    if (!isDragging) return;
+    const delta = e.clientY - dragStartY.current;
+    setSheetOffset(Math.max(0, delta)); // only allow dragging downward
+  };
+
+  const onDragEnd = () => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    const CLOSE_THRESHOLD = 120; // px
+    if (sheetOffset > CLOSE_THRESHOLD) {
+      animateAndClose(); // animate out then unmount
+    } else {
+      setSheetOffset(0); // snap back to open
+    }
+  };
+
 
   useEffect(() => {
     document.body.style.overflow = isCommentsOpen ? 'hidden' : '';
@@ -188,6 +237,10 @@ const Feed = () => {
 
   const openComments = async (postId: string) => {
     setIsCommentsOpen(true);
+    setSheetOffset(window.innerHeight);
+    requestAnimationFrame(() => setSheetOffset(0)); // <- this one is enough
+;
+;
     try {
       const comments = await apiClient.getComments(postId);
       setCurrentComments(comments);
@@ -312,15 +365,45 @@ const Feed = () => {
 
       {/* Comments modal */}
       {isCommentsOpen && (
-        <div className="feed-comments-backdrop" onClick={closeComments}>
-          <div className="feed-comments-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="feed-comments-drag-handle"></div>
+        <div
+          className="feed-comments-backdrop"
+          onClick={animateAndClose} // animate close on backdrop click
+        >
+          <div
+            ref={sheetRef}
+            className="feed-comments-modal"
+            onClick={(e) => e.stopPropagation()}
+            onTransitionEnd={handleTransitionEnd}
+            style={{
+              transform: `translateY(${sheetOffset}px)`,
+              transition: isDragging ? 'none' : 'transform 260ms ease',
+              touchAction: 'none', // helps prevent scroll-jank on mobile
+            }}
+            // allow closing with ESC
+            tabIndex={-1}
+            onKeyDown={(e) => e.key === 'Escape' && animateAndClose()}
+          >
+            {/* drag handle area (grabbable) */}
+            <div
+              className="feed-comments-drag-handle"
+              onPointerDown={onDragStart}
+              onPointerMove={onDragMove}
+              onPointerUp={onDragEnd}
+              onPointerCancel={onDragEnd}
+            >
+              <span className="feed-comments-drag-bar" />
+            </div>
+
             <h3 className="feed-comments-title">Comments</h3>
+
             <div className="feed-comments-list">
               {currentComments.map((c) => (
-                <p key={c.id} className="feed-comment">{c.username}: {c.content}</p>
+                <p key={c.id} className="feed-comment">
+                  {c.username}: {c.content}
+                </p>
               ))}
             </div>
+
             <div className="feed-comments-input">
               <input
                 value={commentInput}
@@ -332,6 +415,7 @@ const Feed = () => {
           </div>
         </div>
       )}
+
 
       {/* Bottom navigation */}
       <div className="index-bottom-nav">

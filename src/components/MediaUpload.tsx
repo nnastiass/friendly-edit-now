@@ -120,7 +120,7 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
             <div
               key={idx}
               className={`w-24 h-24 border-2 rounded-lg overflow-hidden cursor-pointer ${
-                selectedFile === file ? 'border-pink-500' : 'border-gray-300'
+                selectedFile === file ? 'border-[#ff0046]' : 'border-gray-300'
               }`}
               onClick={() => setSelectedFile(file)}
             >

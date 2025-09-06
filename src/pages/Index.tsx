@@ -36,6 +36,11 @@ function detectInitialVariant(): 'main' | 'conf' {
 const Index: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const [showTUChoice, setShowTUChoice] = useState(false);
+  const tuChoiceKey = useMemo(
+    () => `tuChoiceShown::${String(user?.id ?? 'anon')}`,
+    [user?.id]
+  );
 
   // Which flavor of the app are we in?
   const [variantKey, setVariantKey] = useState<'main' | 'conf'>(detectInitialVariant());
@@ -55,6 +60,15 @@ const Index: React.FC = () => {
   const [hasUploadedToday, setHasUploadedToday] = useState(false);
 
   // If the logged-in user is a conference participant, force conference list
+  useEffect(() => {
+    if (authLoading || !user) return;
+    const isParticipant =
+      !!(user as any)?.isConferenceParticipant || !!(user as any)?.is_conference_participant;
+    if (isParticipant && !sessionStorage.getItem(tuChoiceKey)) {
+      setShowTUChoice(true);
+    }
+  }, [authLoading, user, tuChoiceKey]);
+
   useEffect(() => {
     if (user) {
       const isParticipant =
@@ -134,6 +148,18 @@ const Index: React.FC = () => {
     setHasUploadedToday(false);
     toast.success('Dev: You can upload again today!');
   };
+  const handleChooseChallenges = () => {
+    sessionStorage.setItem(tuChoiceKey, '1');
+    setShowTUChoice(false);
+    navigate('/');          // stay/go to Challenges (Index)
+  };
+
+  const handleChooseInfo = () => {
+    sessionStorage.setItem(tuChoiceKey, '1');
+    setShowTUChoice(false);
+    navigate('/info');      // go to Info page
+  };
+
 
   if (authLoading || !user) return <div>Loading...</div>;
 
@@ -184,6 +210,24 @@ const Index: React.FC = () => {
           </div>
         </div>
       </div>
+        {showTUChoice && (
+          <div className="tu-overlay">
+            <div className="tu-card">
+              <h3 className="text-lg font-semibold mb-2">Testing United</h3>
+              <p className="text-sm opacity-80 mb-5">
+                Do you want to try challenges or view Testing United Conference info?
+              </p>
+              <div className="tu-row">
+                <button onClick={handleChooseChallenges} className="tu-btn">
+                  Challenges
+                </button>
+                <button onClick={handleChooseInfo} className="tu-btn tu-btn--ghost">
+                  Info
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
       <MediaUpload
         isOpen={isUploadOpen}

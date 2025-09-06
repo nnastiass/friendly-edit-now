@@ -56,6 +56,52 @@ html, body, #root {
   justify-content: center; /* Center content vertically */
   text-align: center;
 }
+:root { --tu-accent: #FF0046; }
+
+/* Overlay + card */
+.tu-overlay {
+  position: fixed; inset: 0; z-index: 10000;
+  background: rgba(0,0,0,0.7); /* black, slightly transparent */
+  display: flex; align-items: center; justify-content: center;
+}
+.tu-card {
+  width: min(92%, 480px);
+  background: rgba(0,0,0,0.8);
+  border: 2px solid #fff;            /* ← was rgba(...,0.1) */
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+}
+
+/* Buttons — inspired by your challenge style, but separate */
+.tu-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.tu-btn {
+  background-color: var(--tu-accent);
+  color: #fff;
+  border: none;
+  border-radius: 9999px;
+  padding: 1vh 2.5rem;
+  font-size: 1.8vh; font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 0 20px rgba(255,0,70,0.7);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+}
+.tu-btn:hover { transform: translateY(-1px); box-shadow: 0 0 28px rgba(255,0,70,0.75); }
+.tu-btn:active { transform: translateY(0); opacity: 0.9; }
+.tu-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; border-radius: 9999px; }
+
+/* Ghost variant for "Info" */
+.tu-btn--ghost {
+  background: transparent;
+  color: #fff;
+  border: 2px solid #fff;            /* ← was 1px rgba(...) */
+  box-shadow: none;
+}
+.tu-btn--ghost:hover {
+  background: rgba(255,255,255,0.06);
+  /* border stays white */
+}
 
 /* Daily Challenge Specific Styles */
 .challenge-title {
