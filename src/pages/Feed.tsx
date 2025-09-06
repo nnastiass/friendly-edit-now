@@ -35,6 +35,18 @@ interface Comment {
   content: string;
 }
 
+function timeAgo(input: string | Date) {
+  const ms = Date.now() - new Date(input).getTime();
+  const s = Math.floor(ms / 1000);
+  const m = Math.floor(s / 60);
+  const h = Math.floor(m / 60);
+  const d = Math.floor(h / 24);
+  if (d > 0) return `${d}d`;
+  if (h > 0) return `${h}h`;
+  if (m > 0) return `${m}m`;
+  return `${s}s`;
+}
+
 const Feed = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [latestUserPost, setLatestUserPost] = useState<Post | null>(null);
@@ -347,10 +359,30 @@ const Feed = () => {
                 </button>
 
                 <div className="feed-overlay">
-                  {post.avatarUrl && <img src={post.avatarUrl} alt="User avatar" className="feed-avatar" />}
-                  <span className="feed-post-username" onClick={() => handleProfileClick(post.userId)}>@{post.username}</span>
+                  {post.avatarUrl && (
+                    <img src={post.avatarUrl} alt="User avatar" className="feed-avatar" />
+                  )}
+
+                  <div className="feed-userline">
+                    <span
+                      className="feed-post-username"
+                      onClick={() => handleProfileClick(post.userId)}
+                    >
+                      @{post.username}
+                    </span>
+                    <span className="feed-sep"> · </span>
+                    <time
+                      className="feed-post-time"
+                      dateTime={post.createdAt}
+                      title={new Date(post.createdAt).toLocaleString()}
+                    >
+                      {timeAgo(post.createdAt)}
+                    </time>
+                  </div>
+
                   <p className="feed-post-caption">{post.challengeTitle}</p>
                 </div>
+
               </div>
             ))
           )}
