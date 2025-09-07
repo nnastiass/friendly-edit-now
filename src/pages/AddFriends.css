@@ -16,16 +16,20 @@
 .add-friends-header {
   display: flex;
   align-items: center;
-  justify-content: center; /* This centers the title */
+  justify-content: center;
   padding: 1.5rem;
   flex-shrink: 0;
-  position: relative; /* This is needed for the button positioning */
+  position: relative;
+  text-align: center;
+  /* add this to move the header down from the top */
+  margin-top: calc(env(safe-area-inset-top, 0px) + 6vh);
 }
 
 /* --- NEW STYLES FOR THE BACK BUTTON --- */
 .add-friends-back-button {
   position: absolute;
-  top: 4vh;
+  /* was: top: 4vh;  — keep the button snug to the header's top */
+  top: 1.25rem;
   left: 2rem;
   color: #FF0046 !important;
   background-color: transparent !important;

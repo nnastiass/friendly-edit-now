@@ -11,7 +11,6 @@ import { useNavigate } from 'react-router-dom';
 import './Profile.css';
 import './Index.css';
 
-
 // --- HELPER FUNCTION ---
 const pastelColors = [
   '#FFADAD', '#FFD6A5', '#FDFFB6', '#CAFFBF', '#9BF6FF', '#A0C4FF', '#BDB2FF', '#FFC6FF'
@@ -49,6 +48,8 @@ const Profile = () => {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [friends, setFriends] = useState<Friend[]>([]);
   const [friendCount, setFriendCount] = useState(0);
+  const [pendingRequests, setPendingRequests] = useState(0);
+
   const [view, setView] = useState<
     'profile' | 'edit' | 'settings' | 'account' | 'changeEmail' | 'changePassword' | 'conference'
   >('profile');
@@ -71,23 +72,30 @@ const Profile = () => {
   });
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
-  // --- NEW: Local UI state for conference toggle ---
+  // --- Local UI state for conference toggle ---
   const [enableDialogOpen, setEnableDialogOpen] = useState(false);
   const [disableConfirmOpen, setDisableConfirmOpen] = useState(false);
   const [codeInput, setCodeInput] = useState('');
   const [toggleBusy, setToggleBusy] = useState(false);
-const [showTUSettings, setShowTUSettings] = useState(false);
+  const [showTUSettings, setShowTUSettings] = useState(false);
 
+  const isFormView = ['edit', 'changeEmail', 'changePassword'].includes(view);
+  const isSettingsView = ['settings', 'account'].includes(view);
+
+  const isParticipant =
+    !!(user as any)?.isConferenceParticipant || !!(user as any)?.is_conference_participant;
 
   useEffect(() => {
-    if (user) {
+    if (user?.id) {
       fetchProfile();
       fetchFriends();
+      fetchPendingRequestsCount();
     }
-  }, [user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   const fetchProfile = async () => {
-    if (!user || !user.id) return;
+    if (!user?.id) return;
     try {
       const data: ProfileData = await apiClient.getProfile(user.id);
       setProfile(data);
@@ -104,7 +112,7 @@ const [showTUSettings, setShowTUSettings] = useState(false);
   };
 
   const fetchFriends = async () => {
-    if (!user || !user.id) return;
+    if (!user?.id) return;
     try {
       const friendsData: Friend[] = await apiClient.getFriends(user.id);
       setFriends(friendsData);
@@ -114,8 +122,18 @@ const [showTUSettings, setShowTUSettings] = useState(false);
     }
   };
 
+  const fetchPendingRequestsCount = async () => {
+    if (!user?.id) return;
+    try {
+      const reqs = await apiClient.getFriendRequests(user.id);
+      setPendingRequests(Array.isArray(reqs) ? reqs.length : 0);
+    } catch (e) {
+      console.error('Profile: Failed to fetch pending requests count', e);
+    }
+  };
+
   const handleUpdateProfile = async () => {
-    if (!user || !user.id) return;
+    if (!user?.id) return;
     setLoading(true);
     try {
       await apiClient.updateProfile(user.id, {
@@ -142,19 +160,14 @@ const [showTUSettings, setShowTUSettings] = useState(false);
     const isConfirmed = window.confirm(
       'Are you absolutely sure you want to delete your account? This action is permanent and cannot be undone.'
     );
-
-    if (!isConfirmed || !user || !user.id) {
-      return;
-    }
+    if (!isConfirmed || !user?.id) return;
 
     setIsDeleting(true);
     try {
       await apiClient.deleteProfile(user.id);
-
       toast.success('Your account has been successfully deleted.');
       await signOut();
       navigate('/auth');
-
     } catch (error: any) {
       toast.error(error.message || 'Could not delete your account. Please try again.');
     } finally {
@@ -163,33 +176,31 @@ const [showTUSettings, setShowTUSettings] = useState(false);
   };
 
   const handleChangeEmail = async (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!newEmail || !currentPasswordForEmail || !user) return;
+    e.preventDefault();
+    if (!newEmail || !currentPasswordForEmail || !user?.id) return;
 
-      setIsChangingEmail(true);
-      try {
-          const data = await apiClient.requestEmailChange(user.id, newEmail, currentPasswordForEmail);
-
-          toast.success(data.message);
-          setNewEmail('');
-          setCurrentPasswordForEmail('');
-          setView('account');
-
-      } catch (error: any) {
-          console.error('Error changing email:', error);
-          toast.error(error.message || 'Failed to request email change.');
-      } finally {
-          setIsChangingEmail(false);
-      }
+    setIsChangingEmail(true);
+    try {
+      const data = await apiClient.requestEmailChange(user.id, newEmail, currentPasswordForEmail);
+      toast.success(data.message);
+      setNewEmail('');
+      setCurrentPasswordForEmail('');
+      setView('account');
+    } catch (error: any) {
+      console.error('Error changing email:', error);
+      toast.error(error.message || 'Failed to request email change.');
+    } finally {
+      setIsChangingEmail(false);
+    }
   };
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      toast.error("New passwords do not match.");
+      toast.error('New passwords do not match.');
       return;
     }
-    if (!user) return;
+    if (!user?.id) return;
 
     setIsChangingPassword(true);
     try {
@@ -198,7 +209,7 @@ const [showTUSettings, setShowTUSettings] = useState(false);
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
       setView('account');
     } catch (error: any) {
-      toast.error(error.message || "Failed to change password.");
+      toast.error(error.message || 'Failed to change password.');
     } finally {
       setIsChangingPassword(false);
     }
@@ -206,13 +217,13 @@ const [showTUSettings, setShowTUSettings] = useState(false);
 
   const handleBackNavigation = () => {
     if (view === 'edit' || view === 'settings') {
-        setView('profile');
+      setView('profile');
     } else if (view === 'account') {
-        setView('settings');
+      setView('settings');
     } else if (view === 'changeEmail' || view === 'changePassword') {
-        setView('account');
+      setView('account');
     }
-  }
+  };
 
   const getTitleForView = () => {
     switch (view) {
@@ -226,29 +237,34 @@ const [showTUSettings, setShowTUSettings] = useState(false);
     }
   };
 
-
   const getInitials = (name: string | null) => {
     if (!name) return user?.email?.charAt(0).toUpperCase() || 'U';
     return name.split(' ').map(n => n.charAt(0)).join('').toUpperCase();
   };
 
-  // --- NEW: helper to merge updated user from API and keep camelCase flag available
+  // helper to merge updated user from API and keep camelCase flag available
   function mergeUserFromServer(patch: any) {
     if (!user) return;
     const normalized = {
       ...user,
       ...patch,
       isConferenceParticipant:
-        patch?.isConferenceParticipant ?? patch?.is_conference_participant ?? user.isConferenceParticipant ?? user.is_conference_participant ?? false,
+        patch?.isConferenceParticipant ??
+        patch?.is_conference_participant ??
+        user.isConferenceParticipant ??
+        user.is_conference_participant ??
+        false,
       is_conference_participant:
-        patch?.is_conference_participant ?? (patch?.isConferenceParticipant ?? user.isConferenceParticipant ?? user.is_conference_participant ?? false),
+        patch?.is_conference_participant ??
+        (patch?.isConferenceParticipant ??
+          user.isConferenceParticipant ??
+          user.is_conference_participant ??
+          false),
     };
     localStorage.setItem('user', JSON.stringify(normalized));
-    // If your AuthContext exposes setUser, update it so the whole app reacts immediately
     authAny.setUser?.(normalized);
   }
 
-  // --- NEW: enable conference (requires code)
   const handleEnableConference = async () => {
     if (!user?.id) return;
     if (!codeInput.trim()) {
@@ -257,7 +273,6 @@ const [showTUSettings, setShowTUSettings] = useState(false);
     }
     try {
       setToggleBusy(true);
-      // Optional: pre-verify for nicer error messages
       await apiClient.verifyConferenceCode(codeInput.trim());
       const updated = await apiClient.setConferenceParticipation(user.id, true, codeInput.trim());
       mergeUserFromServer(updated);
@@ -271,11 +286,10 @@ const [showTUSettings, setShowTUSettings] = useState(false);
     }
   };
 
-  // --- NEW: disable conference (no code; requires confirm)
   const handleDisableConference = async () => {
     if (!user?.id) return;
     const ok = window.confirm(
-      "IF you switch to normal version, you will need to enter the code again next time. Are you sure?"
+      'IF you switch to normal version, you will need to enter the code again next time. Are you sure?'
     );
     if (!ok) return;
 
@@ -294,12 +308,14 @@ const [showTUSettings, setShowTUSettings] = useState(false);
 
   if (!user) return null;
 
-  const isFormView = ['edit', 'changeEmail', 'changePassword'].includes(view);
-  const isSettingsView = ['settings', 'account'].includes(view);
-  const isParticipant = !!(user as any)?.isConferenceParticipant || !!(user as any)?.is_conference_participant;
-
   return (
-    <div className={`profile-container ${isFormView || isSettingsView ? 'edit-mode' : ''}`}>
+    <div
+      className={`profile-container ${isSettingsView ? 'settings-view' : ''} ${
+        isFormView || isSettingsView ? 'edit-mode' : ''
+      }`}
+    >
+
+
       <div className="profile-main-content">
         <div className="profile-header-gradient">
           {view === 'profile' && (
@@ -313,32 +329,38 @@ const [showTUSettings, setShowTUSettings] = useState(false);
             </>
           )}
 
-
           {view === 'profile' && (
             <>
               <Avatar className="profile-avatar">
-                    <AvatarImage src={profile?.avatar_url || ''} />
-                    <AvatarFallback
-                      className="profile-avatar-fallback"
-                      style={{ backgroundColor: generatePastelColor(profile?.id || '') }}
-                    >
-                      {getInitials(profile?.full_name)}
-                    </AvatarFallback>
-                  </Avatar>
+                <AvatarImage src={profile?.avatar_url || ''} />
+                <AvatarFallback
+                  className="profile-avatar-fallback"
+                  style={{ backgroundColor: generatePastelColor(profile?.id || '') }}
+                >
+                  {getInitials(profile?.full_name)}
+                </AvatarFallback>
+              </Avatar>
               <h1 className="profile-name">{profile?.full_name || 'Your Name'}</h1>
               <p className="profile-username">@{profile?.username || 'username'}</p>
             </>
           )}
         </div>
+
+        {/* Subpage header (back + title) */}
+
         {view !== 'profile' && (
-          <div className="friend-requests-page-header">
-            <Button onClick={handleBackNavigation} variant="ghost" size="icon" className="friend-requests-page-back-button">
+          <div className="profile-subpage-header">
+            <Button
+              onClick={handleBackNavigation}
+              variant="ghost"
+              size="icon"
+              className="profile-subpage-back-button"
+            >
               <ArrowLeft />
             </Button>
-            <h1 className="friend-requests-page-title">{getTitleForView()}</h1>
+            <h1 className="profile-subpage-title">{getTitleForView()}</h1>
           </div>
         )}
-
 
 
         {view === 'edit' && (
@@ -376,16 +398,11 @@ const [showTUSettings, setShowTUSettings] = useState(false);
                 Account
               </Button>
 
-              {/* NEW: Testing United toggle button */}
-              <Button
-                onClick={() => setShowTUSettings((v) => !v)}
-                className="settings-button"
-              >
+              <Button onClick={() => setShowTUSettings((v) => !v)} className="settings-button">
                 Testing United
               </Button>
             </div>
 
-            {/* NEW: Testing United panel (same content as was in Account) */}
             {showTUSettings && (
               <div className="settings-card" style={{ marginTop: 16, textAlign: 'center' }}>
                 {isParticipant ? (
@@ -393,11 +410,7 @@ const [showTUSettings, setShowTUSettings] = useState(false);
                     <p className="text-sm opacity-80 mb-2">
                       You are currently in the Testing United conference version.
                     </p>
-                    <Button
-                      onClick={handleDisableConference}
-                      disabled={toggleBusy}
-                      className="settings-button"
-                    >
+                    <Button onClick={handleDisableConference} disabled={toggleBusy} className="settings-button">
                       {toggleBusy ? 'Switching...' : 'Switch to normal version'}
                     </Button>
                   </>
@@ -412,7 +425,10 @@ const [showTUSettings, setShowTUSettings] = useState(false);
                         Switch to Testing United version
                       </Button>
                     ) : (
-                      <div className="auth-field-code" style={{ display: 'flex', gap: 8, marginTop: 8, justifyContent: 'center' }}>
+                      <div
+                        className="auth-field-code"
+                        style={{ display: 'flex', gap: 8, marginTop: 8, justifyContent: 'center' }}
+                      >
                         <Input
                           type="text"
                           value={codeInput}
@@ -455,16 +471,12 @@ const [showTUSettings, setShowTUSettings] = useState(false);
                 Change Password
               </Button>
 
-<Button onClick={handleSignOut} className="profile-signout-button">
-                              Sign Out
-                            </Button>
+              <Button onClick={handleSignOut} className="profile-signout-button">
+                Sign Out
+              </Button>
             </div>
 
-
-
             <div className="profile-danger-zone">
-
-
               <Button
                 variant="destructive"
                 onClick={handleDeleteAccount}
@@ -478,38 +490,37 @@ const [showTUSettings, setShowTUSettings] = useState(false);
         )}
 
         {view === 'changeEmail' && (
-            <div className="profile-edit-section">
-                <form onSubmit={handleChangeEmail} className="settings-form">
-                    <div className="edit-form-group">
-                        <Label htmlFor="newEmail">New Email Address</Label>
-                        <Input
-                            id="newEmail"
-                            type="email"
-                            value={newEmail}
-                            onChange={(e) => setNewEmail(e.target.value)}
-                            placeholder="Enter your new email"
-                            required
-                            className="profile-edit-input"
-                        />
-                    </div>
-                    <div className="edit-form-group">
-                        <Label htmlFor="currentPasswordForEmail">Current Password</Label>
-                        <Input
-                            id="currentPasswordForEmail"
-                            type="password"
-                            value={currentPasswordForEmail}
-                            onChange={(e) => setCurrentPasswordForEmail(e.target.value)}
-                            placeholder="Enter password to confirm"
-                            required
-                            className="profile-edit-input"
-                        />
-                    </div>
-                    <Button type="submit" disabled={isChangingEmail} className="profile-save-button">
-                        {isChangingEmail ? 'Sending...' : 'Request Change'}
-                    </Button>
-
-                </form>
-            </div>
+          <div className="profile-edit-section">
+            <form onSubmit={handleChangeEmail} className="settings-form">
+              <div className="edit-form-group">
+                <Label htmlFor="newEmail">New Email Address</Label>
+                <Input
+                  id="newEmail"
+                  type="email"
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                  placeholder="Enter your new email"
+                  required
+                  className="profile-edit-input"
+                />
+              </div>
+              <div className="edit-form-group">
+                <Label htmlFor="currentPasswordForEmail">Current Password</Label>
+                <Input
+                  id="currentPasswordForEmail"
+                  type="password"
+                  value={currentPasswordForEmail}
+                  onChange={(e) => setCurrentPasswordForEmail(e.target.value)}
+                  placeholder="Enter password to confirm"
+                  required
+                  className="profile-edit-input"
+                />
+              </div>
+              <Button type="submit" disabled={isChangingEmail} className="profile-save-button">
+                {isChangingEmail ? 'Sending...' : 'Request Change'}
+              </Button>
+            </form>
+          </div>
         )}
 
         {view === 'changePassword' && (
@@ -555,8 +566,8 @@ const [showTUSettings, setShowTUSettings] = useState(false);
                 {isChangingPassword ? 'Saving...' : 'Change Password'}
               </Button>
             </form>
-             <button className="forgot-password-button" onClick={() => navigate('/forgot-password')}>
-                I forgot my password
+            <button className="forgot-password-button" onClick={() => navigate('/forgot-password')}>
+              I forgot my password
             </button>
           </div>
         )}
@@ -568,11 +579,23 @@ const [showTUSettings, setShowTUSettings] = useState(false);
                 <span className="count-number">{friendCount}</span>
                 <span className="count-label">Friends</span>
               </button>
+
               <Button className="profile-add-friends-btn" onClick={() => navigate('/add-friends')}>
                 Add friends
               </Button>
-              <Button variant="ghost" size="icon" className="profile-requests-button" onClick={() => navigate('/friend-requests')}>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                className="profile-requests-button"
+                onClick={() => navigate('/friend-requests')}
+              >
                 <UserPlus className="h-6 w-6" />
+                {pendingRequests > 0 && (
+                  <span className="profile-requests-badge">
+                    {pendingRequests > 99 ? '99+' : pendingRequests}
+                  </span>
+                )}
               </Button>
             </div>
 
@@ -638,7 +661,6 @@ const [showTUSettings, setShowTUSettings] = useState(false);
           </button>
         </div>
       </div>
-
     </div>
   );
 };

@@ -1,6 +1,28 @@
 /* ========================================
    FRIEND REQUESTS PAGE STYLES
    ======================================== */
+:root {
+  /* Profile & General Colors */
+  --primary-accent: #FF0046;
+  --background-dark: #000000;
+  --background-card: #111;
+  --background-button-translucent: rgba(255, 0, 70, 0.3);
+  --background-hover-light: rgba(255, 255, 255, 0.1);
+  --text-light: white;
+  --text-light-secondary: #d1d5db;
+  --text-dark-secondary: #333;
+  --text-gray: #a1a1aa;
+
+  /* Danger Zone Colors */
+  --danger-red-bright: red;
+  --danger-red-dark: #991b1b;
+  --danger-red-dark-hover: #b91c1c;
+  --danger-border: #5c1b1b;
+  --danger-button-translucent: rgba(248, 113, 113, 0.2);
+
+  /* Index Page Colors */
+  --index-gradient-color: rgba(235, 156, 154, 0.8);
+}
 
 .friend-requests-page-container {
   display: flex;
@@ -9,7 +31,7 @@
   background-color: #000000 !important; /* Force black background */
   color: white;
   font-family: 'Poppins', sans-serif;
-  background-image: radial-gradient(ellipse 50% 45% at 50% 45%, #FF0046, transparent);
+  background-image: radial-gradient(ellipse 50% 45% at 50% 45%, var(--primary-accent), transparent);
   background-repeat: no-repeat;
 }
 
@@ -21,15 +43,19 @@
   flex-shrink: 0;
   position: relative;
   text-align: center;
+  /* add this to move the header down from the top */
+  margin-top: calc(env(safe-area-inset-top, 0px) + 6vh);
 }
 
 .friend-requests-page-back-button {
   position: absolute;
-  top: 4vh;
+  /* was: top: 4vh;  — keep the button snug to the header's top */
+  top: 1.25rem;
   left: 2rem;
   color: #FF0046 !important;
   background-color: transparent !important;
 }
+
 
 .friend-requests-page-back-button svg {
     width: 3vh !important; /* Make the icon bigger */

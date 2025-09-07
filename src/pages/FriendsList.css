@@ -23,11 +23,14 @@
   flex-shrink: 0;
   position: relative;
   text-align: center;
+  /* add this to move the header down from the top */
+  margin-top: calc(env(safe-area-inset-top, 0px) + 6vh);
 }
 
 .friends-list-back-button {
   position: absolute;
-  top: 4vh;
+  /* was: top: 4vh;  — keep the button snug to the header's top */
+  top: 1.25rem;
   left: 2rem;
   color: #FF0046 !important;
   background-color: transparent !important;

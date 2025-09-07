@@ -207,26 +207,28 @@
 
 }
 
+/* --- THIS IS THE NEW, UPDATED CODE --- */
 .profile-subpage-back-button {
-
   position: absolute;
-  left: 1.25rem;  /* adjust to taste */
-  top: 1.25rem;
-  color: var(--primary-accent) !important; /* same red you use */
+  top: 1.25rem;      /* Position from the top edge of the header */
+  left: 2rem;        /* Position from the left edge */
+  color: var(--primary-accent) !important;
   background: transparent !important;
+  /* We removed top:50% and transform to match your new style */
 }
 
 .profile-subpage-back-button svg {
-  width: 24px;
-  height: 24px;
-  stroke-width: 2.5;
+  width: 3vh !important;       /* CHANGED: Made the icon bigger */
+  height: 3vh !important;      /* CHANGED: Made the icon bigger */
+  stroke-width: 3 !important;  /* CHANGED: Made the icon thicker */
 }
 
+/* --- THIS IS THE OLD CODE --- */
+/* --- THIS IS THE NEW, UPDATED CODE --- */
 .profile-subpage-title {
-  font-size: 1.1rem;
+  font-size: 1.2rem;   /* CHANGED: Increased font size */
   font-weight: 600;
 }
-
 /* ensure content doesn't hide under fixed bottom bar */
 .profile-main-content {
   flex: 1;
@@ -259,6 +261,8 @@
   flex-direction: column;
   gap: 1rem;
 }
+
+
 
 .view-title {
     font-size: 1.5rem;
@@ -401,6 +405,33 @@
   font-weight: 700;
   color: var(--primary-accent);
 }
+
+.profile-requests-button {
+  position: relative; /* for badge positioning */
+  color: var(--primary-accent) !important;
+  background-color: transparent !important;
+}
+
+.profile-requests-badge {
+  position: absolute;
+  top: -8px;           /* tweak if needed */
+  right: -8px;         /* tweak if needed */
+  width: 1.7rem;      /* bigger circle */
+  height: 1.7rem;
+  border-radius: 50%;
+  background: var(--primary-accent);
+  color: #fff;
+  font-size: 0.8rem;   /* scales with the new size */
+  font-weight: 800;
+  display: flex;       /* center the number perfectly */
+  align-items: center;
+  justify-content: center;
+  line-height: 1;      /* avoid baseline shift */
+  border: 2px solid var(--background-dark);
+  pointer-events: none;
+}
+
+
 
 
 /* Bottom Navigation */
