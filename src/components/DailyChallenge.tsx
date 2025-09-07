@@ -11,6 +11,7 @@ interface DailyChallengeProps {
   onStartUpload: () => void;
   currentStreak: number;
   hasUploadedToday: boolean;
+  onMidnight?: () => void; // ✅ add this
 }
 
 const DailyChallenge: React.FC<DailyChallengeProps> = ({
@@ -18,9 +19,11 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({
   onStartUpload,
   currentStreak,
   hasUploadedToday,
+  onMidnight, // ✅ destructure
 }) => {
   const [timeLeft, setTimeLeft] = React.useState({ hours: '00', minutes: '00', seconds: '00' });
 
+  // countdown display
   React.useEffect(() => {
     const updateTimeLeft = () => {
       const now = new Date();
@@ -39,15 +42,34 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({
     return () => clearInterval(interval);
   }, []);
 
+  // fire parent callback at midnight (or fast test)
+  // fire parent callback at midnight (or fast test) — robust version
+  // DailyChallenge.tsx  — keep countdown only
+  React.useEffect(() => {
+    const updateTimeLeft = () => {
+      const now = new Date();
+      const tomorrow = new Date();
+      tomorrow.setDate(now.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+      const diff = tomorrow.getTime() - now.getTime();
+      const hours = String(Math.floor(diff / (1000 * 60 * 60))).padStart(2, '0');
+      const minutes = String(Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))).padStart(2, '0');
+      const seconds = String(Math.floor((diff % (1000 * 60)) / 1000)).padStart(2, '0');
+      setTimeLeft({ hours, minutes, seconds });
+    };
+
+    updateTimeLeft();
+    const interval = setInterval(updateTimeLeft, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+
+
   return (
     <div className="daily-challenge-container">
       <Card className="daily-challenge-card">
         <CardContent className="daily-challenge-content">
-          {challenge.emoji && (
-            <div className="daily-challenge-emoji" style={{ fontSize: '3em' }}>
-              {challenge.emoji}
-            </div>
-          )}
+          {challenge.emoji && <div className="daily-challenge-emoji" style={{ fontSize: '3em' }}>{challenge.emoji}</div>}
           <h3 className="daily-challenge-text">{challenge.title}</h3>
           <p className="daily-challenge-description">{challenge.description}</p>
 
@@ -61,15 +83,13 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({
         </CardContent>
       </Card>
 
+      {/* timer UI */}
       <div className="daily-challenge-timer-boxes flex justify-center gap-1 mt-6">
         {['Hours', 'Minutes', 'Seconds'].map((label, i) => {
           const value = i === 0 ? timeLeft.hours : i === 1 ? timeLeft.minutes : timeLeft.seconds;
           return (
             <div key={label} className="flex flex-col items-center">
-              <div
-                className="bg-black text-white rounded-xl px-6 py-4 text-2xl font-bold border-white border-solid"
-                style={{ borderWidth: '3px' }}
-              >
+              <div className="bg-black text-white rounded-xl px-6 py-4 text-2xl font-bold border-white border-solid" style={{ borderWidth: '3px' }}>
                 {value}
               </div>
               <span className="text-sm text-gray-400 mt-1">{label}</span>

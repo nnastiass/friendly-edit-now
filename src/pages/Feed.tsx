@@ -1,7 +1,6 @@
 // src/components/Feed.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  ArrowLeft,
   Loader2,
   Volume2,
   VolumeX,
@@ -10,14 +9,13 @@ import {
   Plus,
   Info,
   Clock,
-  MessageCircle, Trash2,
+  MessageCircle,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { apiClient, API_BASE_URL } from '@/lib/api-client';
 import './Feed.css';
 import './Index.css';
-
 
 interface Post {
   id: string;
@@ -64,73 +62,24 @@ const Feed = () => {
   const navigate = useNavigate();
   const feedRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef<{ [key: string]: HTMLVideoElement | null }>({});
-// near other handlers
-// inside Feed.tsx
-const handleDeletePost = async (postId: string) => {
-  if (!user) return;
-  try {
-    await apiClient.deletePost(postId, { user_id: user.id, username: user.username });
-    setPosts((prev) => prev.filter((p) => p.id !== postId));
-  } catch (e) {
-    console.error('Delete failed:', e);
-    alert('Could not delete the post.');
-  }
-};
-const [confirmOpen, setConfirmOpen] = useState(false);
-const [pendingDelete, setPendingDelete] = useState<Post | null>(null);
-
-const requestDelete = (post: Post) => {
-  setPendingDelete(post);
-  setConfirmOpen(true);
-};
-
-const confirmDelete = async () => {
-  if (!pendingDelete || !user) return;
-  try {
-    await apiClient.deletePost(pendingDelete.id, {
-      user_id: user.id,
-      username: user.username,
-    });
-    setPosts(prev => prev.filter(p => p.id !== pendingDelete.id));
-  } catch (e: any) {
-    console.error('Delete failed', e);
-    alert(e?.message || 'Delete failed');
-  } finally {
-    setConfirmOpen(false);
-    setPendingDelete(null);
-  }
-};
-
-const cancelDelete = () => {
-  setConfirmOpen(false);
-  setPendingDelete(null);
-};
-
-
-
-
-
-
-
 
   const isParticipant =
     !!(user as any)?.isConferenceParticipant ||
     !!(user as any)?.is_conference_participant;
-  // --- NEW state & refs near your other useState/useRef lines ---
-  const [sheetOffset, setSheetOffset] = useState(0);       // px dragged down
+
+  // --- bottom sheet state for comments ---
+  const [sheetOffset, setSheetOffset] = useState(0); // px dragged down
   const [isDragging, setIsDragging] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const dragStartY = useRef(0);
   const sheetRef = useRef<HTMLDivElement>(null);
 
-  // --- helper: animate close then unmount ---
   const animateAndClose = () => {
     if (isClosing) return;
     setIsClosing(true);
     setSheetOffset(window.innerHeight); // slide sheet down offscreen
   };
 
-  // When the transform transition finishes, actually close (unmount)
   const handleTransitionEnd = (e: React.TransitionEvent<HTMLDivElement>) => {
     if (e.target !== sheetRef.current) return;
     if (isClosing) {
@@ -140,8 +89,6 @@ const cancelDelete = () => {
     }
   };
 
-
-  // --- pointer/drag handlers ---
   const onDragStart = (e: React.PointerEvent) => {
     setIsDragging(true);
     dragStartY.current = e.clientY;
@@ -159,12 +106,11 @@ const cancelDelete = () => {
     setIsDragging(false);
     const CLOSE_THRESHOLD = 120; // px
     if (sheetOffset > CLOSE_THRESHOLD) {
-      animateAndClose(); // animate out then unmount
+      animateAndClose();
     } else {
-      setSheetOffset(0); // snap back to open
+      setSheetOffset(0);
     }
   };
-
 
   useEffect(() => {
     document.body.style.overflow = isCommentsOpen ? 'hidden' : '';
@@ -203,15 +149,10 @@ const cancelDelete = () => {
   const fetchLatestUserPost = async () => {
     if (!user) return;
     try {
-      // Fetch first feed page
       const feedPosts = await apiClient.getFeed(user.id, 1);
-
-      // Include only current user's posts
       const myPosts = feedPosts.filter((p: any) => p.user_id === user.id);
-
       if (myPosts.length === 0) return;
 
-      // Pick the latest by createdAt
       const latest = myPosts.sort(
         (a: any, b: any) =>
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -280,11 +221,6 @@ const cancelDelete = () => {
     });
   }, [currentIndex, posts, isMuted]);
 
-useEffect(() => {
-  document.body.style.overflow = (isCommentsOpen || confirmOpen) ? 'hidden' : '';
-}, [isCommentsOpen, confirmOpen]);
-
-
   if (authLoading)
     return (
       <div className="flex items-center justify-center min-h-screen bg-black">
@@ -304,9 +240,7 @@ useEffect(() => {
   const openComments = async (postId: string) => {
     setIsCommentsOpen(true);
     setSheetOffset(window.innerHeight);
-    requestAnimationFrame(() => setSheetOffset(0)); // <- this one is enough
-;
-;
+    requestAnimationFrame(() => setSheetOffset(0));
     try {
       const comments = await apiClient.getComments(postId);
       setCurrentComments(comments);
@@ -329,7 +263,10 @@ useEffect(() => {
         user.id,
         commentInput
       );
-      setCurrentComments((prev) => [...prev, { ...newComment, username: user.username }]);
+      setCurrentComments((prev) => [
+        ...prev,
+        { ...newComment, username: user.username },
+      ]);
       setCommentInput('');
     } catch (err) {
       console.error('Failed to post comment', err);
@@ -364,7 +301,6 @@ useEffect(() => {
           <div className="feed-history-icon">
             <Clock size={16} />
           </div>
-
         </div>
       )}
 
@@ -396,7 +332,10 @@ useEffect(() => {
                       ref={(el) => (videoRefs.current[post.id] = el)}
                     />
                     {currentIndex === idx && (
-                      <button className="feed-mute-button" onClick={() => setIsMuted((prev) => !prev)}>
+                      <button
+                        className="feed-mute-button"
+                        onClick={() => setIsMuted((prev) => !prev)}
+                      >
                         {isMuted ? <VolumeX /> : <Volume2 />}
                       </button>
                     )}
@@ -409,7 +348,10 @@ useEffect(() => {
                   />
                 )}
 
-                <button className="feed-comments-button" onClick={() => openComments(post.id)}>
+                <button
+                  className="feed-comments-button"
+                  onClick={() => openComments(post.id)}
+                >
                   <MessageCircle />
                 </button>
 
@@ -417,20 +359,6 @@ useEffect(() => {
                   {post.avatarUrl && (
                     <img src={post.avatarUrl} alt="User avatar" className="feed-avatar" />
                   )}
-
-                  {/* DELETE button – only for the owner */}
-                  {/* DELETE button – only for the owner */}
-                  {post.userId === user.id && (
-                    <button
-                      className="feed-delete-button"
-                      onClick={() => requestDelete(post)}   // <-- was handleDeletePost(post.id)
-                      aria-label="Delete post"
-                      title="Delete post"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  )}
-
 
                   <div className="feed-userline">
                     <span
@@ -451,8 +379,6 @@ useEffect(() => {
 
                   <p className="feed-post-caption">{post.challengeTitle}</p>
                 </div>
-
-
               </div>
             ))
           )}
@@ -464,28 +390,6 @@ useEffect(() => {
           )}
         </div>
       </div>
-      {/* Confirmation modal (global) */}
-      {/* Confirmation modal (global) */}
-      {confirmOpen && (
-        <div className="confirm-backdrop" onClick={cancelDelete}>
-          <div className="confirm-modal" onClick={(e) => e.stopPropagation()}>
-            <h4 className="confirm-title">Delete this post?</h4>
-            <p className="confirm-text">This can’t be undone.</p>
-
-            {/* Reuse TU button row + styles */}
-            <div className="tu-row">
-              <button className="tu-btn tu-btn--ghost" onClick={cancelDelete}>
-                Cancel
-              </button>
-              <button className="tu-btn tu-btn--danger" onClick={confirmDelete}>
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-
 
       {/* Comments modal */}
       {isCommentsOpen && (
@@ -501,13 +405,11 @@ useEffect(() => {
             style={{
               transform: `translateY(${sheetOffset}px)`,
               transition: isDragging ? 'none' : 'transform 260ms ease',
-              touchAction: 'none', // helps prevent scroll-jank on mobile
+              touchAction: 'none',
             }}
-            // allow closing with ESC
             tabIndex={-1}
             onKeyDown={(e) => e.key === 'Escape' && animateAndClose()}
           >
-            {/* drag handle area (grabbable) */}
             <div
               className="feed-comments-drag-handle"
               onPointerDown={onDragStart}
@@ -536,20 +438,39 @@ useEffect(() => {
               />
               <button onClick={handleAddComment}>Post</button>
             </div>
-
-
           </div>
         </div>
       )}
 
-
       {/* Bottom navigation */}
       <div className="index-bottom-nav">
         <div className="index-nav-container">
-          <button className="index-nav-button index-nav-button-active" onClick={() => navigate('/feed')}><Home className="index-nav-icon"/></button>
-          {isParticipant && <button className="index-nav-button index-nav-button-inactive" onClick={() => navigate('/info')}><Info className="index-nav-icon"/></button>}
-          <button className="index-nav-button index-nav-button-inactive" onClick={() => navigate('/')}><Plus className="index-nav-icon"/></button>
-          <button className="index-nav-button index-nav-button-inactive" onClick={() => navigate('/profile')}><User className="index-nav-icon"/></button>
+          <button
+            className="index-nav-button index-nav-button-active"
+            onClick={() => navigate('/feed')}
+          >
+            <Home className="index-nav-icon" />
+          </button>
+          {isParticipant && (
+            <button
+              className="index-nav-button index-nav-button-inactive"
+              onClick={() => navigate('/info')}
+            >
+              <Info className="index-nav-icon" />
+            </button>
+          )}
+          <button
+            className="index-nav-button index-nav-button-inactive"
+            onClick={() => navigate('/')}
+          >
+            <Plus className="index-nav-icon" />
+          </button>
+          <button
+            className="index-nav-button index-nav-button-inactive"
+            onClick={() => navigate('/profile')}
+          >
+            <User className="index-nav-icon" />
+          </button>
         </div>
       </div>
     </div>
