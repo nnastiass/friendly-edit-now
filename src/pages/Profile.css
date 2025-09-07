@@ -552,3 +552,9 @@
   color: white;
   text-align: center;
 }
+
+/* Wider variant just for the Change Password page */
+.profile-save-button--wide {
+  width: clamp(200px, 10%, 520px) !important; /* nice responsive width */
+}
+

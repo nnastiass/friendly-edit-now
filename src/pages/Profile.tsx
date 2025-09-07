@@ -1,3 +1,4 @@
+// src/pages/Profile.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -58,18 +59,21 @@ const Profile = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [editForm, setEditForm] = useState({ full_name: '', username: '' });
 
-  // Email change state (single source of truth)
+  // Email change state
   const [newEmail, setNewEmail] = useState('');
   const [currentPasswordForEmail, setCurrentPasswordForEmail] = useState('');
   const [isChangingEmail, setIsChangingEmail] = useState(false);
 
-  // Password change state (single source of truth)
+  // Password change state
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
   });
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  // NEW: sending reset link state
+  const [isSendingReset, setIsSendingReset] = useState(false); // <- added
 
   // --- Local UI state for conference toggle ---
   const [enableDialogOpen, setEnableDialogOpen] = useState(false);
@@ -84,7 +88,7 @@ const Profile = () => {
   const isParticipant =
     !!(user as any)?.isConferenceParticipant || !!(user as any)?.is_conference_participant;
 
-  // --- Top pop-out banner (black bg, 20px radius, top: 50px) ---
+  // --- Top pop-out banner
   const [banner, setBanner] = useState<{ message: string; type: BannerType } | null>(null);
   const [bannerVisible, setBannerVisible] = useState(false);
   const bannerTimer = useRef<number | null>(null);
@@ -171,7 +175,6 @@ const Profile = () => {
         full_name: editForm.full_name,
         username: editForm.username,
       });
-      // success toast removed
       setView('profile');
       fetchProfile();
     } catch (error: any) {
@@ -184,7 +187,6 @@ const Profile = () => {
   const handleSignOut = async () => {
     await signOut();
     navigate('/auth');
-    // success toast removed
   };
 
   const handleDeleteAccount = async () => {
@@ -196,7 +198,6 @@ const Profile = () => {
     setIsDeleting(true);
     try {
       await apiClient.deleteProfile(user.id);
-      // success toast removed
       await signOut();
       navigate('/auth');
     } catch (error: any) {
@@ -214,10 +215,10 @@ const Profile = () => {
     setIsChangingEmail(true);
     try {
       await apiClient.requestEmailChange(user.id, newEmail, currentPasswordForEmail);
-      // success toast removed
       setNewEmail('');
       setCurrentPasswordForEmail('');
       setView('account');
+      showBanner('Verification email sent to your new address.', 'info');
     } catch (error: any) {
       console.error('Error changing email:', error);
       showBanner(error?.message || 'Failed to request email change.', 'error');
@@ -226,7 +227,7 @@ const Profile = () => {
     }
   };
 
-  // Password change
+  // Password change (logged-in)
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
@@ -238,15 +239,38 @@ const Profile = () => {
     setIsChangingPassword(true);
     try {
       await apiClient.changePassword(user.id, passwordForm);
-      // success toast removed
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
       setView('account');
+      showBanner('Password changed successfully.', 'success');
     } catch (error: any) {
       showBanner(error?.message || 'Failed to change password.', 'error');
     } finally {
       setIsChangingPassword(false);
     }
   };
+
+  // NEW: Forgot password — immediately send email (no extra page)
+  const handleForgotPassword = async () => {
+    if (!user?.email) {
+      showBanner('No email found on your account.', 'error');
+      return;
+    }
+    try {
+      setIsSendingReset(true);
+      const resp = await apiClient.forgotPassword(user.email, true); // ask for token in dev
+      showBanner('If an account exists, a reset link has been sent to your email.', 'info', 5000);
+
+      // If server included a dev token, go straight to the reset page in-app
+      if (resp?.token) {
+        navigate(`/reset-password?token=${encodeURIComponent(resp.token)}`);
+      }
+    } catch (e: any) {
+      showBanner(e?.message || 'If an account exists, a reset link has been sent to your email.', 'info', 5000);
+    } finally {
+      setIsSendingReset(false);
+    }
+  };
+
 
   // helper to merge updated user from API and keep camelCase flag available
   function mergeUserFromServer(patch: any) {
@@ -282,9 +306,9 @@ const Profile = () => {
       await apiClient.verifyConferenceCode(codeInput.trim());
       const updated = await apiClient.setConferenceParticipation(user.id, true, codeInput.trim());
       mergeUserFromServer(updated);
-      // success toast removed
       setEnableDialogOpen(false);
       setCodeInput('');
+      showBanner('Conference mode enabled.', 'success');
     } catch (e: any) {
       showBanner(e?.message || 'Invalid code', 'error');
     } finally {
@@ -303,8 +327,8 @@ const Profile = () => {
       setToggleBusy(true);
       const updated = await apiClient.setConferenceParticipation(user.id, false);
       mergeUserFromServer(updated);
-      // success toast removed
       setDisableConfirmOpen(false);
+      showBanner('Switched to normal version.', 'info');
     } catch (e: any) {
       showBanner(e?.message || 'Failed to switch', 'error');
     } finally {
@@ -387,7 +411,7 @@ const Profile = () => {
           )}
         </div>
 
-        {/* Subpage header (back + title) */}
+        {/* Subpage header */}
         {view !== 'profile' && (
           <div className="profile-subpage-header">
             <Button
@@ -583,8 +607,7 @@ const Profile = () => {
                 />
               </div>
 
-              {/* ⬇️ Add this helper text */}
-              <p className="auth-hint">At least 8 characters, include uppercase, lowercase, and a number.</p>
+
 
               <div className="edit-form-group">
                 <Label htmlFor="confirmPassword">Confirm New Password</Label>
@@ -598,18 +621,22 @@ const Profile = () => {
                   className="profile-edit-input"
                 />
               </div>
+              <p className="auth-hint">At least 8 characters, include uppercase, lowercase, and a number.</p>
 
-              <Button type="submit" disabled={isChangingPassword} className="profile-save-button">
+              <Button
+                type="submit"
+                disabled={isChangingPassword}
+                className="profile-save-button profile-save-button--wide"
+              >
                 {isChangingPassword ? 'Saving...' : 'Change Password'}
               </Button>
+
             </form>
 
-            <button className="forgot-password-button" onClick={() => navigate('/forgot-password')}>
-              I forgot my password
-            </button>
+            {/* CHANGED: no navigation — send email immediately */}
+
           </div>
         )}
-
 
         {view === 'profile' && (
           <>
@@ -678,7 +705,6 @@ const Profile = () => {
             <Home className="index-nav-icon" />
           </button>
 
-          {/* Info only for Testing United participants */}
           {isParticipant && (
             <button
               className="index-nav-button index-nav-button-inactive"

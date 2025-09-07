@@ -25,7 +25,7 @@ async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> 
   if (!response.ok) {
     const message =
       (data && typeof data === 'object' && 'message' in data
-        ? data.message
+        ? (data as any).message
         : data) || `HTTP error ${response.status}`;
     throw new Error(message);
   }
@@ -54,25 +54,6 @@ async function uploadFile<T>(endpoint: string, formData: FormData): Promise<T> {
   return response.json();
 }
 
-// api-client.ts
-// api-client.ts
-// src/lib/api-client.ts
-// --- api-client.ts ---
-
-// TEMP: log all requests going through the wrapper
-
-
-// If you still use a wrapper, make deletePost log too:
-
-
-
-
-
-
-
-
-
-
 // API client with all methods
 export const apiClient = {
   // --- AUTH ---
@@ -81,18 +62,29 @@ export const apiClient = {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     }),
-  signUp: (email: string, password: string, username: string, agreedToTerms: boolean, isConferenceParticipant: boolean) =>
+
+  signUp: (
+    email: string,
+    password: string,
+    username: string,
+    agreedToTerms: boolean,
+    isConferenceParticipant: boolean
+  ) =>
     apiFetch<any>('/api/auth/signup', {
       method: 'POST',
       body: JSON.stringify({ email, password, username, agreedToTerms, isConferenceParticipant }),
     }),
-  verifyEmail: (token: string) =>
-    apiFetch<any>(`/api/auth/verify?token=${token}`),
-  forgotPassword: (email: string) =>
-    apiFetch<any>('/api/auth/forgot-password', {
-      method: 'POST',
-      body: JSON.stringify({ email }),
-    }),
+
+  verifyEmail: (token: string) => apiFetch<any>(`/api/auth/verify?token=${token}`),
+
+  // Forgot / Reset
+  forgotPassword: (email: string, devReturnToken?: boolean) =>
+      apiFetch<any>('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: devReturnToken ? { 'x-dev-return-token': '1' } : undefined,
+        body: JSON.stringify({ email }),
+      }),
+
   resetPassword: (token: string, newPassword: string, confirmPassword: string) =>
     apiFetch<any>('/api/auth/reset-password', {
       method: 'POST',
@@ -101,21 +93,43 @@ export const apiClient = {
 
   // --- PROFILES & SETTINGS ---
   getProfile: (userId: string) => apiFetch<any>(`/api/profiles/${userId}`),
-  updateProfile: (userId: string, data: { full_name?: string; username?: string; streak?: number; daily_challenge_index?: number }) =>
-    apiFetch<any>(`/api/profiles/${userId}`, { method: 'PUT', body: JSON.stringify(data) }),
+
+  updateProfile: (
+    userId: string,
+    data: { full_name?: string; username?: string; streak?: number; daily_challenge_index?: number }
+  ) => apiFetch<any>(`/api/profiles/${userId}`, { method: 'PUT', body: JSON.stringify(data) }),
+
   deleteProfile: (userId: string) => apiFetch<void>(`/api/profiles/${userId}`, { method: 'DELETE' }),
-  changePassword: (userId: string, currentPassword: string, newPassword: string, confirmPassword: string) =>
-    apiFetch<any>(`/api/profiles/${userId}/change-password`, {
+
+  // 👇 Flexible: accepts either a payload object or 3 strings
+  changePassword: (
+    userId: string,
+    a:
+      | { currentPassword: string; newPassword: string; confirmPassword: string }
+      | string,
+    b?: string,
+    c?: string
+  ) => {
+    const payload =
+      typeof a === 'string'
+        ? { currentPassword: a, newPassword: b as string, confirmPassword: c as string }
+        : a;
+
+    return apiFetch<any>(`/api/profiles/${userId}/change-password`, {
       method: 'POST',
-      body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
-    }),
+      body: JSON.stringify(payload),
+    });
+  },
+
   requestEmailChange: (userId: string, newEmail: string, currentPassword: string) =>
     apiFetch<any>(`/api/profiles/${userId}/change-email`, {
       method: 'POST',
       body: JSON.stringify({ newEmail, currentPassword }),
     }),
+
   confirmEmailChange: (token: string) =>
     apiFetch<any>(`/api/profiles/confirm-email-change?token=${token}`),
+
   searchUsers: () => apiFetch<any[]>('/api/profiles'),
 
   // --- CONFERENCE ---
@@ -124,6 +138,7 @@ export const apiClient = {
       method: 'POST',
       body: JSON.stringify({ code }),
     }),
+
   setConferenceParticipation: (userId: string, enable: boolean, code?: string) =>
     apiFetch<any>('/api/conference/participation', {
       method: 'POST',
@@ -132,50 +147,74 @@ export const apiClient = {
 
   // --- FRIENDS & FRIEND REQUESTS ---
   getFriends: (userId: string) => apiFetch<any[]>(`/api/friends/${userId}`),
+
   deleteFriend: (userId: string, friendId: string) =>
     apiFetch<void>(`/api/friends/${userId}/${friendId}`, { method: 'DELETE' }),
+
   getFriendRequests: (userId: string) => apiFetch<any[]>(`/api/friend-requests/${userId}`),
+
   sendFriendRequest: (senderId: string, receiverId: string) =>
-    apiFetch<any>('/api/friend-requests/send', { method: 'POST', body: JSON.stringify({ sender_id: senderId, receiver_id: receiverId }) }),
+    apiFetch<any>('/api/friend-requests/send', {
+      method: 'POST',
+      body: JSON.stringify({ sender_id: senderId, receiver_id: receiverId }),
+    }),
+
   respondToFriendRequest: (requestId: string, action: 'accepted' | 'rejected') =>
-    apiFetch<any>('/api/friend-requests/respond', { method: 'POST', body: JSON.stringify({ requestId, action }) }),
-  getSentFriendRequests: (userId: string) => apiFetch<any[]>(`/api/friend-requests/sent/${userId}`),
+    apiFetch<any>('/api/friend-requests/respond', {
+      method: 'POST',
+      body: JSON.stringify({ requestId, action }),
+    }),
+
+  getSentFriendRequests: (userId: string) =>
+    apiFetch<any[]>(`/api/friend-requests/sent/${userId}`),
 
   // --- LEADERBOARD ---
   getLeaderboard: (userId: string) => apiFetch<any[]>(`/api/leaderboard/${userId}`),
 
   // --- POSTS ---
-  createPost: (postData: { user_id: string; caption: string; media_type: 'image' | 'video'; media_url: string }) =>
-    apiFetch<any>('/api/posts', { method: 'POST', body: JSON.stringify(postData) }),
+  createPost: (postData: {
+    user_id: string;
+    caption: string;
+    media_type: 'image' | 'video';
+    media_url: string;
+  }) => apiFetch<any>('/api/posts', { method: 'POST', body: JSON.stringify(postData) }),
+
   getUserPosts: (userId: string) => apiFetch<any[]>(`/api/users/${userId}/posts`),
- // --- replace inside apiClient: ---
- deletePost: (postId: string, who: { user_id?: string; username?: string }) => {
-   const params = new URLSearchParams();
-   if (who.user_id)  params.set('user_id', who.user_id);
-   if (who.username) params.set('username', who.username);
 
-   const endpoint = `/api/posts/${postId}${params.toString() ? `?${params.toString()}` : ''}`;
+  deletePost: (postId: string, who: { user_id?: string; username?: string }) => {
+    const params = new URLSearchParams();
+    if (who.user_id) params.set('user_id', who.user_id);
+    if (who.username) params.set('username', who.username);
 
-   // send headers too (server can read either query or headers)
-   return apiFetch<void>(endpoint, {
-     method: 'DELETE',
-     headers: {
-       'x-user-id': who.user_id ?? '',
-       'x-username': who.username ?? '',
-     },
-   });
- },
+    const endpoint = `/api/posts/${postId}${params.toString() ? `?${params.toString()}` : ''}`;
+
+    return apiFetch<void>(endpoint, {
+      method: 'DELETE',
+      headers: {
+        'x-user-id': who.user_id ?? '',
+        'x-username': who.username ?? '',
+      },
+    });
+  },
 
   getFeed: (userId: string, page: number) => apiFetch<any[]>(`/api/feed/${userId}?page=${page}`),
 
   // --- COMMENTS ---
   addComment: (postId: string, userId: string, content: string) =>
-    apiFetch<any>('/api/comments', { method: 'POST', body: JSON.stringify({ post_id: postId, user_id: userId, content }) }),
+    apiFetch<any>('/api/comments', {
+      method: 'POST',
+      body: JSON.stringify({ post_id: postId, user_id: userId, content }),
+    }),
+
   getComments: (postId: string) => apiFetch<any[]>(`/api/posts/${postId}/comments`),
 
   // --- APPROVALS ---
   addApproval: (postId: string, userId: string, status: string) =>
-    apiFetch<any>('/api/approvals', { method: 'POST', body: JSON.stringify({ post_id: postId, user_id: userId, status }) }),
+    apiFetch<any>('/api/approvals', {
+      method: 'POST',
+      body: JSON.stringify({ post_id: postId, user_id: userId, status }),
+    }),
+
   getApprovals: (postId: string) => apiFetch<any>(`/api/posts/${postId}/approvals`),
 
   // --- MEDIA UPLOAD (FIXED) ---
@@ -184,7 +223,6 @@ export const apiClient = {
     formData.append('file', file);
     formData.append('userId', userId);
     formData.append('challengeTitle', challengeTitle);
-    // Let backend detect type, but can send mediaType for reference
     formData.append('mediaType', file.type.startsWith('image/') ? 'image' : 'video');
 
     return uploadFile<any>('/api/media/upload', formData);

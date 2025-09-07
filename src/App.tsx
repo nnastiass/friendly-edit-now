@@ -16,6 +16,7 @@ import Feed from "./pages/Feed";
 import InfoPage from "./pages/InfoPage";
 import ProgramPage from "./pages/ProgramPage";
 import SpeakersPage from "./pages/SpeakersPage";
+import ResetPassword from '@/pages/ResetPassword';
 
 const queryClient = new QueryClient();
 
@@ -48,6 +49,7 @@ const App = () => (
             <Route path="/info" element={<InfoPage />} />
             <Route path="/program" element={<ProgramPage />} />
             <Route path="/speakers" element={<SpeakersPage />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
 
             {/* Protected routes */}
             <Route
