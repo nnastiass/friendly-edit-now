@@ -10,13 +10,14 @@ import {
   Plus,
   Info,
   Clock,
-  MessageCircle,
+  MessageCircle, Trash2,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { apiClient, API_BASE_URL } from '@/lib/api-client';
 import './Feed.css';
 import './Index.css';
+
 
 interface Post {
   id: string;
@@ -63,6 +64,54 @@ const Feed = () => {
   const navigate = useNavigate();
   const feedRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef<{ [key: string]: HTMLVideoElement | null }>({});
+// near other handlers
+// inside Feed.tsx
+const handleDeletePost = async (postId: string) => {
+  if (!user) return;
+  try {
+    await apiClient.deletePost(postId, { user_id: user.id, username: user.username });
+    setPosts((prev) => prev.filter((p) => p.id !== postId));
+  } catch (e) {
+    console.error('Delete failed:', e);
+    alert('Could not delete the post.');
+  }
+};
+const [confirmOpen, setConfirmOpen] = useState(false);
+const [pendingDelete, setPendingDelete] = useState<Post | null>(null);
+
+const requestDelete = (post: Post) => {
+  setPendingDelete(post);
+  setConfirmOpen(true);
+};
+
+const confirmDelete = async () => {
+  if (!pendingDelete || !user) return;
+  try {
+    await apiClient.deletePost(pendingDelete.id, {
+      user_id: user.id,
+      username: user.username,
+    });
+    setPosts(prev => prev.filter(p => p.id !== pendingDelete.id));
+  } catch (e: any) {
+    console.error('Delete failed', e);
+    alert(e?.message || 'Delete failed');
+  } finally {
+    setConfirmOpen(false);
+    setPendingDelete(null);
+  }
+};
+
+const cancelDelete = () => {
+  setConfirmOpen(false);
+  setPendingDelete(null);
+};
+
+
+
+
+
+
+
 
   const isParticipant =
     !!(user as any)?.isConferenceParticipant ||
@@ -231,6 +280,11 @@ const Feed = () => {
     });
   }, [currentIndex, posts, isMuted]);
 
+useEffect(() => {
+  document.body.style.overflow = (isCommentsOpen || confirmOpen) ? 'hidden' : '';
+}, [isCommentsOpen, confirmOpen]);
+
+
   if (authLoading)
     return (
       <div className="flex items-center justify-center min-h-screen bg-black">
@@ -310,6 +364,7 @@ const Feed = () => {
           <div className="feed-history-icon">
             <Clock size={16} />
           </div>
+
         </div>
       )}
 
@@ -363,6 +418,20 @@ const Feed = () => {
                     <img src={post.avatarUrl} alt="User avatar" className="feed-avatar" />
                   )}
 
+                  {/* DELETE button – only for the owner */}
+                  {/* DELETE button – only for the owner */}
+                  {post.userId === user.id && (
+                    <button
+                      className="feed-delete-button"
+                      onClick={() => requestDelete(post)}   // <-- was handleDeletePost(post.id)
+                      aria-label="Delete post"
+                      title="Delete post"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  )}
+
+
                   <div className="feed-userline">
                     <span
                       className="feed-post-username"
@@ -383,6 +452,7 @@ const Feed = () => {
                   <p className="feed-post-caption">{post.challengeTitle}</p>
                 </div>
 
+
               </div>
             ))
           )}
@@ -394,6 +464,28 @@ const Feed = () => {
           )}
         </div>
       </div>
+      {/* Confirmation modal (global) */}
+      {/* Confirmation modal (global) */}
+      {confirmOpen && (
+        <div className="confirm-backdrop" onClick={cancelDelete}>
+          <div className="confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <h4 className="confirm-title">Delete this post?</h4>
+            <p className="confirm-text">This can’t be undone.</p>
+
+            {/* Reuse TU button row + styles */}
+            <div className="tu-row">
+              <button className="tu-btn tu-btn--ghost" onClick={cancelDelete}>
+                Cancel
+              </button>
+              <button className="tu-btn tu-btn--danger" onClick={confirmDelete}>
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
 
       {/* Comments modal */}
       {isCommentsOpen && (
@@ -444,6 +536,8 @@ const Feed = () => {
               />
               <button onClick={handleAddComment}>Post</button>
             </div>
+
+
           </div>
         </div>
       )}

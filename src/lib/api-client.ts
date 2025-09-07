@@ -54,6 +54,25 @@ async function uploadFile<T>(endpoint: string, formData: FormData): Promise<T> {
   return response.json();
 }
 
+// api-client.ts
+// api-client.ts
+// src/lib/api-client.ts
+// --- api-client.ts ---
+
+// TEMP: log all requests going through the wrapper
+
+
+// If you still use a wrapper, make deletePost log too:
+
+
+
+
+
+
+
+
+
+
 // API client with all methods
 export const apiClient = {
   // --- AUTH ---
@@ -129,8 +148,24 @@ export const apiClient = {
   createPost: (postData: { user_id: string; caption: string; media_type: 'image' | 'video'; media_url: string }) =>
     apiFetch<any>('/api/posts', { method: 'POST', body: JSON.stringify(postData) }),
   getUserPosts: (userId: string) => apiFetch<any[]>(`/api/users/${userId}/posts`),
-  deletePost: (postId: string) =>
-    apiFetch<void>(`/api/posts/${postId}`, { method: 'DELETE' }),
+ // --- replace inside apiClient: ---
+ deletePost: (postId: string, who: { user_id?: string; username?: string }) => {
+   const params = new URLSearchParams();
+   if (who.user_id)  params.set('user_id', who.user_id);
+   if (who.username) params.set('username', who.username);
+
+   const endpoint = `/api/posts/${postId}${params.toString() ? `?${params.toString()}` : ''}`;
+
+   // send headers too (server can read either query or headers)
+   return apiFetch<void>(endpoint, {
+     method: 'DELETE',
+     headers: {
+       'x-user-id': who.user_id ?? '',
+       'x-username': who.username ?? '',
+     },
+   });
+ },
+
   getFeed: (userId: string, page: number) => apiFetch<any[]>(`/api/feed/${userId}?page=${page}`),
 
   // --- COMMENTS ---

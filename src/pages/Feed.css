@@ -380,3 +380,144 @@
   color: white;
   cursor: pointer;
 }
+
+/* Fallback accent if not defined elsewhere */
+:root { --tu-accent: #FF0046; }
+
+/* Confirm popup container */
+.confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 4000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(2px);
+}
+
+.confirm-modal {
+  width: 90%;
+  max-width: 360px;
+  background: #111;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 16px 16px 14px;
+  color: #fff;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+  text-align: center;
+}
+
+.confirm-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.confirm-text {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  margin-bottom: 14px;
+}
+/* Confirm popup container stays the same */
+.confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 4000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(2px);
+}
+
+/* 👉 Black background + white stroke */
+.confirm-modal {
+  width: 90%;
+  max-width: 360px;
+  background: rgba(0,0,0,0.8);                 /* black */       /* white stroke */
+  border-radius: 16px;
+  padding: 16px 16px 14px;
+  color: #fff;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.7);
+  text-align: center;
+}
+
+.confirm-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 6px; }
+.confirm-text  { font-size: 0.9rem; opacity: 0.85; margin-bottom: 14px; }
+
+/* Trash icon button — black bg + white stroke */
+.feed-delete-button {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: #000;                 /* black */
+  color: #fff;                      /* white icon */
+  border: 2px solid #fff;           /* white stroke */
+  border-radius: 9999px;
+  padding: 8px 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.18s ease, opacity 0.18s ease, background 0.18s ease;
+}
+
+.feed-delete-button:hover { transform: translateY(-1px); background: rgba(255,255,255,0.06); }
+.feed-delete-button:active { transform: translateY(0); opacity: 0.95; }
+.feed-delete-button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+
+/* Reuse your TU buttons, add a danger variant */
+.tu-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+.tu-btn {
+  background: black;
+  color: #fff;
+  border: none;
+  border-radius: 9999px;
+  padding: 1vh 2.5rem;
+  font-size: 1.8vh;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 0 20px rgba(255,0,70,0.7);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+}
+.tu-btn:hover { transform: translateY(-1px); box-shadow: 0 0 28px rgba(255,0,70,0.75); }
+.tu-btn:active { transform: translateY(0); opacity: 0.9; }
+.tu-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; border-radius: 9999px; }
+
+.tu-btn--ghost {
+  background: transparent;
+  color: #fff;
+  border: 2px solid #fff;
+  box-shadow: none;
+}
+.tu-btn--ghost:hover { background: rgba(255,255,255,0.06); }
+
+/* Stronger 'danger' look specifically for Delete */
+.tu-btn.tu-btn--danger {
+  background-color: var(--tu-accent);
+  box-shadow: 0 0 22px rgba(255,0,70,0.8);
+}
+
+/* Trash icon button on the post – subtle but on-brand */
+.feed-delete-button {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: black;
+  color: #fff;
+  border: none;
+  border-radius: 9999px;
+  padding: 8px 10px;
+  box-shadow: 0 0 14px rgba(255,0,70,0.6);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+}
+.feed-delete-button:hover { transform: translateY(-1px); box-shadow: 0 0 20px rgba(255,0,70,0.75); }
+.feed-delete-button:active { transform: translateY(0); opacity: 0.95; }
+.feed-delete-button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
