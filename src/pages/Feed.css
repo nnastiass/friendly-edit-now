@@ -14,6 +14,7 @@
 .feed-mobile-frame {
   width: 100%;
   height: 100%;
+  padding-top: 60px;
   max-width: 500px; /* Typická šírka mobilnej obrazovky */
   background: #000;
   border-radius: 0;
@@ -25,6 +26,7 @@
   scroll-snap-type: y mandatory;
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
+   position: relative;
 }
 
 .feed-layout {
@@ -32,12 +34,16 @@
   flex-direction: column;
   min-height: 100%;
   position: relative;
+  padding-bottom: 80px; /* Adjust to your nav bar height */
 }
 
 /* Štýly pre každý príspevok na celú obrazovku (obrázok/video) */
+/* This is the CORRECTED rule */
+/* --- FIX #1: Correct Post Height --- */
 .feed-post-fullscreen {
   width: 100%;
-  height: calc(100vh - 64px);
+  /* This is the most important change. Each post MUST be the full viewport height. */
+  height: 100vh;
   scroll-snap-align: start;
   position: relative;
   background-color: #000;
@@ -63,14 +69,16 @@
   background-color: #000; /* black background for borders */
 }
 
+/* This is the corrected rule with more bottom padding */
 .feed-overlay {
   position: absolute;
-  inset: 0;                 /* keep full-screen gradient */
+  inset: 0;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end; /* ⬅ was space-between */
+  justify-content: flex-end;
   gap: 6px;
-  padding: 16px 16px 20px;  /* bottom padding clears the nav */
+  /* Increased the bottom padding to push content above the nav bar */
+  padding: 16px 16px 90px; /* Adjust the 90px if your nav bar is taller or shorter */
   background: linear-gradient(
     to bottom,
     rgba(0,0,0,0.5) 0%,
@@ -85,13 +93,13 @@
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;               /* ensure full width */
+  right: 0;
   display: flex;
   align-items: center;
-  justify-content: center;/* center the title */
+  justify-content: center;
   width: 100%;
   z-index: 20;
-  pointer-events: none;   /* header itself non-interactive... */
+  /* pointer-events: none; <-- REMOVED THIS LINE */
 }
 
 /* Back button — same as friend-requests */
@@ -116,7 +124,9 @@
 .feed-title {
   font-size: 1.2rem;
   font-weight: 600;
-  margin-top: 3.5rem; /* 👈 pushes title further down */
+  margin-top: 3.5rem;
+  pointer-events: auto; /* This makes the title clickable/touchable */
+  cursor: pointer;      /* Shows a pointer on hover */
 }
 
 .feed-post-info {
@@ -260,10 +270,12 @@
 }
 
 /* Comments FAB */
+/* This is the corrected rule, moving the button up */
 .feed-comments-button {
   position: absolute;
   right: 16px;
-  bottom: 2rem;
+  /* This moves the button up to sit above the bottom nav bar */
+  bottom: 100px; /* You can adjust this value if needed */
   background: rgba(0,0,0,0.6);
   border-radius: 50%;
   padding: 10px;
@@ -521,3 +533,26 @@
 .feed-delete-button:hover { transform: translateY(-1px); box-shadow: 0 0 20px rgba(255,0,70,0.75); }
 .feed-delete-button:active { transform: translateY(0); opacity: 0.95; }
 .feed-delete-button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+/* Make the frame a positioning context for the indicator */
+.feed-mobile-frame {
+  position: relative;
+}
+
+/* Styles for the pull-to-refresh loading indicator */
+.feed-pull-indicator {
+  position: absolute;
+  top: 15px; /* Adjust vertical position as needed */
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  z-index: 0; /* Keep it behind the main content's header */
+}
+
+/* Add a continuous spin animation when in the refreshing state */
+.feed-pull-indicator.refreshing svg {
+  animation: spin 1s linear infinite;
+}
