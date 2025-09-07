@@ -6,7 +6,6 @@ import MediaUpload from '@/components/MediaUpload';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '@/lib/api-client';
-import { toast } from 'sonner';
 import './Index.css';
 
 import {
@@ -100,7 +99,7 @@ const Index: React.FC = () => {
         .then((data) => setCurrentStreak(data?.streak || 0))
         .catch((err) => {
           console.error('Error fetching streak:', err);
-          toast.error('Failed to load streak.');
+          // (deleted visual notification)
         });
     }
   }, [user, authLoading, navigate]);
@@ -186,10 +185,10 @@ const Index: React.FC = () => {
       const newStreak = currentStreak + 1;
       await apiClient.updateProfile(user.id, { streak: newStreak });
       setCurrentStreak(newStreak);
-      toast.success(`Streak updated: ${newStreak} days`);
+      // (deleted visual notification)
     } catch (err) {
-      console.error(err);
-      toast.error('Failed to update streak.');
+      console.error('Failed to update streak.', err);
+      // (deleted visual notification)
     }
 
     setIsUploadOpen(false);
@@ -201,7 +200,7 @@ const Index: React.FC = () => {
     if (!user?.id) return;
     localStorage.removeItem(`${user.id}_${keys.completed(today)}`);
     setHasUploadedToday(false);
-    toast.success('Dev: You can upload again today!');
+    // (deleted visual notification)
   };
 
   const handleChooseChallenges = () => {

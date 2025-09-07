@@ -191,3 +191,69 @@
   width: 1.8rem;
   stroke-width: 1.5;
 }
+
+/* Top pop-out notification — defaults:
+   - top: 50px
+   - border-radius: 20px
+   - black background
+*/
+.notify-root {
+  position: fixed;
+  top: 50px;                 /* your default */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  pointer-events: none;
+  width: 100%;
+  max-width: 640px;
+  padding: 0 12px;
+}
+
+.notify-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 auto;
+  max-width: 560px;
+  padding: 12px 16px;
+  color: #ffffff;
+  background: #000000;        /* black background */
+  border-radius: 20px;         /* rounded 20px */
+  border: 1px solid rgba(255,255,255,0.15);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.6);
+  transform: translateY(-150%);
+  opacity: 0;
+  transition: transform 280ms ease, opacity 200ms ease;
+  pointer-events: auto;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.95rem;
+}
+
+.notify-banner.visible {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.notify-error { border-color: rgba(255, 0, 70, 0.35); }
+.notify-success { border-color: rgba(144, 238, 144, 0.35); }
+.notify-info { border-color: rgba(255,255,255,0.2); }
+
+.notify-text {
+  flex: 1 1 auto;
+  line-height: 1.2;
+}
+
+.notify-close {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  opacity: 0.8;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  padding: 2px 6px;
+}
+.notify-close:hover { opacity: 1; }

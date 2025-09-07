@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '@/lib/api-client';
 import './Auth.css';
+
+type BannerType = 'error' | 'success' | 'info';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -23,6 +24,11 @@ const Auth = () => {
   const [isCodeVerified, setIsCodeVerified] = useState(false);
   const [verifyingCode, setVerifyingCode] = useState(false);
 
+  // --- NEW STATE: Top pop-out banner ---
+  const [banner, setBanner] = useState<{ message: string; type: BannerType } | null>(null);
+  const [bannerVisible, setBannerVisible] = useState(false);
+  const bannerTimer = useRef<number | null>(null);
+
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
 
@@ -32,19 +38,50 @@ const Auth = () => {
     }
   }, [user, navigate]);
 
-  // --- NEW FUNCTION TO VERIFY THE CONFERENCE CODE ---
+  // --- Banner helpers ---
+  const showBanner = (message: string, type: BannerType = 'info', duration = 3500) => {
+    if (bannerTimer.current) {
+      window.clearTimeout(bannerTimer.current);
+      bannerTimer.current = null;
+    }
+    setBanner({ message, type });
+    // allow layout to paint before sliding in
+    requestAnimationFrame(() => setBannerVisible(true));
+    bannerTimer.current = window.setTimeout(() => {
+      setBannerVisible(false);
+      bannerTimer.current = null;
+    }, duration);
+  };
+
+  const closeBanner = () => {
+    if (bannerTimer.current) {
+      window.clearTimeout(bannerTimer.current);
+      bannerTimer.current = null;
+    }
+    setBannerVisible(false);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (bannerTimer.current) {
+        window.clearTimeout(bannerTimer.current);
+      }
+    };
+  }, []);
+
+  // --- Verify the conference code (no success notification per request) ---
   const handleVerifyCode = async () => {
     if (!conferenceCode) {
-      toast.error("Please enter a code.");
+      showBanner('Please enter a code.', 'error');
       return;
     }
     setVerifyingCode(true);
     try {
       await apiClient.verifyConferenceCode(conferenceCode);
-      toast.success("Conference code verified!");
+      // Deleted: "Conference code verified!" (no notification shown)
       setIsCodeVerified(true);
     } catch (error: any) {
-      toast.error(error.message || "Invalid conference code.");
+      showBanner(error?.message || 'Invalid conference code.', 'error');
       setIsCodeVerified(false);
     } finally {
       setVerifyingCode(false);
@@ -59,15 +96,15 @@ const Auth = () => {
       if (isLogin) {
         const { error } = await signIn(email, password);
         if (error) {
-          toast.error(error.message || 'Invalid email or password');
+          showBanner(error.message || 'Invalid email or password', 'error');
         } else {
-          toast.success('Successfully signed in!');
+          // Deleted: "Successfully signed in!" (no notification shown)
           navigate('/');
         }
       } else {
         // Confirm password validation
         if (password !== confirmPassword) {
-          toast.error("Passwords don't match.");
+          showBanner("Passwords don't match.", 'error');
           setLoading(false);
           return;
         }
@@ -75,8 +112,9 @@ const Auth = () => {
         // Password strength validation
         const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).{8,}$/;
         if (!passwordPattern.test(password)) {
-          toast.error(
-            'Password must be at least 8 characters long and include uppercase, lowercase, and a number.'
+          showBanner(
+            'Password must be at least 8 characters long and include uppercase, lowercase, and a number.',
+            'error'
           );
           setLoading(false);
           return;
@@ -85,15 +123,15 @@ const Auth = () => {
         // If the user claims participant, verify code here before signUp
         if (isParticipant) {
           if (!conferenceCode.trim()) {
-            toast.error('Please enter your conference code.');
+            showBanner('Please enter your conference code.', 'error');
             setLoading(false);
             return;
           }
           try {
             await apiClient.verifyConferenceCode(conferenceCode.trim());
-            // ok, continue to signUp
+            // ok, continue to signUp (no "verified" banner)
           } catch (err: any) {
-            toast.error(err?.message || 'Invalid conference code.');
+            showBanner(err?.message || 'Invalid conference code.', 'error');
             setLoading(false);
             return; // stop submission
           }
@@ -108,15 +146,15 @@ const Auth = () => {
         );
 
         if (error) {
-          toast.error(error.message || 'An unexpected error occurred during signup.');
+          showBanner(error.message || 'An unexpected error occurred during signup.', 'error');
         } else {
-          toast.success('Account created! Please check your email to verify your account.');
+          showBanner('Account created! Please check your email to verify your account.', 'success');
           setIsLogin(true);
         }
       }
     } catch (error) {
       console.error('Auth handleSubmit error:', error);
-      toast.error('An unexpected error occurred');
+      showBanner('An unexpected error occurred', 'error');
     } finally {
       setLoading(false);
     }
@@ -129,6 +167,26 @@ const Auth = () => {
       className="auth-container"
       style={{ background: 'radial-gradient(circle 25% at 50% 20%, #FF0046, #000000)' }}
     >
+      {/* Top Pop-out Banner */}
+      <div className="notify-root" aria-live="assertive" aria-atomic="true">
+        <div
+          className={`notify-banner ${bannerVisible ? 'visible' : ''} ${
+            banner?.type ? `notify-${banner.type}` : ''
+          }`}
+          role="alert"
+        >
+          <span className="notify-text">{banner?.message}</span>
+          <button
+            type="button"
+            className="notify-close"
+            aria-label="Close notification"
+            onClick={closeBanner}
+          >
+            ×
+          </button>
+        </div>
+      </div>
+
       <div className="auth-mobile-frame">
         <div className="auth-layout">
           <div className="auth-header">
@@ -184,8 +242,15 @@ const Auth = () => {
                 required
                 className="auth-input"
                 placeholder="Enter your password"
+                aria-describedby={!isLogin ? 'password-requirements' : undefined}
               />
+              {!isLogin && (
+                <p id="password-requirements" className="auth-hint">
+                  Must be at least 8 characters and include uppercase, lowercase, and a number.
+                </p>
+              )}
             </div>
+
 
             {!isLogin && (
               <div className="auth-field">
@@ -275,6 +340,7 @@ const Auth = () => {
             <button
               onClick={() => setIsLogin(!isLogin)}
               className="auth-toggle-button"
+              type="button"
             >
               {isLogin
                 ? "Don't have an account? Sign up"

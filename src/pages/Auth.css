@@ -1,34 +1,105 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Urbanist:wght@600&display=swap');
 
+/* ========= Top Pop-out Notification ========= */
+.notify-root {
+  position: fixed;
+  top: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  pointer-events: none; /* container ignores clicks so only the banner is clickable */
+  width: 100%;
+  max-width: 640px;
+  padding: 0 12px;
+}
+
+.notify-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 auto;
+  max-width: 560px;
+  padding: 12px 16px;
+  color: #ffffff;
+  background: #000000;          /* solid black background */
+  border-radius: 20px;         /* fully rounded edges */
+  border: 1px solid rgba(255,255,255,0.15);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.6);
+  transform: translateY(-150%);  /* hidden above the screen */
+  opacity: 0;
+  transition: transform 280ms ease, opacity 200ms ease;
+  pointer-events: auto;          /* allow close button clicks */
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.95rem;
+}
+
+.notify-banner.visible {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* Optional subtle variants (still black background) — tweak borders if you like */
+.notify-error { border-color: rgba(255, 0, 70, 0.35); }
+.notify-success { border-color: rgba(144, 238, 144, 0.35); }
+.notify-info { border-color: rgba(255,255,255,0.2); }
+
+.notify-text {
+  flex: 1 1 auto;
+  line-height: 1.2;
+}
+
+.notify-close {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  opacity: 0.8;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  padding: 2px 6px;
+}
+.notify-close:hover { opacity: 1; }
+
+/* ========= Page background / base ========= */
+/* Small helper text under inputs (password requirements) */
+.auth-hint {
+  margin-top: 6px;
+  font-size: 0.78rem;
+  line-height: 1.1;
+  color: white;
+  text-align: center;   /* center the text */
+}
+
+
 /* Apply the gradient background to the entire page for the auth route */
 html,
 body,
 #root /* This targets the main React app container */ {
-    /* Set a base background color first */
     background-color: #000000 !important;
-    /* Then, apply the gradient as an image on top using a more compatible syntax */
     background-image: radial-gradient(circle 250px at 50% 34%, rgba(255, 0, 70, 0.7), transparent 80%) !important;
     background-repeat: no-repeat !important;
-    background-attachment: fixed; /* Keeps the gradient centered */
+    background-attachment: fixed;
     height: 100%;
 }
 
 /* General body styling for a clean slate */
 body {
     margin: 0;
-    font-family: 'Poppins', sans-serif; /* A modern, clean font */
+    font-family: 'Poppins', sans-serif;
     color: white;
 }
 
-/* * The main container is now transparent to let the body's background show through.
- */
+/* * The main container is now transparent to let the body's background show through. */
 .auth-container {
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 1rem;
-    background: transparent; /* This is the key change */
+    background: transparent;
 }
 
 /* * This class is in your component, we'll use it to center the content.
@@ -51,11 +122,11 @@ body {
 
 /* Styling for your H1 title */
 .auth-app-title {
-    font-family: 'Urbanist', sans-serif; /* Using the new font */
+    font-family: 'Urbanist', sans-serif;
     font-size: 2.5rem; /* Reduced font size */
-    font-weight: 400; /* A bit bold */
-    font-style: normal; /* Not italic */
-    letter-spacing: normal; /* Default letter spacing */
+    font-weight: 400;
+    font-style: normal;
+    letter-spacing: normal;
     margin: 0;
     color: white;
 }
@@ -66,7 +137,6 @@ body {
     font-size: 0.9rem; /* Reduced font size */
     color: #d1d5db; /* light gray */
     font-weight: 400; /* Overriding bold default */
-
 }
 
 /* The design doesn't have a third line of text, so we hide it */
@@ -78,6 +148,7 @@ body {
 .auth-label {
     display: none;
 }
+
 /* Bigger, round custom checkbox */
 .auth-checkbox {
   appearance: none;
@@ -129,7 +200,6 @@ body {
   max-width: 16rem;        /* cap the width */
 }
 
-
 /* Form styling */
 .auth-form {
     width: 100%;
@@ -140,12 +210,10 @@ body {
 
 /* Input field styling */
 .auth-input {
-    /* This shorthand property ensures no background color, image, etc. */
     background: transparent !important;
     border: 2px solid white !important;
     border-radius: 9999px !important; /* Fully rounded edges */
     color: white !important;
-    /* Reduced right padding to give text more space */
     padding: 1.2rem 3rem !important; /* Reduced padding */
     font-size: 0.9rem !important; /* Reduced font size */
     box-sizing: border-box;
@@ -153,7 +221,7 @@ body {
 }
 
 .auth-input::placeholder {
-    color: white; /* medium gray */
+    color: white;
 }
 
 .auth-input:focus {
@@ -165,8 +233,8 @@ body {
 /* Submit button styling */
 .auth-submit-button {
     width: 50%; /* Reduced width */
-    margin-left: auto; /* Center the button */
-    margin-right: auto; /* Center the button */
+    margin-left: auto;
+    margin-right: auto;
     background-color: #FF0046 !important;
     color: white !important;
     border: none !important;
@@ -175,9 +243,8 @@ body {
     font-size: 0.85rem !important; /* Reduced font size */
     font-weight: 600 !important;
     cursor: pointer;
-    margin-top: 0.5rem; /* Space above the button */
+    margin-top: 0.5rem;
     transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    /* Added pink glow effect */
     box-shadow: 0 0 20px rgba(255, 0, 70, 0.7);
 }
 

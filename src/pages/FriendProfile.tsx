@@ -3,10 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { apiClient, API_BASE_URL } from '@/lib/api-client';
-import { toast } from 'sonner';
 import { ArrowLeft, Loader2, Trash2 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext'; // 👈 add
+import { useAuth } from '@/contexts/AuthContext';
 import './FriendProfile.css';
 import './Index.css';
 
@@ -21,17 +20,17 @@ interface UserPost { id: string; mediaUrl: string; mediaType: 'image'|'video'; c
 const FriendProfile = () => {
   const navigate = useNavigate();
   const { friendId } = useParams();
-  const { user } = useAuth();                     // 👈 add
+  const { user } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [posts, setPosts] = useState<UserPost[]>([]);
   const [loading, setLoading] = useState(false);
 
   const [modalPost, setModalPost] = useState<UserPost | null>(null);
 
-  // NEW: confirm delete state
+  // confirm delete state
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  useEffect(() => { if(friendId) fetchProfileAndPosts(friendId); }, [friendId]);
+  useEffect(() => { if (friendId) fetchProfileAndPosts(friendId); }, [friendId]);
 
   const fetchProfileAndPosts = async (id: string) => {
     setLoading(true);
@@ -39,7 +38,6 @@ const FriendProfile = () => {
       const profileData: UserProfile = await apiClient.getProfile(id);
       setProfile(profileData);
 
-      // Get this user's posts (you can swap to a dedicated endpoint if you add one)
       const feedPosts = await apiClient.getFeed(id, 1);
       const userPosts = feedPosts.filter((p:any) => p.user_id === id);
       setPosts(userPosts.map((p:any) => ({
@@ -49,8 +47,7 @@ const FriendProfile = () => {
         challengeTitle: p.caption,
       })));
     } catch (err) {
-      console.error(err);
-      toast.error('Nepodarilo sa načítať profil priateľa.');
+      console.error('FriendProfile: failed to load profile or posts', err);
       setProfile(null);
       setPosts([]);
     } finally {
@@ -68,9 +65,8 @@ const FriendProfile = () => {
       setPosts(prev => prev.filter(p => p.id !== modalPost.id)); // remove from grid
       setModalPost(null); // close media modal
       setConfirmOpen(false);
-      toast.success('Post deleted');
     } catch (e: any) {
-      toast.error(e?.message || 'Delete failed');
+      console.error('FriendProfile: delete failed', e);
       setConfirmOpen(false);
     }
   };
@@ -88,7 +84,7 @@ const FriendProfile = () => {
     </div>
   );
 
-  const isOwner = user?.id === profile.id; // 👈 show delete only if viewing own profile
+  const isOwner = user?.id === profile.id; // show delete only if viewing own profile
 
   return (
     <div className="friend-profile-container">

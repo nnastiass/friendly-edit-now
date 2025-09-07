@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
-import { apiClient } from '@/lib/api-client'; // Import the centralized API client
-import { toast } from 'sonner';
+import { apiClient } from '@/lib/api-client';
 import { Home, User, Plus, ArrowLeft } from 'lucide-react';
 import './FriendsList.css';
 
@@ -19,19 +18,53 @@ const generatePastelColor = (id: string) => {
 };
 
 interface Friend {
-  id: string; // This is the friendship ID from your API
-  friend_id: string; // The ID of the friend
+  id: string; // friendship ID
+  friend_id: string; // the friend's user ID
   username: string | null;
   full_name: string | null;
   avatar_url: string | null;
   streak: number | null;
 }
 
+type BannerType = 'error' | 'success' | 'info';
+
 const FriendsList = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [friends, setFriends] = useState<Friend[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Top pop-out banner (black bg, 20px radius, top: 50px)
+  const [banner, setBanner] = useState<{ message: string; type: BannerType } | null>(null);
+  const [bannerVisible, setBannerVisible] = useState(false);
+  const bannerTimer = useRef<number | null>(null);
+
+  const showBanner = (message: string, type: BannerType = 'info', duration = 3500) => {
+    if (bannerTimer.current) {
+      window.clearTimeout(bannerTimer.current);
+      bannerTimer.current = null;
+    }
+    setBanner({ message, type });
+    requestAnimationFrame(() => setBannerVisible(true));
+    bannerTimer.current = window.setTimeout(() => {
+      setBannerVisible(false);
+      bannerTimer.current = null;
+    }, duration);
+  };
+
+  const closeBanner = () => {
+    if (bannerTimer.current) {
+      window.clearTimeout(bannerTimer.current);
+      bannerTimer.current = null;
+    }
+    setBannerVisible(false);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (bannerTimer.current) window.clearTimeout(bannerTimer.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -46,12 +79,12 @@ const FriendsList = () => {
     }
     setLoading(true);
     try {
-      // Use apiClient to fetch friends
       const friendsData: Friend[] = await apiClient.getFriends(user.id);
       setFriends(friendsData);
     } catch (error) {
       console.error('FriendsList: Error fetching friends:', error);
-      toast.error('Failed to load friends list.');
+      // REMADE as top banner (was toast.error('Failed to load friends list.'))
+      showBanner('Failed to load friends list.', 'error');
     } finally {
       setLoading(false);
     }
@@ -64,16 +97,17 @@ const FriendsList = () => {
     }
 
     const originalFriends = friends;
-    setFriends(friends.filter(f => f.friend_id !== friendId)); // Optimistic UI update
+    setFriends(friends.filter(f => f.friend_id !== friendId)); // optimistic UI
 
     try {
-      // Use apiClient to delete friend
       await apiClient.deleteFriend(user.id, friendId);
-      toast.success('Friend removed.');
+      // Deleted success toast: toast.success('Friend removed.')
+      // Silent success — UI already updated.
     } catch (error) {
       console.error('FriendsList: Error deleting friend:', error);
-      toast.error('Failed to remove friend.');
-      setFriends(originalFriends); // Revert UI if API call fails
+      // REMADE as top banner (was toast.error('Failed to remove friend.'))
+      showBanner('Failed to remove friend.', 'error');
+      setFriends(originalFriends); // revert on failure
     }
   };
 
@@ -84,6 +118,26 @@ const FriendsList = () => {
 
   return (
     <div className="friends-list-container">
+      {/* Top Pop-out Banner */}
+      <div className="notify-root" aria-live="assertive" aria-atomic="true">
+        <div
+          className={`notify-banner ${bannerVisible ? 'visible' : ''} ${
+            banner?.type ? `notify-${banner.type}` : ''
+          }`}
+          role="alert"
+        >
+          <span className="notify-text">{banner?.message}</span>
+          <button
+            type="button"
+            className="notify-close"
+            aria-label="Close notification"
+            onClick={closeBanner}
+          >
+            ×
+          </button>
+        </div>
+      </div>
+
       {/* Header */}
       <div className="friends-list-header">
         <Button onClick={() => navigate(-1)} variant="ghost" size="icon" className="friends-list-back-button">
@@ -97,7 +151,7 @@ const FriendsList = () => {
         {loading ? (
           <p className="loading-text">Loading friends...</p>
         ) : friends.length > 0 ? (
-          friends.map((friend) => friend && ( // friend_profile is now flattened into friend
+          friends.map((friend) => friend && (
             <div key={friend.id} className="friend-card">
               <div className="friend-info">
                 <Avatar className="friend-avatar">
@@ -116,7 +170,7 @@ const FriendsList = () => {
               </div>
               <Button
                 className="delete-button"
-                onClick={() => handleDeleteFriend(friend.friend_id)} // Use friend_id for deletion
+                onClick={() => handleDeleteFriend(friend.friend_id)}
               >
                 Delete
               </Button>
@@ -127,8 +181,7 @@ const FriendsList = () => {
         )}
       </div>
 
-      {/* Bottom Navigation */}
-
+      {/* Bottom Navigation (if any) */}
     </div>
   );
 };

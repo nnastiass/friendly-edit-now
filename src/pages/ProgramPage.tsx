@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Home, User, Plus, Info, Menu, Users, Clock, X, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { Home, User, Plus, Info, Menu, Users, Clock, X } from 'lucide-react';
 import { conferenceApiClient } from '@/lib/conference-api-client';
 import './ProgramPage.css';
-
 
 interface ScheduleEntry {
   id: number;
@@ -38,13 +36,13 @@ const ProgramPage = () => {
   const fetchSchedule = async (confId: string) => {
     setLoading(true);
     try {
-        const data = await conferenceApiClient.getScheduleByConferenceId(confId);
-        setSchedule(data);
+      const data = await conferenceApiClient.getScheduleByConferenceId(confId);
+      setSchedule(data);
     } catch (error) {
-        console.error("Failed to fetch schedule:", error);
-        toast.error("Failed to load schedule.");
+      console.error('Failed to fetch schedule:', error);
+      // (deleted visual notification)
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 
@@ -57,17 +55,17 @@ const ProgramPage = () => {
   };
 
   const handleMenuToggle = () => {
-      if (isMenuOpen) {
-          handleMenuClose();
-      } else {
-          setIsMenuOpen(true);
-      }
-  }
+    if (isMenuOpen) {
+      handleMenuClose();
+    } else {
+      setIsMenuOpen(true);
+    }
+  };
 
   const handleNavAndClose = (path: string) => {
-      navigate(path);
-      handleMenuClose();
-  }
+    navigate(path);
+    handleMenuClose();
+  };
 
   // Helper function to format time string to hours and minutes
   const formatTime = (timeString: string): string => {
@@ -79,13 +77,13 @@ const ProgramPage = () => {
       date.setMinutes(parseInt(minutes, 10));
       return date.toLocaleTimeString('sk-SK', { hour: '2-digit', minute: '2-digit' });
     } catch (e) {
-      console.error("Failed to parse time string:", timeString, e);
+      console.error('Failed to parse time string:', timeString, e);
       return timeString;
     }
   };
 
   // Filter schedule for the active day
-  const filteredSchedule = schedule.filter(entry => entry.day === activeDay);
+  const filteredSchedule = schedule.filter((entry) => entry.day === activeDay);
 
   return (
     <div className="program-page-container">
@@ -93,12 +91,18 @@ const ProgramPage = () => {
       {isMenuOpen && (
         <div className={`program-page-mobile-menu ${isMenuClosing ? 'closing' : ''}`}>
           <nav className="menu-nav">
-            <button className="menu-button" onClick={() => handleNavAndClose('/info')}>Home</button>
-            <button className="menu-button" onClick={() => handleNavAndClose('/program')}>Program</button>
-            <button className="menu-button" onClick={() => handleNavAndClose('/speakers')}>Speakers</button>
+            <button className="menu-button" onClick={() => handleNavAndClose('/info')}>
+              Home
+            </button>
+            <button className="menu-button" onClick={() => handleNavAndClose('/program')}>
+              Program
+            </button>
+            <button className="menu-button" onClick={() => handleNavAndClose('/speakers')}>
+              Speakers
+            </button>
             <button className="menu-button" onClick={() => handleNavAndClose('/')}>
-                                      Challenges
-                        </button>
+              Challenges
+            </button>
           </nav>
         </div>
       )}
@@ -120,37 +124,31 @@ const ProgramPage = () => {
         </Button>
       </header>
 
-
       {/* Main Content */}
       <div className="program-page-main-content">
         <h1 className="program-title">Conference Program 2025</h1>
         <p className="program-subtitle">Conference Day</p>
 
         <div className="day-toggle-buttons">
-          <Button
-            className={`day-button ${activeDay === 1 ? 'active' : ''}`}
-            onClick={() => setActiveDay(1)}
-          >
+          <Button className={`day-button ${activeDay === 1 ? 'active' : ''}`} onClick={() => setActiveDay(1)}>
             Day 1
           </Button>
-          <Button
-            className={`day-button ${activeDay === 2 ? 'active' : ''}`}
-            onClick={() => setActiveDay(2)}
-          >
+          <Button className={`day-button ${activeDay === 2 ? 'active' : ''}`} onClick={() => setActiveDay(2)}>
             Day 2
           </Button>
         </div>
 
         {loading ? (
-            <p className="loading-text">Loading schedule...</p>
+          <p className="loading-text">Loading schedule...</p>
         ) : filteredSchedule.length > 0 ? (
           <div className="schedule-list">
             {filteredSchedule.map((item) => (
               <div key={item.id} className="schedule-item-card">
                 <div className="schedule-icon-container">
-                  {/* Assuming you want a specific icon for a session type */}
                   {item.session_type === 'talk' ? <Clock /> : <Users />}
-                  <span className="schedule-time">{formatTime(item.start_time)} - {formatTime(item.end_time)}</span>
+                  <span className="schedule-time">
+                    {formatTime(item.start_time)} - {formatTime(item.end_time)}
+                  </span>
                 </div>
                 <div className="schedule-title-container">
                   <p className="schedule-title">{item.title}</p>
@@ -173,27 +171,17 @@ const ProgramPage = () => {
           >
             <Home className="info-page-nav-icon" />
           </button>
-          <button
-            className="info-page-nav-button info-page-nav-button-active"
-            onClick={() => navigate('/info')}
-          >
+          <button className="info-page-nav-button info-page-nav-button-active" onClick={() => navigate('/info')}>
             <Info className="info-page-nav-icon" />
           </button>
-          <button
-            className="info-page-nav-button info-page-nav-button-inactive"
-            onClick={() => navigate('/')}
-          >
+          <button className="info-page-nav-button info-page-nav-button-inactive" onClick={() => navigate('/')}>
             <Plus className="info-page-nav-icon" />
           </button>
-          <button
-            className="info-page-nav-button info-page-nav-button-inactive"
-            onClick={() => navigate('/profile')}
-          >
+          <button className="info-page-nav-button info-page-nav-button-inactive" onClick={() => navigate('/profile')}>
             <User className="info-page-nav-icon" />
           </button>
         </div>
       </div>
-
     </div>
   );
 };

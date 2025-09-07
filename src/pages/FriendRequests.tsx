@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
-import { apiClient } from '@/lib/api-client'; // Using the centralized API client
-import { toast } from 'sonner';
+import { apiClient } from '@/lib/api-client';
 import { Home, User, Plus, ArrowLeft, Check, X, Users } from 'lucide-react';
 import './FriendRequests.css';
 
@@ -20,19 +19,53 @@ const generatePastelColor = (id: string) => {
 
 // UPDATED INTERFACE to match API's flat response structure
 interface FriendRequest {
-  id: string; // This is the request ID
+  id: string; // request ID
   sender_id: string;
-  created_at: string; // Add created_at from API
-  username: string | null; // Directly from API join
-  full_name: string | null; // Directly from API join
-  avatar_url: string | null; // Directly from API join
+  created_at: string;
+  username: string | null;
+  full_name: string | null;
+  avatar_url: string | null;
 }
+
+type BannerType = 'error' | 'success' | 'info';
 
 const FriendRequestsPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [requests, setRequests] = useState<FriendRequest[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Top pop-out banner (black bg, 20px radius, top: 50px)
+  const [banner, setBanner] = useState<{ message: string; type: BannerType } | null>(null);
+  const [bannerVisible, setBannerVisible] = useState(false);
+  const bannerTimer = useRef<number | null>(null);
+
+  const showBanner = (message: string, type: BannerType = 'info', duration = 3500) => {
+    if (bannerTimer.current) {
+      window.clearTimeout(bannerTimer.current);
+      bannerTimer.current = null;
+    }
+    setBanner({ message, type });
+    requestAnimationFrame(() => setBannerVisible(true));
+    bannerTimer.current = window.setTimeout(() => {
+      setBannerVisible(false);
+      bannerTimer.current = null;
+    }, duration);
+  };
+
+  const closeBanner = () => {
+    if (bannerTimer.current) {
+      window.clearTimeout(bannerTimer.current);
+      bannerTimer.current = null;
+    }
+    setBannerVisible(false);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (bannerTimer.current) window.clearTimeout(bannerTimer.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -48,21 +81,21 @@ const FriendRequestsPage = () => {
     setLoading(true);
     console.log("FriendRequests: Attempting to fetch requests for user ID:", user.id);
     try {
-      // Use apiClient to fetch requests
       const requestsData: FriendRequest[] = await apiClient.getFriendRequests(user.id);
-      console.log("FriendRequests: API response for requests:", requestsData); // Log the raw API response
+      console.log("FriendRequests: API response for requests:", requestsData);
       setRequests(requestsData);
       console.log("FriendRequests: Requests state updated. Number of requests:", requestsData.length);
     } catch (error) {
       console.error('FriendRequests: Error fetching friend requests:', error);
-      toast.error('Failed to load friend requests.');
+      // REMADE as top banner (was toast.error('Failed to load friend requests.'))
+      showBanner('Failed to load friend requests.', 'error');
     } finally {
       setLoading(false);
       console.log("FriendRequests: Loading finished.");
     }
   };
 
-  // Changed 'action' parameter type to match API's expected values
+  // action is 'accepted' | 'rejected'
   const handleFriendRequest = async (requestId: string, senderId: string, action: 'accepted' | 'rejected') => {
     if (!user || !user.id) {
       console.warn("FriendRequests: User or user ID not available for handling request.");
@@ -74,19 +107,18 @@ const FriendRequestsPage = () => {
     console.log(`FriendRequests: Attempting to ${action} request ID: ${requestId} from sender: ${senderId}`);
 
     try {
-      // Your API endpoint: POST /api/friend-requests/respond
-      await apiClient.respondToFriendRequest(requestId, action); // 'action' now directly matches 'accepted'/'rejected'
+      await apiClient.respondToFriendRequest(requestId, action);
 
-      if (action === 'accepted') { // Check against 'accepted'
-        toast.success('Friend request accepted!');
-      } else { // Implicitly 'rejected'
-        toast.info('Friend request rejected.');
-      }
+      // Deleted:
+      //  - toast.success('Friend request accepted!')
+      //  - toast.info('Friend request rejected.')
+      // Silent success; UI already updated optimistically.
     } catch (error) {
       console.error('FriendRequests: Error handling friend request:', error);
-      toast.error('Failed to process request.');
-      // Revert UI if API call fails
-      fetchFriendRequests(); // Re-fetch to get accurate state
+      // REMADE as top banner (was toast.error('Failed to process request.'))
+      showBanner('Failed to process request.', 'error');
+      // Revert UI by re-fetching
+      fetchFriendRequests();
     }
   };
 
@@ -97,6 +129,26 @@ const FriendRequestsPage = () => {
 
   return (
     <div className="friend-requests-page-container">
+      {/* Top Pop-out Banner */}
+      <div className="notify-root" aria-live="assertive" aria-atomic="true">
+        <div
+          className={`notify-banner ${bannerVisible ? 'visible' : ''} ${
+            banner?.type ? `notify-${banner.type}` : ''
+          }`}
+          role="alert"
+        >
+          <span className="notify-text">{banner?.message}</span>
+          <button
+            type="button"
+            className="notify-close"
+            aria-label="Close notification"
+            onClick={closeBanner}
+          >
+            ×
+          </button>
+        </div>
+      </div>
+
       {/* Header */}
       <div className="friend-requests-page-header">
         <Button onClick={() => navigate(-1)} variant="ghost" size="icon" className="friend-requests-page-back-button">
@@ -110,14 +162,13 @@ const FriendRequestsPage = () => {
         {loading ? (
           <p className="loading-text">Loading requests...</p>
         ) : requests.length > 0 ? (
-          requests.map((request) => ( // Iterate directly over 'request'
+          requests.map((request) => (
             <div key={request.id} className="request-card">
               <div className="request-info">
                 <Avatar className="request-avatar">
                   <AvatarImage src={request.avatar_url || ''} />
                   <AvatarFallback
                     className="avatar-fallback"
-                    // Manually re-typed this line to remove any hidden characters
                     style={{ backgroundColor: generatePastelColor(request.sender_id) }}
                   >
                     {getInitials(request.full_name)}
@@ -132,7 +183,6 @@ const FriendRequestsPage = () => {
                 <Button
                   className="decline-button"
                   size="icon"
-                  // Pass 'rejected' instead of 'reject'
                   onClick={() => handleFriendRequest(request.id, request.sender_id, 'rejected')}
                 >
                   <X />
@@ -140,7 +190,6 @@ const FriendRequestsPage = () => {
                 <Button
                   className="accept-button"
                   size="icon"
-                  // Pass 'accepted' instead of 'accept'
                   onClick={() => handleFriendRequest(request.id, request.sender_id, 'accepted')}
                 >
                   <Check />
@@ -156,8 +205,7 @@ const FriendRequestsPage = () => {
         )}
       </div>
 
-      {/* Bottom Navigation */}
-
+      {/* Bottom Navigation (if any) */}
     </div>
   );
 };

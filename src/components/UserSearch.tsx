@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
-import { apiClient } from '@/lib/api-client'; // Import the centralized API client
-import { toast } from 'sonner';
+import { apiClient } from '@/lib/api-client';
 import { Search, UserPlus, Check } from 'lucide-react';
+import './UserSearch.css';
 
-// --- NEW HELPER FUNCTION ---(existing)
+// --- Pastel avatar helpers (existing) ---
 const pastelColors = [
   '#FFADAD', '#FFD6A5', '#FDFFB6', '#CAFFBF', '#9BF6FF', '#A0C4FF', '#BDB2FF', '#FFC6FF'
 ];
@@ -35,6 +35,8 @@ interface FriendRequestStatus {
   status: 'none' | 'sent' | 'received' | 'friends';
 }
 
+type BannerType = 'error' | 'success' | 'info';
+
 const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
@@ -42,6 +44,38 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
   const [loading, setLoading] = useState(false);
   const [requestStatuses, setRequestStatuses] = useState<Record<string, FriendRequestStatus>>({});
   const [hasSearched, setHasSearched] = useState(false);
+
+  // --- Top pop-out banner state (black bg, 20px radius, top: 50px) ---
+  const [banner, setBanner] = useState<{ message: string; type: BannerType } | null>(null);
+  const [bannerVisible, setBannerVisible] = useState(false);
+  const bannerTimer = useRef<number | null>(null);
+
+  const showBanner = (message: string, type: BannerType = 'info', duration = 3500) => {
+    if (bannerTimer.current) {
+      window.clearTimeout(bannerTimer.current);
+      bannerTimer.current = null;
+    }
+    setBanner({ message, type });
+    requestAnimationFrame(() => setBannerVisible(true));
+    bannerTimer.current = window.setTimeout(() => {
+      setBannerVisible(false);
+      bannerTimer.current = null;
+    }, duration);
+  };
+
+  const closeBanner = () => {
+    if (bannerTimer.current) {
+      window.clearTimeout(bannerTimer.current);
+      bannerTimer.current = null;
+    }
+    setBannerVisible(false);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (bannerTimer.current) window.clearTimeout(bannerTimer.current);
+    };
+  }, []);
 
   const searchUsers = async () => {
     if (!searchTerm.trim() || !user || !user.id) {
@@ -53,16 +87,13 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
     console.log("UserSearch: Starting user search for term:", searchTerm);
 
     try {
-      // Your API's /api/profiles endpoint returns all profiles.
-      // We will filter client-side for simplicity, or you can enhance your API
-      // to support search queries.
       const allProfiles: SearchedUser[] = await apiClient.searchUsers();
       console.log("UserSearch: All profiles fetched:", allProfiles);
 
       const filteredUsers = allProfiles.filter(profile =>
         (profile.username?.toLowerCase().includes(searchTerm.trim().toLowerCase()) ||
          profile.full_name?.toLowerCase().includes(searchTerm.trim().toLowerCase())) &&
-        profile.id !== user.id // Exclude current user
+        profile.id !== user.id
       );
 
       setSearchResults(filteredUsers);
@@ -72,11 +103,12 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
       if (filteredUsers.length) {
         await checkFriendStatuses(filteredUsers.map((u) => u.id));
       } else {
-        setRequestStatuses({}); // Clear statuses if no users found
+        setRequestStatuses({});
       }
     } catch (error) {
       console.error('UserSearch: Error searching users:', error);
-      toast.error('Failed to search users');
+      // REMADE as top banner (was toast.error('Failed to search users'))
+      showBanner('Failed to search users', 'error');
     } finally {
       setLoading(false);
       console.log("UserSearch: Search finished.");
@@ -91,16 +123,13 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
     console.log("UserSearch: Checking friend statuses for user IDs:", userIds);
 
     try {
-      // Fetch current user's friends
       const friends: { friend_id: string }[] = await apiClient.getFriends(user.id);
       console.log("UserSearch: Friends fetched:", friends);
 
-      // Fetch sent requests by current user
-      const sentRequests: { receiver_id: string }[] = await apiClient.getSentFriendRequests(user.id); // Assuming this API endpoint exists
+      const sentRequests: { receiver_id: string }[] = await apiClient.getSentFriendRequests(user.id);
       console.log("UserSearch: Sent requests fetched:", sentRequests);
 
-      // Fetch received requests for current user
-      const receivedRequests: { sender_id: string }[] = await apiClient.getFriendRequests(user.id); // This is for incoming requests
+      const receivedRequests: { sender_id: string }[] = await apiClient.getFriendRequests(user.id);
       console.log("UserSearch: Received requests fetched:", receivedRequests);
 
       const statuses: Record<string, FriendRequestStatus> = {};
@@ -122,7 +151,8 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
 
     } catch (error) {
       console.error('UserSearch: Error checking friend statuses:', error);
-      toast.error('Failed to check friend statuses.');
+      // DELETED old toast: toast.error('Failed to check friend statuses.')
+      // (Per your instruction, we show nothing here)
     }
   };
 
@@ -134,9 +164,10 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
     console.log("UserSearch: Sending friend request to receiver ID:", receiverId);
 
     try {
-      await apiClient.sendFriendRequest(user.id, receiverId); // Using apiClient for sending request
+      await apiClient.sendFriendRequest(user.id, receiverId);
 
-      toast.success('Friend request sent!');
+      // DELETED old toast.success('Friend request sent!')
+      // Keep silent success; update local UI state:
       setRequestStatuses(prev => ({
         ...prev,
         [receiverId]: { userId: receiverId, status: 'sent' }
@@ -144,7 +175,8 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
       console.log("UserSearch: Friend request sent successfully, status updated.");
     } catch (error) {
       console.error('UserSearch: Error sending friend request:', error);
-      toast.error('Failed to send friend request');
+      // REMADE as top banner (was toast.error('Failed to send friend request'))
+      showBanner('Failed to send friend request', 'error');
     }
   };
 
@@ -196,65 +228,87 @@ const UserSearch: React.FC<UserSearchProps> = ({ onClose }) => {
 
   const getDisplayUsername = (searchedUser: SearchedUser) => {
     return searchedUser.username || '...';
-  }
+  };
 
   return (
-    <div className="user-search-container">
-      <div className="search-bar">
-        <div className="search-input-wrapper">
-          <Search className="search-icon" />
-          <Input
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && searchUsers()}
-            placeholder="Search by username"
-            className="search-input"
-          />
-        </div>
-        <Button
-          onClick={searchUsers}
-          disabled={loading || !searchTerm.trim()}
-          className="search-button"
+    <>
+      {/* Top Pop-out Banner */}
+      <div className="notify-root" aria-live="assertive" aria-atomic="true">
+        <div
+          className={`notify-banner ${bannerVisible ? 'visible' : ''} ${
+            banner?.type ? `notify-${banner.type}` : ''
+          }`}
+          role="alert"
         >
-          {loading ? '...' : 'Search'}
-        </Button>
+          <span className="notify-text">{banner?.message}</span>
+          <button
+            type="button"
+            className="notify-close"
+            aria-label="Close notification"
+            onClick={closeBanner}
+          >
+            ×
+          </button>
+        </div>
       </div>
 
-      <div className="search-results">
-        {searchResults.map((searchedUser) => (
-          <Card key={searchedUser.id} className="user-card">
-            <CardContent className="user-card-content">
-              <div className="user-info">
-                <div className="flex items-center space-x-3">
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage src={searchedUser.avatar_url || ''} />
-                    <AvatarFallback
-                      className="avatar-fallback"
-                      style={{ backgroundColor: generatePastelColor(searchedUser.id) }}
-                    >
-                      {getInitials(getDisplayName(searchedUser))}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="user-name">
-                      {getDisplayName(searchedUser)}
-                    </p>
-                    <p className="user-username">
-                      @{getDisplayUsername(searchedUser)}
-                    </p>
+      <div className="user-search-container">
+        <div className="search-bar">
+          <div className="search-input-wrapper">
+            <Search className="search-icon" />
+            <Input
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && searchUsers()}
+              placeholder="Search by username"
+              className="search-input"
+            />
+          </div>
+          <Button
+            onClick={searchUsers}
+            disabled={loading || !searchTerm.trim()}
+            className="search-button"
+          >
+            {loading ? '...' : 'Search'}
+          </Button>
+        </div>
+
+        <div className="search-results">
+          {searchResults.map((searchedUser) => (
+            <Card key={searchedUser.id} className="user-card">
+              <CardContent className="user-card-content">
+                <div className="user-info">
+                  <div className="flex items-center space-x-3">
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage src={searchedUser.avatar_url || ''} />
+                      <AvatarFallback
+                        className="avatar-fallback"
+                        style={{ backgroundColor: generatePastelColor(searchedUser.id) }}
+                      >
+                        {getInitials(getDisplayName(searchedUser))}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="user-name">
+                        {getDisplayName(searchedUser)}
+                      </p>
+                      <p className="user-username">
+                        @{getDisplayUsername(searchedUser)}
+                      </p>
+                    </div>
                   </div>
+                  {renderActionButton(searchedUser)}
                 </div>
-                {renderActionButton(searchedUser)}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          ))}
 
-        {hasSearched && searchResults.length === 0 && !loading && (
-          <p className="no-results-text">No users found</p>
-        )}
+          {hasSearched && searchResults.length === 0 && !loading && (
+            <p className="no-results-text">No users found</p>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

@@ -2,15 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Home, User, Plus, Info, Menu, Users, Clock, X, ArrowLeft } from 'lucide-react';
-import { toast } from 'sonner';
 import { conferenceApiClient } from '@/lib/conference-api-client'; // Import the new API client
 import './SpeakersPage.css';
 
 // This helper function now correctly handles URL encoding for filenames with spaces
 const getImageUrl = (imageName: string) => {
-    // encodeURIComponent is used to safely encode special characters like spaces
-    const encodedName = encodeURIComponent(imageName);
-    return `/images/speakers/${encodedName}`;
+  // encodeURIComponent is used to safely encode special characters like spaces
+  const encodedName = encodeURIComponent(imageName);
+  return `/images/speakers/${encodedName}`;
 };
 
 // Interface to match the API response for speakers
@@ -26,7 +25,7 @@ interface Speaker {
 }
 
 // This is the new component for the speaker detail view
-const SpeakerDetailView = ({ speaker, onBack }) => (
+const SpeakerDetailView: React.FC<{ speaker: Speaker; onBack: () => void }> = ({ speaker, onBack }) => (
   <div className="speaker-detail-view">
     <Button onClick={onBack} variant="ghost" size="icon" className="speakers-page-back-button">
       <ArrowLeft />
@@ -39,7 +38,6 @@ const SpeakerDetailView = ({ speaker, onBack }) => (
     <p className="speaker-detail-bio">{speaker.bio}</p>
   </div>
 );
-
 
 const SpeakersPage = () => {
   const navigate = useNavigate();
@@ -59,13 +57,13 @@ const SpeakersPage = () => {
   const fetchSpeakers = async (confId: string) => {
     setLoading(true);
     try {
-        const data = await conferenceApiClient.getSpeakersByConferenceId(confId);
-        setSpeakers(data);
+      const data = await conferenceApiClient.getSpeakersByConferenceId(confId);
+      setSpeakers(data);
     } catch (error) {
-        console.error("Failed to fetch speakers:", error);
-        toast.error("Failed to load speakers.");
+      console.error('Failed to fetch speakers:', error);
+      // (deleted visual notification)
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 
@@ -78,12 +76,12 @@ const SpeakersPage = () => {
   };
 
   const handleMenuToggle = () => {
-      if (isMenuOpen) {
-          handleMenuClose();
-      } else {
-          setIsMenuOpen(true);
-      }
-  }
+    if (isMenuOpen) {
+      handleMenuClose();
+    } else {
+      setIsMenuOpen(true);
+    }
+  };
 
   const handleNavAndClose = (path: string) => {
     navigate(path);
@@ -91,12 +89,12 @@ const SpeakersPage = () => {
   };
 
   const handleBack = () => {
-      if (selectedSpeaker) {
-          setSelectedSpeaker(null);
-      } else {
-          navigate(-1);
-      }
-  }
+    if (selectedSpeaker) {
+      setSelectedSpeaker(null);
+    } else {
+      navigate(-1);
+    }
+  };
 
   return (
     <div className="speakers-page-container">
@@ -108,17 +106,14 @@ const SpeakersPage = () => {
             <button className="menu-button" onClick={() => handleNavAndClose('/program')}>Program</button>
             <button className="menu-button" onClick={() => handleNavAndClose('/speakers')}>Speakers</button>
             <button className="menu-button" onClick={() => handleNavAndClose('/')}>
-                                      Challenges
-                        </button>
+              Challenges
+            </button>
           </nav>
         </div>
       )}
 
       {/* Header */}
       <header className="speakers-page-header">
-        {/* Back button stays absolute on the left */}
-
-
         {/* Real logo, same as other pages */}
         <div className="logo-placeholder">
           <img
@@ -136,16 +131,14 @@ const SpeakersPage = () => {
         </Button>
       </header>
 
-
       {/* Main Content */}
       <div className="speakers-page-main-content">
         {loading ? (
-            <p className="loading-text">Loading speakers...</p>
+          <p className="loading-text">Loading speakers...</p>
         ) : selectedSpeaker ? (
           <SpeakerDetailView speaker={selectedSpeaker} onBack={() => setSelectedSpeaker(null)} />
         ) : (
           <>
-            <h1 className="speakers-title">Workshops</h1>
             <div className="speakers-list">
               {speakers.map((speaker) => (
                 <button
@@ -165,7 +158,6 @@ const SpeakersPage = () => {
         )}
       </div>
 
-      {/* Bottom Navigation */}
       {/* Bottom Navigation */}
       <div className="info-page-bottom-nav">
         <div className="info-page-nav-container">
@@ -195,7 +187,6 @@ const SpeakersPage = () => {
           </button>
         </div>
       </div>
-
     </div>
   );
 };

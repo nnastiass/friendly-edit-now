@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/lib/api-client';
-import { toast } from 'sonner';
 import { Home, User, Settings, Plus, Edit, ArrowLeft, UserPlus, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import './Profile.css';
@@ -39,8 +38,9 @@ interface Friend {
   streak: number | null;
 }
 
+type BannerType = 'error' | 'success' | 'info';
+
 const Profile = () => {
-  // Cast to any so we can optionally call setUser if your context exposes it
   const authAny = useAuth() as any;
   const { user, signOut } = authAny;
 
@@ -56,15 +56,14 @@ const Profile = () => {
 
   const [loading, setLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [editForm, setEditForm] = useState({
-    full_name: '',
-    username: '',
-  });
+  const [editForm, setEditForm] = useState({ full_name: '', username: '' });
 
+  // Email change state (single source of truth)
   const [newEmail, setNewEmail] = useState('');
   const [currentPasswordForEmail, setCurrentPasswordForEmail] = useState('');
   const [isChangingEmail, setIsChangingEmail] = useState(false);
 
+  // Password change state (single source of truth)
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
     newPassword: '',
@@ -85,6 +84,38 @@ const Profile = () => {
   const isParticipant =
     !!(user as any)?.isConferenceParticipant || !!(user as any)?.is_conference_participant;
 
+  // --- Top pop-out banner (black bg, 20px radius, top: 50px) ---
+  const [banner, setBanner] = useState<{ message: string; type: BannerType } | null>(null);
+  const [bannerVisible, setBannerVisible] = useState(false);
+  const bannerTimer = useRef<number | null>(null);
+
+  const showBanner = (message: string, type: BannerType = 'error', duration = 3500) => {
+    if (bannerTimer.current) {
+      window.clearTimeout(bannerTimer.current);
+      bannerTimer.current = null;
+    }
+    setBanner({ message, type });
+    requestAnimationFrame(() => setBannerVisible(true));
+    bannerTimer.current = window.setTimeout(() => {
+      setBannerVisible(false);
+      bannerTimer.current = null;
+    }, duration);
+  };
+
+  const closeBanner = () => {
+    if (bannerTimer.current) {
+      window.clearTimeout(bannerTimer.current);
+      bannerTimer.current = null;
+    }
+    setBannerVisible(false);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (bannerTimer.current) window.clearTimeout(bannerTimer.current);
+    };
+  }, []);
+
   useEffect(() => {
     if (user?.id) {
       fetchProfile();
@@ -102,12 +133,12 @@ const Profile = () => {
       if (data) {
         setEditForm({
           full_name: data.full_name || '',
-          username: data.username || ''
+          username: data.username || '',
         });
       }
     } catch (error) {
       console.error('Profile: Error fetching profile:', error);
-      toast.error('Failed to load profile');
+      showBanner('Failed to load profile', 'error');
     }
   };
 
@@ -138,13 +169,13 @@ const Profile = () => {
     try {
       await apiClient.updateProfile(user.id, {
         full_name: editForm.full_name,
-        username: editForm.username
+        username: editForm.username,
       });
-      toast.success('Profile updated!');
+      // success toast removed
       setView('profile');
       fetchProfile();
     } catch (error: any) {
-      toast.error(error.message || 'Failed to update profile');
+      showBanner(error?.message || 'Failed to update profile', 'error');
     } finally {
       setLoading(false);
     }
@@ -153,7 +184,7 @@ const Profile = () => {
   const handleSignOut = async () => {
     await signOut();
     navigate('/auth');
-    toast.success('Signed out successfully');
+    // success toast removed
   };
 
   const handleDeleteAccount = async () => {
@@ -165,81 +196,56 @@ const Profile = () => {
     setIsDeleting(true);
     try {
       await apiClient.deleteProfile(user.id);
-      toast.success('Your account has been successfully deleted.');
+      // success toast removed
       await signOut();
       navigate('/auth');
     } catch (error: any) {
-      toast.error(error.message || 'Could not delete your account. Please try again.');
+      showBanner(error?.message || 'Could not delete your account. Please try again.', 'error');
     } finally {
       setIsDeleting(false);
     }
   };
 
+  // Email change
   const handleChangeEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newEmail || !currentPasswordForEmail || !user?.id) return;
 
     setIsChangingEmail(true);
     try {
-      const data = await apiClient.requestEmailChange(user.id, newEmail, currentPasswordForEmail);
-      toast.success(data.message);
+      await apiClient.requestEmailChange(user.id, newEmail, currentPasswordForEmail);
+      // success toast removed
       setNewEmail('');
       setCurrentPasswordForEmail('');
       setView('account');
     } catch (error: any) {
       console.error('Error changing email:', error);
-      toast.error(error.message || 'Failed to request email change.');
+      showBanner(error?.message || 'Failed to request email change.', 'error');
     } finally {
       setIsChangingEmail(false);
     }
   };
 
+  // Password change
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      toast.error('New passwords do not match.');
+      showBanner('New passwords do not match.', 'error');
       return;
     }
     if (!user?.id) return;
 
     setIsChangingPassword(true);
     try {
-      const data = await apiClient.changePassword(user.id, passwordForm);
-      toast.success(data.message);
+      await apiClient.changePassword(user.id, passwordForm);
+      // success toast removed
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
       setView('account');
     } catch (error: any) {
-      toast.error(error.message || 'Failed to change password.');
+      showBanner(error?.message || 'Failed to change password.', 'error');
     } finally {
       setIsChangingPassword(false);
     }
-  };
-
-  const handleBackNavigation = () => {
-    if (view === 'edit' || view === 'settings') {
-      setView('profile');
-    } else if (view === 'account') {
-      setView('settings');
-    } else if (view === 'changeEmail' || view === 'changePassword') {
-      setView('account');
-    }
-  };
-
-  const getTitleForView = () => {
-    switch (view) {
-      case 'edit': return 'Edit Profile';
-      case 'settings': return 'Settings';
-      case 'account': return 'Account';
-      case 'changeEmail': return 'Change Email';
-      case 'changePassword': return 'Change Password';
-      case 'conference': return 'Testing United';
-      default: return '';
-    }
-  };
-
-  const getInitials = (name: string | null) => {
-    if (!name) return user?.email?.charAt(0).toUpperCase() || 'U';
-    return name.split(' ').map(n => n.charAt(0)).join('').toUpperCase();
   };
 
   // helper to merge updated user from API and keep camelCase flag available
@@ -268,7 +274,7 @@ const Profile = () => {
   const handleEnableConference = async () => {
     if (!user?.id) return;
     if (!codeInput.trim()) {
-      toast.error('Please enter a code.');
+      showBanner('Please enter a code.', 'error');
       return;
     }
     try {
@@ -276,11 +282,11 @@ const Profile = () => {
       await apiClient.verifyConferenceCode(codeInput.trim());
       const updated = await apiClient.setConferenceParticipation(user.id, true, codeInput.trim());
       mergeUserFromServer(updated);
-      toast.success('Testing United mode enabled!');
+      // success toast removed
       setEnableDialogOpen(false);
       setCodeInput('');
     } catch (e: any) {
-      toast.error(e.message || 'Invalid code');
+      showBanner(e?.message || 'Invalid code', 'error');
     } finally {
       setToggleBusy(false);
     }
@@ -297,13 +303,30 @@ const Profile = () => {
       setToggleBusy(true);
       const updated = await apiClient.setConferenceParticipation(user.id, false);
       mergeUserFromServer(updated);
-      toast.success('Switched to normal version.');
+      // success toast removed
       setDisableConfirmOpen(false);
     } catch (e: any) {
-      toast.error(e.message || 'Failed to switch');
+      showBanner(e?.message || 'Failed to switch', 'error');
     } finally {
       setToggleBusy(false);
     }
+  };
+
+  const getTitleForView = () => {
+    switch (view) {
+      case 'edit': return 'Edit Profile';
+      case 'settings': return 'Settings';
+      case 'account': return 'Account';
+      case 'changeEmail': return 'Change Email';
+      case 'changePassword': return 'Change Password';
+      case 'conference': return 'Testing United';
+      default: return '';
+    }
+  };
+
+  const getInitials = (name: string | null) => {
+    if (!name) return user?.email?.charAt(0).toUpperCase() || 'U';
+    return name.split(' ').map(n => n.charAt(0)).join('').toUpperCase();
   };
 
   if (!user) return null;
@@ -314,7 +337,25 @@ const Profile = () => {
         isFormView || isSettingsView ? 'edit-mode' : ''
       }`}
     >
-
+      {/* Top Pop-out Banner */}
+      <div className="notify-root" aria-live="assertive" aria-atomic="true">
+        <div
+          className={`notify-banner ${bannerVisible ? 'visible' : ''} ${
+            banner?.type ? `notify-${banner.type}` : ''
+          }`}
+          role="alert"
+        >
+          <span className="notify-text">{banner?.message}</span>
+          <button
+            type="button"
+            className="notify-close"
+            aria-label="Close notification"
+            onClick={closeBanner}
+          >
+            ×
+          </button>
+        </div>
+      </div>
 
       <div className="profile-main-content">
         <div className="profile-header-gradient">
@@ -347,11 +388,14 @@ const Profile = () => {
         </div>
 
         {/* Subpage header (back + title) */}
-
         {view !== 'profile' && (
           <div className="profile-subpage-header">
             <Button
-              onClick={handleBackNavigation}
+              onClick={() => {
+                if (view === 'edit' || view === 'settings') setView('profile');
+                else if (view === 'account') setView('settings');
+                else if (view === 'changeEmail' || view === 'changePassword') setView('account');
+              }}
               variant="ghost"
               size="icon"
               className="profile-subpage-back-button"
@@ -361,7 +405,6 @@ const Profile = () => {
             <h1 className="profile-subpage-title">{getTitleForView()}</h1>
           </div>
         )}
-
 
         {view === 'edit' && (
           <div className="profile-edit-section">
@@ -394,13 +437,8 @@ const Profile = () => {
         {view === 'settings' && (
           <div className="profile-settings-section">
             <div className="settings-list">
-              <Button onClick={() => setView('account')} className="settings-button">
-                Account
-              </Button>
-
-              <Button onClick={() => setShowTUSettings((v) => !v)} className="settings-button">
-                Testing United
-              </Button>
+              <Button onClick={() => setView('account')} className="settings-button">Account</Button>
+              <Button onClick={() => setShowTUSettings((v) => !v)} className="settings-button">Testing United</Button>
             </div>
 
             {showTUSettings && (
@@ -464,16 +502,9 @@ const Profile = () => {
         {view === 'account' && (
           <div className="profile-settings-section">
             <div className="settings-card">
-              <Button onClick={() => setView('changeEmail')} className="settings-button">
-                Change Email Address
-              </Button>
-              <Button onClick={() => setView('changePassword')} className="settings-button">
-                Change Password
-              </Button>
-
-              <Button onClick={handleSignOut} className="profile-signout-button">
-                Sign Out
-              </Button>
+              <Button onClick={() => setView('changeEmail')} className="settings-button">Change Email Address</Button>
+              <Button onClick={() => setView('changePassword')} className="settings-button">Change Password</Button>
+              <Button onClick={handleSignOut} className="profile-signout-button">Sign Out</Button>
             </div>
 
             <div className="profile-danger-zone">
@@ -525,7 +556,7 @@ const Profile = () => {
 
         {view === 'changePassword' && (
           <div className="profile-edit-section">
-            <form onSubmit={handleChangePassword} className="settings-form">
+            <form onSubmit={handleChangePassword} className="settings-form" noValidate>
               <div className="edit-form-group">
                 <Label htmlFor="currentPassword">Current Password</Label>
                 <Input
@@ -538,6 +569,7 @@ const Profile = () => {
                   className="profile-edit-input"
                 />
               </div>
+
               <div className="edit-form-group">
                 <Label htmlFor="newPassword">New Password</Label>
                 <Input
@@ -550,6 +582,10 @@ const Profile = () => {
                   className="profile-edit-input"
                 />
               </div>
+
+              {/* ⬇️ Add this helper text */}
+              <p className="auth-hint">At least 8 characters, include uppercase, lowercase, and a number.</p>
+
               <div className="edit-form-group">
                 <Label htmlFor="confirmPassword">Confirm New Password</Label>
                 <Input
@@ -562,15 +598,18 @@ const Profile = () => {
                   className="profile-edit-input"
                 />
               </div>
+
               <Button type="submit" disabled={isChangingPassword} className="profile-save-button">
                 {isChangingPassword ? 'Saving...' : 'Change Password'}
               </Button>
             </form>
+
             <button className="forgot-password-button" onClick={() => navigate('/forgot-password')}>
               I forgot my password
             </button>
           </div>
         )}
+
 
         {view === 'profile' && (
           <>
