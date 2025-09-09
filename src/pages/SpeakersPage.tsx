@@ -136,7 +136,16 @@ const SpeakersPage = () => {
         {loading ? (
           <p className="loading-text">Loading speakers...</p>
         ) : selectedSpeaker ? (
-          <SpeakerDetailView speaker={selectedSpeaker} onBack={() => setSelectedSpeaker(null)} />
+          <div className="speaker-detail-view relative">
+            <Button onClick={() => setSelectedSpeaker(null)} variant="ghost" size="icon" className="speaker-detail-back-button">
+              <ArrowLeft />
+            </Button>
+            <h1 className="speaker-detail-title">About the Speaker</h1>
+            <img src={getImageUrl(selectedSpeaker.photo_url)} alt={selectedSpeaker.name} className="speaker-detail-photo" />
+            <h2 className="speaker-detail-name">{selectedSpeaker.name}</h2>
+            <p className="speaker-detail-job-title">{selectedSpeaker.title}</p>
+            <p className="speaker-detail-bio">{selectedSpeaker.bio}</p>
+          </div>
         ) : (
           <>
             <div className="speakers-list">

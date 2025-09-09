@@ -13,9 +13,9 @@ interface ScheduleEntry {
   title: string;
   description: string;
   session_type: string;
-  speaker_id: number;
+  speaker_id: number | null; // Allow speaker_id to be null
   conference_id: number;
-  speaker_name: string;
+  speaker_name: string | null; // Allow speaker_name to be null
 }
 
 const ProgramPage = () => {
@@ -27,7 +27,7 @@ const ProgramPage = () => {
   const [loading, setLoading] = useState(true);
 
   // You will likely have a way to get the conference ID, e.g., from a URL parameter or global state
-  const conferenceId = '123'; // Placeholder conference ID
+  const conferenceId = '1'; // Placeholder conference ID
 
   useEffect(() => {
     fetchSchedule(conferenceId);
@@ -37,7 +37,12 @@ const ProgramPage = () => {
     setLoading(true);
     try {
       const data = await conferenceApiClient.getScheduleByConferenceId(confId);
-      setSchedule(data);
+      // Ensure that speaker_name is always a string or null, to avoid 'undefined' issues
+      const cleanData = data.map(item => ({
+        ...item,
+        speaker_name: item.speaker_name || null // Convert undefined to null
+      }));
+      setSchedule(cleanData);
     } catch (error) {
       console.error('Failed to fetch schedule:', error);
       // (deleted visual notification)
@@ -70,6 +75,7 @@ const ProgramPage = () => {
   // Helper function to format time string to hours and minutes
   const formatTime = (timeString: string): string => {
     try {
+      // Assuming a "HH:MM AM/PM" format from the database
       const [time, period] = timeString.split(' ');
       const [hours, minutes] = time.split(':');
       const date = new Date();
@@ -78,12 +84,21 @@ const ProgramPage = () => {
       return date.toLocaleTimeString('sk-SK', { hour: '2-digit', minute: '2-digit' });
     } catch (e) {
       console.error('Failed to parse time string:', timeString, e);
-      return timeString;
+      return timeString; // Fallback to original string on error
     }
   };
 
   // Filter schedule for the active day
   const filteredSchedule = schedule.filter((entry) => entry.day === activeDay);
+
+  const getSessionIcon = (sessionType: string) => {
+    const cleanedType = sessionType.trim().toLowerCase();
+    if (cleanedType.includes('talk') || cleanedType.includes('keynote') || cleanedType.includes('workshop')) {
+      return <Clock />;
+    }
+    // You can add more specific conditions for other icons here
+    return <Users />;
+  };
 
   return (
     <div className="program-page-container">
@@ -145,14 +160,17 @@ const ProgramPage = () => {
             {filteredSchedule.map((item) => (
               <div key={item.id} className="schedule-item-card">
                 <div className="schedule-icon-container">
-                  {item.session_type === 'talk' ? <Clock /> : <Users />}
+                  {getSessionIcon(item.session_type)}
                   <span className="schedule-time">
                     {formatTime(item.start_time)} - {formatTime(item.end_time)}
                   </span>
                 </div>
                 <div className="schedule-title-container">
                   <p className="schedule-title">{item.title}</p>
-                  <p className="schedule-speaker-name">with {item.speaker_name}</p>
+                  {/* The key change: Check if item.speaker_name is truthy before rendering */}
+                  {item.speaker_name && (
+                    <p className="schedule-speaker-name">with {item.speaker_name}</p>
+                  )}
                 </div>
               </div>
             ))}

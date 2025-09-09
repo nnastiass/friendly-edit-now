@@ -24,7 +24,7 @@
   color: #ffffff;
   background: #000000;          /* solid black background */
   border-radius: 20px;         /* fully rounded edges */
-  border: 1px solid rgba(255,255,255,0.15);
+  border: 2px solid white;
   box-shadow: 0 12px 30px rgba(0,0,0,0.6);
   transform: translateY(-150%);  /* hidden above the screen */
   opacity: 0;

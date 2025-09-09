@@ -72,7 +72,6 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
         media_url: result.mediaUrl // if this is relative, render with API_BASE_URL prefix
       });
 
-      toast.success('Dôkaz bol úspešne nahraný!');
       onUploadComplete?.(result.mediaUrl, mediaType);
       handleClose();
     } catch (err: any) {

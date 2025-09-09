@@ -1,7 +1,7 @@
 // src/lib/api-client.ts
 
 // *** IMPORTANT: REPLACE WITH YOUR ACTUAL API BASE URL ***
-export const API_BASE_URL = 'http://192.168.0.102:3000';
+export const API_BASE_URL = 'http://192.168.1.8:3000';
 
 // Generic API fetch helper
 async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
@@ -181,12 +181,10 @@ export const apiClient = {
 
   getUserPosts: (userId: string) => apiFetch<any[]>(`/api/users/${userId}/posts`),
 
-  deletePost: (postId: string, who: { user_id?: string; username?: string }) => {
-    const params = new URLSearchParams();
-    if (who.user_id) params.set('user_id', who.user_id);
-    if (who.username) params.set('username', who.username);
 
-    const endpoint = `/api/posts/${postId}${params.toString() ? `?${params.toString()}` : ''}`;
+  deletePost: (postId: string, who: { user_id?: string; username?: string }) => {
+    // The endpoint should only contain the post ID
+    const endpoint = `/api/posts/${postId}`;
 
     return apiFetch<void>(endpoint, {
       method: 'DELETE',

@@ -185,6 +185,20 @@
   text-align: center;
 }
 
+/* --- SPEAKER DETAIL BACK BUTTON --- */
+.speaker-detail-back-button {
+  position: absolute;
+  left: 0.3rem;
+  color: #444ec9 !important;
+  background-color: transparent !important;
+}
+
+.speaker-detail-back-button svg {
+  width: 3vh !important;
+  height: 3vh !important;
+  stroke-width: 3 !important;
+}
+
 .speaker-detail-title {
   font-size: 1.6rem;
   font-weight: 700;
