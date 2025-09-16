@@ -1,4 +1,18 @@
 /* Aplikované na komponent Feed, aby vyzeral ako aplikácia na celú obrazovku */
+
+/* Keep your existing .feed-post-fullscreen block as-is, but add: */
+@supports (height: 100dvh) {
+  .feed-post-fullscreen {
+    height: 100dvh; /* fixes initial mobile viewport offset without changing later layout */
+  }
+}
+@supports (height: 100svh) {
+  .feed-post-fullscreen {
+    height: 100svh; /* fallback for older Safari */
+  }
+}
+
+
 .feed-container {
   display: flex;
   justify-content: center;
@@ -12,21 +26,20 @@
 }
 
 .feed-mobile-frame {
+
   width: 100%;
   height: 100%;
   padding-top: 60px;
-  max-width: 500px; /* Typická šírka mobilnej obrazovky */
+  max-width: 500px;
   background: #000;
-  border-radius: 0;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-  -ms-overflow-style: none; /* for Internet Explorer, Edge */
-  scrollbar-width: none; /* for Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
   flex-direction: column;
   overflow-y: scroll;
   scroll-snap-type: y mandatory;
   -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
-   position: relative;
+  position: relative;
+  scroll-snap-stop: always; /* force snapping even on small pulls */
 }
 
 .feed-layout {
@@ -34,15 +47,11 @@
   flex-direction: column;
   min-height: 100%;
   position: relative;
-  padding-bottom: 80px; /* Adjust to your nav bar height */
+  padding-bottom: 0px;
 }
 
-/* Štýly pre každý príspevok na celú obrazovku (obrázok/video) */
-/* This is the CORRECTED rule */
-/* --- FIX #1: Correct Post Height --- */
 .feed-post-fullscreen {
   width: 100%;
-  /* This is the most important change. Each post MUST be the full viewport height. */
   height: 100vh;
   scroll-snap-align: start;
   position: relative;
@@ -53,23 +62,20 @@
   overflow: hidden;
 }
 
-.feed-video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover; /* Cover for TikTok-like fullscreen */
-  object-position: center center;
-  background-color: #000;
-  will-change: transform; /* Improve scroll performance */
-}
-
+/* Make both videos and images fully fit the viewport, no cropping */
+.feed-video,
 .feed-image {
   width: 100%;
   height: 100%;
-  object-fit: contain; /* show full image with black borders */
-  background-color: #000; /* black background for borders */
+  object-fit: contain;      /* was cover on video */
+  background-color: #000;   /* fills the rest with black */
 }
 
-/* This is the corrected rule with more bottom padding */
+/* (you already have this, just confirming) */
+.feed-post-fullscreen {
+  background-color: #000;   /* ensures letterboxed area is black */
+}
+
 .feed-overlay {
   position: absolute;
   inset: 0;
@@ -77,8 +83,7 @@
   flex-direction: column;
   justify-content: flex-end;
   gap: 6px;
-  /* Increased the bottom padding to push content above the nav bar */
-  padding: 16px 16px 90px; /* Adjust the 90px if your nav bar is taller or shorter */
+  padding: 16px 16px 90px;
   background: linear-gradient(
     to bottom,
     rgba(0,0,0,0.5) 0%,
@@ -99,48 +104,14 @@
   justify-content: center;
   width: 100%;
   z-index: 20;
-  /* pointer-events: none; <-- REMOVED THIS LINE */
 }
 
-/* Back button — same as friend-requests */
-.feed-back-button {
-  position: absolute;
-  top: 4vh;
-  left: 2rem;
-  color: #FF0046 !important;
-  background: transparent !important;
-  border: none;
-  z-index: 30;
-  pointer-events: auto; /* make button clickable */
-}
-
-.feed-back-button svg {
-  width: 3vh !important;
-  height: 3vh !important;
-  stroke-width: 3 !important;
-}
-
-/* Title — same as friend-requests */
 .feed-title {
   font-size: 1.2rem;
   font-weight: 600;
   margin-top: 3.5rem;
-  pointer-events: auto; /* This makes the title clickable/touchable */
-  cursor: pointer;      /* Shows a pointer on hover */
-}
-
-.feed-post-info {
-  display: flex;
-  flex-direction: column;
-  margin-top: auto;
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-}
-
-.feed-post-user-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+  pointer-events: auto;
+  cursor: pointer;
 }
 
 .feed-avatar {
@@ -156,20 +127,17 @@
   margin-bottom: 2vh;
 }
 
-/* Align username • time on the same baseline inside the row */
 .feed-userline {
   display: flex;
-  align-items: center;   /* vertical center */
+  align-items: center;
   gap: 6px;
 }
 
 .feed-userline .feed-post-username,
 .feed-userline .feed-post-time,
-.feed-userline .feed-post-dot {
-  margin: 0;             /* override the global margins */
-  line-height: 1;        /* keep baselines consistent */
-  display: inline-flex;  /* ensures align-items works */
-  align-items: center;
+.feed-userline .feed-sep {
+  margin: 0;
+  line-height: 1;
 }
 
 .feed-userline .feed-post-username {
@@ -182,8 +150,8 @@
   opacity: 0.85;
 }
 
-.feed-userline .feed-post-dot {
-  opacity: 0.7;          /* optional, to de-emphasize the dot */
+.feed-userline .feed-sep {
+  opacity: 0.7;
 }
 
 .feed-empty {
@@ -208,7 +176,7 @@
   color: #a0a0a0;
 }
 
-.feed-loading-more, .feed-end-of-feed {
+.feed-loading-more {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -218,7 +186,8 @@
 
 .feed-mute-button {
   position: absolute;
-  bottom: 100px;
+  /* move it ABOVE the comments button */
+  bottom: 160px; /* was 100px */
   right: 20px;
   z-index: 50;
   background: rgba(0,0,0,0.5);
@@ -231,9 +200,8 @@
   color: white;
 }
 
-/* Latest user video button in top-right */
+
 .feed-history-button {
-  background:blue;
   position: fixed;
   top: 3.5rem;
   right: 16px;
@@ -242,9 +210,9 @@
   border-radius: 8px;
   overflow: hidden;
   cursor: pointer;
-  z-index: 1000; /* above everything */
+  z-index: 1000;
   border: 2px solid #fff;
-  background-color: black; /* ensures visibility */
+  background-color: black;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -265,17 +233,12 @@
   border-radius: 4px;
   color: white;
   display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
-/* Comments FAB */
-/* This is the corrected rule, moving the button up */
 .feed-comments-button {
   position: absolute;
   right: 16px;
-  /* This moves the button up to sit above the bottom nav bar */
-  bottom: 100px; /* You can adjust this value if needed */
+  bottom: 100px;
   background: rgba(0,0,0,0.6);
   border-radius: 50%;
   padding: 10px;
@@ -284,18 +247,8 @@
   cursor: pointer;
 }
 
-/* Comments Modal Styles */
+/* --- COMMENT MODAL CHANGES START HERE --- */
 
-@keyframes slideUp {
-  from {
-    transform: translateY(100%);
-  }
-  to {
-    transform: translateY(0);
-  }
-}
-
-/* Backdrop */
 .feed-comments-backdrop {
   position: fixed;
   inset: 0;
@@ -304,44 +257,30 @@
   display: flex;
   justify-content: center;
   align-items: flex-end;
-  transition: opacity 0.3s ease-out;
-}
-.feed-comments-backdrop.closing {
-  opacity: 0;
 }
 
-/* Bottom sheet base */
 .feed-comments-modal {
   position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
   height: 60%;
-  background: #111;
+  background: #000;
   border-top-left-radius: 16px;
   border-top-right-radius: 16px;
   z-index: 3000;
   display: flex;
   flex-direction: column;
-  will-change: transform;
-  animation: none !important;
 }
 
-/* Drag handle (big hit-zone) */
 .feed-comments-drag-handle {
   display: flex;
   justify-content: center;
   padding: 12px 0 8px;
   cursor: grab;
   touch-action: none;
-  -webkit-user-select: none;
-  user-select: none;
-}
-.feed-comments-drag-handle:active {
-  cursor: grabbing;
 }
 
-/* Tiny bar inside the handle */
 .feed-comments-drag-bar {
   width: 40px;
   height: 5px;
@@ -349,210 +288,161 @@
   background: rgba(255,255,255,0.35);
 }
 
-/* Content */
 .feed-comments-title {
   text-align: center;
   font-size: 16px;
   font-weight: bold;
   padding: 8px;
-  color: white;
 }
+
 .feed-comments-list {
   flex: 1;
   overflow-y: auto;
-  padding: 12px;
-  color: white;
-  overscroll-behavior: contain;  /* avoid scroll chaining */
+  padding: 12px 16px;
+  overscroll-behavior: contain;
 }
+
+/* NEW: Individual comment container */
 .feed-comment {
-  margin-bottom: 8px;
+  display: flex;
+  align-items: flex-start; /* Aligns avatar with the top of the text block */
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
-.feed-comments-input {
-  display: flex;
-  border-top: 1px solid #333;
-  padding: 8px;
-  background: #111;
+/* NEW: Commenter's avatar */
+.feed-comment-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0; /* Prevents avatar from shrinking */
+  margin-top: 2px;
 }
-.feed-comments-input input {
-  flex: 1;
-  padding: 8px;
-  background: #222;
-  border: none;
-  color: white;
-  border-radius: 8px;
-  outline: none;
+
+/* NEW: Placeholder for users without an avatar */
+.feed-comment-avatar-placeholder {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #222;
+  flex-shrink: 0;
 }
-.feed-comments-input button {
-  margin-left: 8px;
+
+/* NEW: Wrapper for username and content */
+.feed-comment-body {
+  flex: 1; /* Allows this to take up remaining space */
+  border: 2px solid white;
+  border-radius: 12px;
   padding: 8px 12px;
-  background: #444;
-  border: none;
-  border-radius: 8px;
-  color: white;
-  cursor: pointer;
-}
-
-/* Fallback accent if not defined elsewhere */
-:root { --tu-accent: #FF0046; }
-
-/* Confirm popup container */
-.confirm-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.55);
-  z-index: 4000;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(2px);
+  flex-direction: column;
+  gap: 4px;
 }
 
-.confirm-modal {
-  width: 90%;
-  max-width: 360px;
-  background: #111;
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 16px;
-  padding: 16px 16px 14px;
-  color: #fff;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.6);
-  text-align: center;
-}
-
-.confirm-title {
-  font-size: 1.05rem;
-  font-weight: 700;
-  margin-bottom: 6px;
-}
-
-.confirm-text {
-  font-size: 0.9rem;
-  opacity: 0.8;
-  margin-bottom: 14px;
-}
-/* Confirm popup container stays the same */
-.confirm-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.55);
-  z-index: 4000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(2px);
-}
-
-/* 👉 Black background + white stroke */
-.confirm-modal {
-  width: 90%;
-  max-width: 360px;
-  background: rgba(0,0,0,0.8);                 /* black */       /* white stroke */
-  border-radius: 16px;
-  padding: 16px 16px 14px;
-  color: #fff;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.7);
-  text-align: center;
-}
-
-.confirm-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 6px; }
-.confirm-text  { font-size: 0.9rem; opacity: 0.85; margin-bottom: 14px; }
-
-/* Trash icon button — black bg + white stroke */
-.feed-delete-button {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  background: #000;                 /* black */
-  color: #fff;                      /* white icon */
-  border: 2px solid #fff;           /* white stroke */
-  border-radius: 9999px;
-  padding: 8px 10px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: transform 0.18s ease, opacity 0.18s ease, background 0.18s ease;
-}
-
-.feed-delete-button:hover { transform: translateY(-1px); background: rgba(255,255,255,0.06); }
-.feed-delete-button:active { transform: translateY(0); opacity: 0.95; }
-.feed-delete-button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-
-
-/* Reuse your TU buttons, add a danger variant */
-.tu-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-
-.tu-btn {
-  background: black;
-  color: #fff;
-  border: none;
-  border-radius: 9999px;
-  padding: 1vh 2.5rem;
-  font-size: 1.8vh;
+.feed-comment-username {
+  color: #FF0046;
   font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.feed-comment-content {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  color: #f0f0f0;
+  word-wrap: break-word;
+}
+
+/* NEW: Container for the input and button area */
+.feed-comments-input-area {
+  padding: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #333;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* NEW: Input field styling */
+.feed-comments-input-field {
+  width: 100%;
+  background: transparent !important;
+  border: 2px solid white !important;
+  border-radius: 9999px !important;
+  color: white !important;
+  padding: 0.6rem 1.5rem !important;
+  font-size: 0.9rem !important;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease-in-out;
+}
+
+.feed-comments-input-field::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.feed-comments-input-field:focus {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: #FF0046 !important;
+}
+
+/* NEW: Submit button styling */
+.feed-comments-submit-button {
+  width: 30%;
+
+  margin: 0 auto;
+  background-color: #FF0046 !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 9999px !important;
+  padding: 0.6rem 1.2rem !important;
+  font-size: 0.9rem !important;
+  font-weight: 600 !important;
   cursor: pointer;
-  box-shadow: 0 0 20px rgba(255,0,70,0.7);
-  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
-}
-.tu-btn:hover { transform: translateY(-1px); box-shadow: 0 0 28px rgba(255,0,70,0.75); }
-.tu-btn:active { transform: translateY(0); opacity: 0.9; }
-.tu-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; border-radius: 9999px; }
-
-.tu-btn--ghost {
-  background: transparent;
-  color: #fff;
-  border: 2px solid #fff;
-  box-shadow: none;
-}
-.tu-btn--ghost:hover { background: rgba(255,255,255,0.06); }
-
-/* Stronger 'danger' look specifically for Delete */
-.tu-btn.tu-btn--danger {
-  background-color: var(--tu-accent);
-  box-shadow: 0 0 22px rgba(255,0,70,0.8);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 0 20px rgba(255, 0, 70, 0.6);
 }
 
-/* Trash icon button on the post – subtle but on-brand */
-.feed-delete-button {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  background: black;
-  color: #fff;
-  border: none;
-  border-radius: 9999px;
-  padding: 8px 10px;
-  box-shadow: 0 0 14px rgba(255,0,70,0.6);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+.feed-comments-submit-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 28px rgba(255, 0, 70, 0.9);
 }
-.feed-delete-button:hover { transform: translateY(-1px); box-shadow: 0 0 20px rgba(255,0,70,0.75); }
-.feed-delete-button:active { transform: translateY(0); opacity: 0.95; }
-.feed-delete-button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+/* src/pages/Feed.css */
 
-/* Make the frame a positioning context for the indicator */
-.feed-mobile-frame {
-  position: relative;
+/* Add these styles to your existing file, or update if they already exist */
+.feed-comment-avatar-placeholder {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex; /* Make it a flex container */
+  align-items: center; /* Center vertically */
+  justify-content: center; /* Center horizontally */
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.6); /* Dark text for light backgrounds */
+  font-size: 14px; /* Adjust font size as needed for good fit */
 }
+/* --- COMMENT MODAL CHANGES END HERE --- */
 
-/* Styles for the pull-to-refresh loading indicator */
 .feed-pull-indicator {
   position: absolute;
-  top: 15px; /* Adjust vertical position as needed */
+  top: 15px;
   left: 0;
   right: 0;
   display: flex;
   justify-content: center;
   align-items: center;
   color: white;
-  z-index: 0; /* Keep it behind the main content's header */
+  z-index: 0;
 }
 
-/* Add a continuous spin animation when in the refreshing state */
 .feed-pull-indicator.refreshing svg {
   animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }

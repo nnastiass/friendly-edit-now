@@ -79,7 +79,7 @@ html,
 body,
 #root /* This targets the main React app container */ {
     background-color: #000000 !important;
-    background-image: radial-gradient(circle 250px at 50% 34%, rgba(255, 0, 70, 0.7), transparent 80%) !important;
+    background-image: radial-gradient(circle 250px at 50% 25%, rgba(255, 0, 70, 0.7), transparent 80%) !important;
     background-repeat: no-repeat !important;
     background-attachment: fixed;
     height: 100%;

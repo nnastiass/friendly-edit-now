@@ -71,7 +71,7 @@
   border-radius: 8px;
 }
 .friend-profile-post-media { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
-.friend-profile-empty { text-align: center; color: #a0a0a0; margin-top: 2rem; }
+.friend-profile-empty { text-align: center; color: white; margin-top: 2rem; }
 
 /* Fullscreen modal */
 .friend-profile-modal {
@@ -89,22 +89,53 @@
   height: 100%;
   object-fit: contain;
 }
+/* Add this to your FriendProfile.css file */
 
+.friend-profile-meta-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  margin-top: 16px;
+  padding: 0 16px;
+}
+
+.friend-profile-remove-btn {
+  width: 100%;
+  max-width: 300px; /* Or another width you prefer */
+}
 /* Close (X) button lowered */
 .friend-profile-modal-close {
+  /* --- Positioning (Kept from original) --- */
   position: absolute;
   top: var(--modal-btn-top);
   right: 12px;
-  color: white;
-  background: none;
-  border: none;
+  z-index: 2;
+
+  /* --- Appearance (Copied from delete button) --- */
+  width: 40px;
+  height: 40px;
+  border-radius: 999px; /* Makes it a circle */
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid #fff;
+  color: #fff;
+
+  /* --- Centering (Copied from delete button) --- */
+  display: grid;
+  place-items: center;
+
+  /* --- Content Styling (Adjusted for the '×') --- */
   font-size: 1.8rem;
   line-height: 1;
+  padding: 0;
+  text-shadow: none; /* Remove old shadow */
+
+  /* --- Behavior --- */
   cursor: pointer;
-  text-shadow: 0 0 10px rgba(0,0,0,0.7);
 }
 
-/* Delete button: left side, 50% bg, white stroke, TU glow */
+/* Delete button remains the same */
 .friend-profile-delete-btn {
   position: absolute;
   top: var(--modal-btn-top);
@@ -119,7 +150,6 @@
   place-items: center;
   cursor: pointer;
   z-index: 2;
-  box-shadow: 0 0 20px rgba(255, 0, 70, 0.7);
 }
 .friend-profile-delete-btn:hover {
   box-shadow: 0 0 28px rgba(255, 0, 70, 0.75);

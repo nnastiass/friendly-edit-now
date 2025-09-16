@@ -244,11 +244,7 @@ const Auth = () => {
                 placeholder="Enter your password"
                 aria-describedby={!isLogin ? 'password-requirements' : undefined}
               />
-              {!isLogin && (
-                <p id="password-requirements" className="auth-hint">
-                  Must be at least 8 characters and include uppercase, lowercase, and a number.
-                </p>
-              )}
+
             </div>
 
 
@@ -264,6 +260,12 @@ const Auth = () => {
                   className="auth-input"
                   placeholder="Re-enter your password"
                 />
+
+                {!isLogin && (
+                                <p id="password-requirements" className="auth-hint">
+                                  Must be at least 8 characters and include uppercase, lowercase, and a number.
+                                </p>
+                              )}
               </div>
             )}
 
@@ -280,7 +282,7 @@ const Auth = () => {
                   <Label htmlFor="terms" className="auth-label-terms">
                     I agree to the{' '}
                     <a
-                      href="/Terms-and-Conditions.pdf"
+                      href="resources/terms.pdf"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="auth-link"

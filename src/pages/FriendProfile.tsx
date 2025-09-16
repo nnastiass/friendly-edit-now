@@ -1,4 +1,3 @@
-// src/components/FriendProfile.tsx
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -19,18 +18,22 @@ interface UserPost { id: string; mediaUrl: string; mediaType: 'image'|'video'; c
 
 const FriendProfile = () => {
   const navigate = useNavigate();
-  const { friendId } = useParams();
+  const { friendId } = useParams<{ friendId: string }>(); // More specific type
   const { user } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [posts, setPosts] = useState<UserPost[]>([]);
-  const [loading, setLoading] = useState(false);
-
+  const [loading, setLoading] = useState(true); // Start with true
   const [modalPost, setModalPost] = useState<UserPost | null>(null);
-
-  // confirm delete state
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  useEffect(() => { if (friendId) fetchProfileAndPosts(friendId); }, [friendId]);
+  // --- NEW: State for remove friend action ---
+  const [isRemoving, setIsRemoving] = useState(false);
+
+  useEffect(() => {
+    if (friendId) {
+      fetchProfileAndPosts(friendId);
+    }
+  }, [friendId]);
 
   const fetchProfileAndPosts = async (id: string) => {
     setLoading(true);
@@ -62,14 +65,39 @@ const FriendProfile = () => {
     if (!modalPost || !user) return;
     try {
       await apiClient.deletePost(modalPost.id, { user_id: user.id, username: user.username });
-      setPosts(prev => prev.filter(p => p.id !== modalPost.id)); // remove from grid
-      setModalPost(null); // close media modal
+      setPosts(prev => prev.filter(p => p.id !== modalPost.id));
+      setModalPost(null);
       setConfirmOpen(false);
     } catch (e: any) {
       console.error('FriendProfile: delete failed', e);
       setConfirmOpen(false);
     }
   };
+
+  // --- NEW: Handler for removing a friend ---
+  const handleRemoveFriend = async () => {
+    if (!user || !friendId) return;
+
+    const isConfirmed = window.confirm(
+      `Are you sure you want to remove ${profile?.username || 'this user'} as a friend?`
+    );
+
+    if (isConfirmed) {
+      setIsRemoving(true);
+      try {
+        await apiClient.removeFriend(user.id, friendId);
+        // On success, navigate back to the previous page
+        navigate(-1);
+      } catch (error) {
+        console.error("Failed to remove friend:", error);
+        // You could show an error banner here if you have one
+        alert("Could not remove friend. Please try again.");
+      } finally {
+        setIsRemoving(false);
+      }
+    }
+  };
+
 
   if (loading) return (
     <div className="friend-profile-container flex items-center justify-center min-h-screen">
@@ -84,7 +112,7 @@ const FriendProfile = () => {
     </div>
   );
 
-  const isOwner = user?.id === profile.id; // show delete only if viewing own profile
+  const isOwner = user?.id === profile.id;
 
   return (
     <div className="friend-profile-container">
@@ -103,11 +131,28 @@ const FriendProfile = () => {
           <p className="friend-profile-username">@{profile.username||'username'}</p>
         </div>
 
-        <div className="friend-profile-streak-section">
-          <span className="friend-profile-streak-number">{profile.streak||0}</span>
-          <p className="friend-profile-streak-label">Day Streak</p>
-          <div className="friend-profile-streak-line"></div>
+        {/* --- Section for Streak and Remove Friend Button --- */}
+        <div className="friend-profile-meta-section">
+          <div className="friend-profile-streak-section">
+            <span className="friend-profile-streak-number">{profile.streak||0}</span>
+            <p className="friend-profile-streak-label">Day Streak</p>
+            <div className="friend-profile-streak-line"></div>
+          </div>
+
+          {/* --- NEW: Remove Friend Button --- */}
+          {!isOwner && (
+            <Button
+              variant="destructive"
+              className="friend-profile-remove-btn"
+              onClick={handleRemoveFriend}
+              disabled={isRemoving}
+            >
+              {isRemoving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isRemoving ? 'Removing...' : 'Remove Friend'}
+            </Button>
+          )}
         </div>
+
 
         <div className="friend-profile-posts-grid">
           {posts.length > 0 ? posts.map(post => (
@@ -118,7 +163,11 @@ const FriendProfile = () => {
                 <img src={`${API_BASE_URL}${post.mediaUrl}`} alt={post.challengeTitle||'Photo'} className="friend-profile-post-media"/>
               )}
             </div>
-          )) : <p className="w-full text-center text-gray-400 mt-8">Tento používateľ zatiaľ nepridal žiadne príspevky.</p>}
+          )) : (
+            <p className="col-span-full text-center text-gray-400 mt-8">
+              Tento používateľ zatiaľ nepridal žiadne príspevky.
+            </p>
+          )}
         </div>
       </div>
 
@@ -127,7 +176,6 @@ const FriendProfile = () => {
         <div className="friend-profile-modal" onClick={()=>setModalPost(null)}>
           <button className="friend-profile-modal-close" onClick={(e)=>{ e.stopPropagation(); setModalPost(null); }}>×</button>
 
-          {/* DELETE (top-right) — only owner */}
           {isOwner && (
             <button
               className="friend-profile-delete-btn"
@@ -161,7 +209,6 @@ const FriendProfile = () => {
             {modalPost.challengeTitle}
           </div>
 
-          {/* Confirm dialog (TU-style) */}
           {confirmOpen && (
             <div className="confirm-backdrop" onClick={closeDeleteConfirm}>
               <div className="confirm-modal" onClick={(e)=>e.stopPropagation()}>

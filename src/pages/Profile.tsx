@@ -10,16 +10,27 @@ import { Home, User, Settings, Plus, Edit, ArrowLeft, UserPlus, Info } from 'luc
 import { useNavigate } from 'react-router-dom';
 import './Profile.css';
 import './Index.css';
+import FriendProfile from '@/pages/FriendProfile';
+
 
 // --- HELPER FUNCTION ---
-const pastelColors = [
+export const pastelColors = [
   '#FFADAD', '#FFD6A5', '#FDFFB6', '#CAFFBF', '#9BF6FF', '#A0C4FF', '#BDB2FF', '#FFC6FF'
 ];
 
-const generatePastelColor = (id: string) => {
+export const generatePastelColor = (id: string | null): string => {
   if (!id) return pastelColors[0];
   const hash = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   return pastelColors[hash % pastelColors.length];
+};
+
+export const getInitials = (name: string | null): string => {
+  if (!name) return 'U';
+  const parts = name.split(' ').filter(Boolean);
+  if (parts.length > 1) {
+    return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+  }
+  return parts[0] ? parts[0][0].toUpperCase() : 'U';
 };
 
 interface ProfileData {
@@ -676,7 +687,11 @@ const Profile = () => {
               <div className="friends-list-container-profile">
                 {friends.slice(0, 4).map((friend) => (
                   <div key={friend.id} className="friend-item">
-                    <Avatar className="friend-avatar">
+                    <Avatar
+                      className="friend-avatar"
+                      onClick={() => navigate(`/profile/${friend.friend_id}`)} // ← make avatar clickable (optional)
+                      style={{ cursor: 'pointer' }}
+                    >
                       <AvatarImage src={friend.avatar_url || ''} />
                       <AvatarFallback
                         className="friend-avatar-fallback"
@@ -685,12 +700,26 @@ const Profile = () => {
                         {getInitials(friend.full_name)}
                       </AvatarFallback>
                     </Avatar>
-                    <p className="friend-name">@{friend.full_name || '...'}</p>
+
+                    {/* username instead of name + clickable to FriendProfile */}
+                    <p
+                      className="friend-name"
+                      onClick={() => navigate(`/profile/${friend.friend_id}`)} // ← absolute path
+                      style={{ cursor: 'pointer' }}
+                      title={`@${friend.username ?? ''}`}
+                    >
+                      @{friend.username || '...'}
+                    </p>
+
                     <p className="friend-streak">{friend.streak || 0}</p>
                   </div>
                 ))}
               </div>
             </div>
+
+
+
+
           </>
         )}
       </div>
