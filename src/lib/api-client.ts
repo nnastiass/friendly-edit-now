@@ -1,7 +1,7 @@
 // src/lib/api-client.ts
 
 // *** IMPORTANT: REPLACE WITH YOUR ACTUAL API BASE URL ***
-export const API_BASE_URL = 'http://192.168.1.8:3000';
+export const API_BASE_URL = 'http://10.2.13.186:3000';
 
 // Generic API fetch helper
 async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
@@ -170,6 +170,9 @@ export const apiClient = {
 
   // --- LEADERBOARD ---
   getLeaderboard: (userId: string) => apiFetch<any[]>(`/api/leaderboard/${userId}`),
+
+  getChallenges: (set: 'main' | 'conf') =>
+    apiFetch<any[]>(`/api/challenges?set=${set}`),
 
   // --- POSTS ---
   createPost: (postData: {

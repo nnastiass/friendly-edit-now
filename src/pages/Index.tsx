@@ -8,17 +8,14 @@ import { useNavigate } from 'react-router-dom';
 import { apiClient } from '@/lib/api-client';
 import './Index.css';
 
+// Import helpers, but not the static challenge arrays
 import {
   type Challenge,
-  MAIN_CHALLENGES,
-  CONF_CHALLENGES,
-  pickInitialChallenge,
-  pickNextChallenge,
   storageKeys,
   todayKey,
 } from '@/lib/challengeSets';
 
-// Detect variant
+// This helper function remains unchanged
 function detectInitialVariant(): 'main' | 'conf' {
   const envVariant =
     (import.meta as any)?.env?.VITE_APP_VARIANT ??
@@ -42,29 +39,62 @@ const Index: React.FC = () => {
   // Which flavor?
   const [variantKey, setVariantKey] = useState<'main' | 'conf'>(detectInitialVariant());
 
-  // Pick list for current variant
-  const challengeList = useMemo(
-    () => (variantKey === 'conf' ? CONF_CHALLENGES : MAIN_CHALLENGES),
-    [variantKey]
-  );
+  // --- NEW STATE for fetching challenges ---
+  const [challengeList, setChallengeList] = useState<Challenge[]>([]);
+  const [challengesLoading, setChallengesLoading] = useState(true);
 
-  // Challenge + state
-  const [challenge, setChallenge] = useState<Challenge>(() =>
-    pickInitialChallenge(challengeList, variantKey)
-  );
+  // --- MODIFIED STATE: Challenge starts as null until loaded ---
+  const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [currentStreak, setCurrentStreak] = useState(0);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [hasUploadedToday, setHasUploadedToday] = useState(false);
 
-  // Rehydrate when variant changes
+  // --- NEW EFFECT: Fetches challenges from the API when variant changes ---
   useEffect(() => {
+    setChallengesLoading(true);
+    apiClient.getChallenges(variantKey)
+      .then(data => {
+        setChallengeList(data);
+      })
+      .catch(err => {
+        console.error(`Failed to fetch ${variantKey} challenges:`, err);
+        setChallengeList([]); // Set to empty on error to prevent crashes
+      })
+      .finally(() => {
+        setChallengesLoading(false);
+      });
+  }, [variantKey]);
+
+  // --- NEW EFFECT: Picks the initial challenge once the list has been fetched ---
+  useEffect(() => {
+    // Don't run if the list is empty or still loading
+    if (!challengeList.length || !user?.id) return;
+
     const today = todayKey();
     const keys = storageKeys(variantKey);
+    const savedId = localStorage.getItem(`${user.id}_${keys.current(today)}`);
+    let initialChallenge: Challenge;
 
-    setHasUploadedToday(!!localStorage.getItem(`${user?.id}_${keys.completed(today)}`));
-    setChallenge(pickInitialChallenge(challengeList, variantKey));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [variantKey]);
+    if (savedId) {
+      const found = challengeList.find((c) => c.id === Number(savedId));
+      if (found) {
+        initialChallenge = found;
+      } else {
+        // Fallback if the saved ID is somehow invalid
+        const idx = new Date().getDate() % challengeList.length;
+        initialChallenge = challengeList[idx];
+      }
+    } else {
+      // Pick a challenge based on the day of the month
+      const idx = new Date().getDate() % challengeList.length;
+      initialChallenge = challengeList[idx];
+    }
+
+    // Save the chosen challenge for today and set component state
+    localStorage.setItem(`${user.id}_${keys.current(today)}`, String(initialChallenge.id));
+    setChallenge(initialChallenge);
+    setHasUploadedToday(!!localStorage.getItem(`${user.id}_${keys.completed(today)}`));
+  }, [challengeList, variantKey, user?.id]);
 
   // Show TU choice if participant
   useEffect(() => {
@@ -99,20 +129,22 @@ const Index: React.FC = () => {
         .then((data) => setCurrentStreak(data?.streak || 0))
         .catch((err) => {
           console.error('Error fetching streak:', err);
-          // (deleted visual notification)
         });
     }
   }, [user, authLoading, navigate]);
 
-  // Advance to next day (called at midnight or via Dev button)
+  // --- MODIFIED: Advance to next day now uses the fetched challenge list ---
   const advanceToNextDay = React.useCallback(() => {
-    const today = todayKey();                  // now it's the NEW day
+    // Guard against running before challenges are loaded
+    if (!challenge || !challengeList.length) return;
+
+    const today = todayKey();
     const keys = storageKeys(variantKey);
 
-    // choose next challenge based on the one currently shown
-    const next = pickNextChallenge(challengeList, challenge.id);
+    // Find the next challenge from the list in state
+    const currentIndex = Math.max(0, challengeList.findIndex((c) => c.id === challenge.id));
+    const next = challengeList[(currentIndex + 1) % challengeList.length];
 
-    // pin today's challenge id and clear today's completion
     if (user?.id) {
       localStorage.setItem(`${user.id}_${keys.current(today)}`, String(next.id));
       localStorage.removeItem(`${user.id}_${keys.completed(today)}`);
@@ -122,7 +154,7 @@ const Index: React.FC = () => {
     setHasUploadedToday(false);
 
     console.log('[Midnight] advanced to challenge', next.id, 'and reset completion for', today);
-  }, [challenge.id, challengeList, user?.id, variantKey]);
+  }, [challenge, challengeList, user?.id, variantKey]);
 
   const msUntilNextMidnight = () => {
     const now = new Date();
@@ -176,19 +208,15 @@ const Index: React.FC = () => {
     const today = todayKey();
     const keys = storageKeys(variantKey);
 
-    // mark completed for *today* (challenge stays the same until midnight)
     localStorage.setItem(`${user.id}_${keys.completed(today)}`, '1');
     setHasUploadedToday(true);
 
-    // increment streak
     try {
       const newStreak = currentStreak + 1;
       await apiClient.updateProfile(user.id, { streak: newStreak });
       setCurrentStreak(newStreak);
-      // (deleted visual notification)
     } catch (err) {
       console.error('Failed to update streak.', err);
-      // (deleted visual notification)
     }
 
     setIsUploadOpen(false);
@@ -200,7 +228,6 @@ const Index: React.FC = () => {
     if (!user?.id) return;
     localStorage.removeItem(`${user.id}_${keys.completed(today)}`);
     setHasUploadedToday(false);
-    // (deleted visual notification)
   };
 
   const handleChooseChallenges = () => {
@@ -215,7 +242,10 @@ const Index: React.FC = () => {
     navigate('/info');
   };
 
-  if (authLoading || !user) return <div>Loading...</div>;
+  // --- UPDATED: New loading state check ---
+  if (authLoading || challengesLoading || !user || !challenge) {
+    return <div>Loading...</div>;
+  }
 
   // for console testing: window.__triggerMidnight()
   if (import.meta.env.DEV) {

@@ -80,6 +80,7 @@ const Auth = () => {
       await apiClient.verifyConferenceCode(conferenceCode);
       // Deleted: "Conference code verified!" (no notification shown)
       setIsCodeVerified(true);
+      
     } catch (error: any) {
       showBanner(error?.message || 'Invalid conference code.', 'error');
       setIsCodeVerified(false);
