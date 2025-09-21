@@ -216,6 +216,7 @@ const Auth = () => {
                     className="auth-input"
                     placeholder="Choose a username"
                   />
+                  
                 </div>
               </>
             )}
