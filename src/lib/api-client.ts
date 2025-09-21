@@ -1,7 +1,7 @@
 // src/lib/api-client.ts
 
 // *** IMPORTANT: REPLACE WITH YOUR ACTUAL API BASE URL ***
-export const API_BASE_URL = 'http://10.2.13.186:3000';
+export const API_BASE_URL = 'http://192.168.100.96:3000';
 
 // Generic API fetch helper
 async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {

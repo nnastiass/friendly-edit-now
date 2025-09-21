@@ -1,16 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Home, User, Plus, Info, Menu, Users, Clock, X, ArrowLeft } from 'lucide-react';
-import { conferenceApiClient } from '@/lib/conference-api-client'; // Import the new API client
+import { Home, User, Plus, Info, Menu, X, ArrowLeft } from 'lucide-react';
+import { conferenceApiClient } from '@/lib/conference-api-client';
 import './SpeakersPage.css';
 
-// This helper function now correctly handles URL encoding for filenames with spaces
-const getImageUrl = (imageName: string) => {
-  // encodeURIComponent is used to safely encode special characters like spaces
-  const encodedName = encodeURIComponent(imageName);
-  return `/images/speakers/${encodedName}`;
-};
+// DELETED: The getImageUrl helper function is no longer needed because the API now provides a full URL.
 
 // Interface to match the API response for speakers
 interface Speaker {
@@ -18,21 +13,22 @@ interface Speaker {
   name: string;
   title: string;
   country: string;
-  photo_url: string; // The database stores the filename, this maps to a URL
+  photo_url: string; // This now holds the full URL from MinIO
   bio: string;
   linkedin_url: string;
   twitter_url: string;
 }
 
-// This is the new component for the speaker detail view
+// This is the component for the speaker detail view
+// NOTE: This component was commented out in your original file, but if you use it, it should also be updated.
 const SpeakerDetailView: React.FC<{ speaker: Speaker; onBack: () => void }> = ({ speaker, onBack }) => (
   <div className="speaker-detail-view">
     <Button onClick={onBack} variant="ghost" size="icon" className="speakers-page-back-button">
       <ArrowLeft />
     </Button>
     <h1 className="speaker-detail-title">About the Speaker</h1>
-    {/* Use getImageUrl helper to construct the full URL */}
-    <img src={getImageUrl(speaker.photo_url)} alt={speaker.name} className="speaker-detail-photo" />
+    {/* CHANGED: Use speaker.photo_url directly */}
+    <img src={speaker.photo_url} alt={speaker.name} className="speaker-detail-photo" />
     <h2 className="speaker-detail-name">{speaker.name}</h2>
     <p className="speaker-detail-job-title">{speaker.title}</p>
     <p className="speaker-detail-bio">{speaker.bio}</p>
@@ -47,25 +43,23 @@ const SpeakersPage = () => {
   const [speakers, setSpeakers] = useState<Speaker[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // You will likely have a way to get the conference ID, e.g., from a URL parameter or global state
   const conferenceId = '1'; // Placeholder conference ID
 
   useEffect(() => {
+    const fetchSpeakers = async (confId: string) => {
+      setLoading(true);
+      try {
+        const data = await conferenceApiClient.getSpeakersByConferenceId(confId);
+        setSpeakers(data);
+      } catch (error) {
+        console.error('Failed to fetch speakers:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchSpeakers(conferenceId);
   }, [conferenceId]);
-
-  const fetchSpeakers = async (confId: string) => {
-    setLoading(true);
-    try {
-      const data = await conferenceApiClient.getSpeakersByConferenceId(confId);
-      setSpeakers(data);
-    } catch (error) {
-      console.error('Failed to fetch speakers:', error);
-      // (deleted visual notification)
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleMenuClose = () => {
     setIsMenuClosing(true);
@@ -88,14 +82,6 @@ const SpeakersPage = () => {
     handleMenuClose();
   };
 
-  const handleBack = () => {
-    if (selectedSpeaker) {
-      setSelectedSpeaker(null);
-    } else {
-      navigate(-1);
-    }
-  };
-
   return (
     <div className="speakers-page-container">
       {/* Mobile Menu Overlay */}
@@ -114,7 +100,6 @@ const SpeakersPage = () => {
 
       {/* Header */}
       <header className="speakers-page-header">
-        {/* Real logo, same as other pages */}
         <div className="logo-placeholder">
           <img
             src="/images/logo/testing united.webp"
@@ -141,7 +126,8 @@ const SpeakersPage = () => {
               <ArrowLeft />
             </Button>
             <h1 className="speaker-detail-title">About the Speaker</h1>
-            <img src={getImageUrl(selectedSpeaker.photo_url)} alt={selectedSpeaker.name} className="speaker-detail-photo" />
+            {/* CHANGED: Use selectedSpeaker.photo_url directly */}
+            <img src={selectedSpeaker.photo_url} alt={selectedSpeaker.name} className="speaker-detail-photo" />
             <h2 className="speaker-detail-name">{selectedSpeaker.name}</h2>
             <p className="speaker-detail-job-title">{selectedSpeaker.title}</p>
             <p className="speaker-detail-bio">{selectedSpeaker.bio}</p>
@@ -155,7 +141,8 @@ const SpeakersPage = () => {
                   className="speaker-card"
                   onClick={() => setSelectedSpeaker(speaker)}
                 >
-                  <img src={getImageUrl(speaker.photo_url)} alt={speaker.name} className="speaker-photo" />
+                  {/* CHANGED: Use speaker.photo_url directly */}
+                  <img src={speaker.photo_url} alt={speaker.name} className="speaker-photo" />
                   <div className="speaker-info">
                     <div className="speaker-name-card">{speaker.name}</div>
                     <div className="speaker-country-card">{speaker.country}</div>
