@@ -110,9 +110,12 @@ const InfoPage = () => {
           >
             <Home className="info-page-nav-icon" />
           </button>
-          <button className="info-page-nav-button info-page-nav-button-active">
-            <Info className="info-page-nav-icon" />
-          </button>
+          <button
+    className="index-nav-button index-nav-button-inactive"
+    onClick={() => navigate('/info')}
+  >
+    <span className="index-nav-text">TU</span>
+  </button>
           <button
             className="info-page-nav-button info-page-nav-button-inactive"
             onClick={() => navigate('/')}

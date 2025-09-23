@@ -1,8 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogOverlay } from '@/components/ui/dialog';
-import { useAuth } from '@/contexts/AuthContext';
-import { apiClient } from '@/lib/api-client';
 import { toast } from 'sonner';
 import '@/components/MediaUpload.css';
 
@@ -10,19 +8,18 @@ interface MediaUploadProps {
   isOpen: boolean;
   onClose: () => void;
   challengeTitle: string;
-  onUploadComplete?: (mediaUrl: string, mediaType: 'image' | 'video') => void;
+  // NEW: A callback to hand off the selected file to the parent component
+  onFileSelectForUpload: (file: File) => void;
 }
 
 const MediaUpload: React.FC<MediaUploadProps> = ({
   isOpen,
   onClose,
   challengeTitle,
-  onUploadComplete,
+  onFileSelectForUpload, // Use the new prop
 }) => {
-  const { user } = useAuth();
   const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const openGallery = () => {
@@ -38,50 +35,20 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
     setSelectedFile(files[0] || null);
   };
 
-  const handleUpload = async () => {
+  // MODIFIED: This function no longer performs the upload.
+  // It just validates the file and passes it to the parent.
+  const handleConfirmUpload = () => {
     if (!selectedFile) {
       toast.error('Vyber súbor pre nahratie');
       return;
     }
-    if (!user) {
-      toast.error('Používateľ nie je prihlásený.');
-      return;
-    }
-
-    // 🔒 prevent more than one proof per day
-    const today = new Date().toDateString();
-    if (localStorage.getItem(`challenge-${today}`) === 'completed') {
-      toast.error('Už si splnil dnešnú výzvu!');
-      return;
-    }
-
-    // Normalize: never send empty caption
-    const title = (challengeTitle ?? '').trim() || 'daily-challenge';
-
-    setIsUploading(true);
-    try {
-      // 1) upload to MinIO
-      const result = await apiClient.uploadMedia(user.id, selectedFile, title);
-      const mediaType = selectedFile.type.startsWith('image/') ? 'image' : 'video';
-
-      // 2) create the post (use the SAME title)
-      await apiClient.createPost({
-        user_id: user.id,
-        caption: title,            // <= IMPORTANT
-        media_type: mediaType,
-        media_url: result.mediaUrl // if this is relative, render with API_BASE_URL prefix
-      });
-
-      onUploadComplete?.(result.mediaUrl, mediaType);
-      handleClose();
-    } catch (err: any) {
-      console.error(err);
-      toast.error(err.message || 'Nastala chyba pri nahrávaní súboru.');
-    } finally {
-      setIsUploading(false);
-    }
+    
+    // Pass the selected file to the parent component.
+    onFileSelectForUpload(selectedFile);
+    
+    // Close the dialog immediately.
+    handleClose();
   };
-
 
   const handleClose = () => {
     setGalleryFiles([]);
@@ -104,14 +71,14 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
       >
         <DialogHeader className="px-4 py-2">
           <DialogTitle className="text-center">
-            Pridaj dôkaz: {challengeTitle}
+            Add a proof: {challengeTitle}
           </DialogTitle>
         </DialogHeader>
 
         <div className="p-4 flex flex-wrap gap-2 justify-center">
           {galleryFiles.length === 0 && !selectedFile && (
             <Button onClick={openGallery} className="mu-btn--ghost">
-              Vybrať súbory z galérie
+              Choose from your gallery
             </Button>
           )}
 
@@ -169,16 +136,16 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
 
         <div className="flex gap-2 p-4">
           <Button
-            onClick={handleUpload}
+            onClick={handleConfirmUpload} // MODIFIED function name
             className="flex-1"
             style={{
               backgroundColor: '#ff0046',
               color: '#ffffff',
               border: 'none',
             }}
-            disabled={!selectedFile || isUploading}
+            disabled={!selectedFile}
           >
-            {isUploading ? 'Nahrávam...' : 'Nahrať dôkaz'}
+            Upload proof
           </Button>
           <Button
             onClick={handleClose}
@@ -189,7 +156,7 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
               border: 'none',
             }}
           >
-            Zrušiť
+            Discard
           </Button>
         </div>
       </DialogContent>

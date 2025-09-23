@@ -735,13 +735,13 @@ const Profile = () => {
           </button>
 
           {isParticipant && (
-            <button
-              className="index-nav-button index-nav-button-inactive"
-              onClick={() => navigate('/info')}
-            >
-              <Info className="index-nav-icon" />
-            </button>
-          )}
+  <button
+    className="index-nav-button index-nav-button-inactive"
+    onClick={() => navigate('/info')}
+  >
+    <span className="index-nav-text">TU</span>
+  </button>
+)}
 
           <button
             className="index-nav-button index-nav-button-inactive"

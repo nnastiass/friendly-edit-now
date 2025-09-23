@@ -291,3 +291,81 @@ html, body, #root {
     transform: rotate(360deg);
   }
 }
+
+/* ========================================
+   FEED BANNER (notifications)
+   ======================================== */
+.feed-banner-root { 
+  position: fixed;
+  top: 60px; /* Below header */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  pointer-events: none; /* Container ignores clicks */
+  width: 100%;
+  max-width: 500px;
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+
+.index-nav-text {
+  font-size: 1.5rem !important;      /* adjust size to match icons */
+  font-weight: 100 !important;
+  color: white;
+  line-height: 1;
+}
+
+.feed-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 auto;
+  padding: 12px 16px;
+  color: #ffffff;
+  background: #000000;
+  border-radius: 20px;
+  border: 2px solid white;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.6);
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.95rem;
+
+  /* Animation */
+  transform: translateY(-150%);
+  opacity: 0;
+  transition: transform 300ms ease-out, opacity 250ms ease-out;
+  pointer-events: auto; /* Banner itself is clickable */
+}
+
+.feed-banner--visible {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* Type variants */
+.feed-banner--error { 
+  border-color: #FF0046;
+}
+.feed-banner--info { 
+  border-color: rgba(255, 255, 255, 0.4); 
+}
+
+.feed-banner-text {
+  flex-grow: 1;
+  line-height: 1.3;
+}
+
+.feed-banner-close {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  opacity: 0.7;
+  cursor: pointer;
+  font-size: 24px;
+  line-height: 1;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+.feed-banner-close:hover { 
+  opacity: 1; 
+}
