@@ -22,6 +22,9 @@ interface BannerNotification {
   type: 'error' | 'info';
 }
 
+// --- PAGED SCROLLING (one post per gesture) ---
+
+
 // --- pastel helpers (unchanged) ---
 const pastelColors = [
   '#FFADAD', '#FFD6A5', '#FDFFB6', '#CAFFBF', '#9BF6FF', '#A0C4FF', '#BDB2FF', '#FFC6FF'
@@ -279,6 +282,99 @@ const Feed = () => {
     }
   }, [isRefreshing]);
 
+
+  // --- PAGED SCROLLING (one post per gesture) ---
+  const pagingLockRef = useRef(false);
+  const touchStartYRef = useRef(0);
+
+  const clampIndex = (idx: number) => Math.max(0, Math.min(idx, posts.length - 1));
+
+  const snapTo = useCallback((targetIndex: number) => {
+    const el = feedRef.current;
+    if (!el) return;
+    const clamped = clampIndex(targetIndex);
+
+    pagingLockRef.current = true;
+    setCurrentIndex(clamped);
+
+    el.scrollTo({
+      top: clamped * el.clientHeight,
+      behavior: 'smooth',
+    });
+
+    // unlock after the snap finishes
+    window.setTimeout(() => {
+      pagingLockRef.current = false;
+    }, 450);
+  }, [posts.length]);
+
+  const pageNext = useCallback(() => {
+    const next = clampIndex(currentIndex + 1);
+    if (next !== currentIndex) {
+      snapTo(next);
+    }
+  }, [currentIndex, posts.length, hasMore, isLoading, isRefreshing, snapTo]);
+
+
+  const pagePrev = useCallback(() => {
+    const prev = clampIndex(currentIndex - 1);
+    if (prev !== currentIndex) {
+      snapTo(prev);
+    }
+  }, [currentIndex, snapTo]);
+
+// Enable one-post-per-gesture paging
+useEffect(() => {
+  const el = feedRef.current;
+  if (!el) return;
+
+  const onWheel = (e: WheelEvent) => {
+    // prevent native free-scrolling
+    e.preventDefault();
+    if (pagingLockRef.current) return;
+    const dy = e.deltaY;
+    if (Math.abs(dy) < 15) return; // ignore tiny scrolls
+    if (dy > 0) pageNext();
+    else pagePrev();
+  };
+
+  const onTouchStart = (e: TouchEvent) => {
+    touchStartYRef.current = e.touches[0].clientY;
+  };
+
+  const onTouchMove = (e: TouchEvent) => {
+    // stop native scroll so we control paging
+    e.preventDefault();
+  };
+
+  const onTouchEnd = (e: TouchEvent) => {
+    const endY = e.changedTouches[0].clientY;
+    const dy = endY - touchStartYRef.current;
+    const THRESH = 40; // swipe threshold in px
+
+    if (Math.abs(dy) < THRESH) {
+      // small swipe -> snap back to current
+      snapTo(currentIndex);
+      return;
+    }
+    if (dy < 0) pageNext(); // swiped up => next
+    else pagePrev();        // swiped down => prev
+  };
+
+  el.addEventListener('wheel', onWheel, { passive: false });
+  el.addEventListener('touchstart', onTouchStart, { passive: false });
+  el.addEventListener('touchmove', onTouchMove, { passive: false });
+  el.addEventListener('touchend', onTouchEnd, { passive: false });
+
+  return () => {
+    el.removeEventListener('wheel', onWheel as any);
+    el.removeEventListener('touchstart', onTouchStart as any);
+    el.removeEventListener('touchmove', onTouchMove as any);
+    el.removeEventListener('touchend', onTouchEnd as any);
+  };
+}, [currentIndex, pageNext, pagePrev, snapTo]);
+
+
   const handleTouchMove = useCallback((e: TouchEvent) => {
     if (!isPulling || pullStartY.current === 0) return;
     if (!atTop()) {
@@ -312,35 +408,59 @@ const Feed = () => {
   }, [user, authLoading, fetchPosts, fetchLatestUserPost]);
 
   useEffect(() => {
-    const headerElement = headerRef.current;
-    if (!headerElement) return;
-    const opts: AddEventListenerOptions & EventListenerOptions = { passive: false };
-    headerElement.addEventListener('touchstart', handleTouchStart, opts);
-    headerElement.addEventListener('touchmove', handleTouchMove, opts);
-    headerElement.addEventListener('touchend', handleTouchEnd, opts);
-    return () => {
-      headerElement.removeEventListener('touchstart', handleTouchStart, opts);
-      headerElement.removeEventListener('touchmove', handleTouchMove, opts);
-      headerElement.removeEventListener('touchend', handleTouchEnd, opts);
-    };
-  }, [handleTouchStart, handleTouchMove, handleTouchEnd]);
+    const el = feedRef.current;
+    if (!el) return;
 
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!feedRef.current || isCommentsOpen) return;
-      const { scrollTop, clientHeight, scrollHeight } = feedRef.current;
-      const newIndex = Math.round(scrollTop / clientHeight);
-      if (newIndex !== currentIndex) setCurrentIndex(newIndex);
-      if (scrollTop + clientHeight >= scrollHeight - clientHeight && !isLoading && hasMore && !isRefreshing) {
-        setPage((p) => p + 1);
-      }
+    const onWheel = (e: WheelEvent) => {
+     if (isCommentsOpen || isPulling) return;
+      e.preventDefault();
+      if (pagingLockRef.current) return;
+      const dy = e.deltaY;
+      if (Math.abs(dy) < 15) return;
+      if (dy > 0) pageNext();
+      else pagePrev();
     };
-    const feed = feedRef.current;
-    if (feed) {
-      feed.addEventListener('scroll', handleScroll);
-      return () => feed.removeEventListener('scroll', handleScroll);
+
+    const onTouchStart = (e: TouchEvent) => {
+     if (isCommentsOpen) return;
+      touchStartYRef.current = e.touches[0].clientY;
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+     if (isCommentsOpen || isPulling) return;
+      e.preventDefault();
+    };
+
+    const onTouchEnd = (e: TouchEvent) => {
+     if (isCommentsOpen || isPulling) return;
+      const endY = e.changedTouches[0].clientY;
+      const dy = endY - touchStartYRef.current;
+      const THRESH = 40;
+      if (Math.abs(dy) < THRESH) { snapTo(currentIndex); return; }
+      if (dy < 0) pageNext(); else pagePrev();
+    };
+
+    el.addEventListener('wheel', onWheel, { passive: false });
+    el.addEventListener('touchstart', onTouchStart, { passive: false });
+    el.addEventListener('touchmove', onTouchMove, { passive: false });
+    el.addEventListener('touchend', onTouchEnd, { passive: false });
+
+    return () => {
+      el.removeEventListener('wheel', onWheel as any);
+      el.removeEventListener('touchstart', onTouchStart as any);
+      el.removeEventListener('touchmove', onTouchMove as any);
+      el.removeEventListener('touchend', onTouchEnd as any);
+    };
+  }, [currentIndex, pageNext, pagePrev, snapTo, isCommentsOpen, isPulling]);
+
+
+  // With paging, we drive index ourselves; just prefetch when near the end
+  useEffect(() => {
+    if (currentIndex >= posts.length - 3 && hasMore && !isLoading && !isRefreshing) {
+      setPage((p) => p + 1);
     }
-  }, [currentIndex, isLoading, hasMore, isCommentsOpen, isRefreshing]);
+  }, [currentIndex, posts.length, hasMore, isLoading, isRefreshing]);
+
 
   useEffect(() => {
     Object.values(videoRefs.current).forEach((video) => {
