@@ -278,12 +278,18 @@ const Index: React.FC = () => {
       const result = await apiClient.uploadMedia(user.id, file, title);
       const mediaType = file.type.startsWith('image/') ? 'image' : 'video';
 
-      await apiClient.createPost({
-        user_id: user.id,
-        caption: title,
-        media_type: mediaType,
-        media_url: result.mediaUrl,
-      });
+     // Index.tsx — inside handleStartUpload, replace the createPost call with:
+     await apiClient.createPost({
+       user_id: user.id,
+       caption: title,
+       media_type: mediaType,
+       media_url: result.mediaUrl,
+
+       // NEW: tag the post properly so visibility rules work
+       challenge_id: challenge.id,                                // you already have `challenge` in scope
+       challenge_set: variantKey === 'conf' ? 'conference' : 'main',
+     });
+
 
       localStorage.setItem(`${user.id}_${keys.completed(today)}`, '1');
       setHasUploadedToday(true);
