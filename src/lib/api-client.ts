@@ -3,6 +3,18 @@
 // *** IMPORTANT: REPLACE WITH YOUR ACTUAL API BASE URL ***
 export const API_BASE_URL = 'http://192.168.0.102:3000';
 
+export interface Post {
+  id: string;
+  user_id: string;
+  caption: string;
+  media_type: 'image' | 'video';
+  media_url: string;
+  challenge_id: number | null;
+  challenge_set: 'main' | 'conference' | null;
+  verified: boolean;         // ⬅️ important
+  created_at: string;
+}
+
 // Generic API fetch helper
 async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -180,9 +192,19 @@ export const apiClient = {
     caption: string;
     media_type: 'image' | 'video';
     media_url: string;
-  }) => apiFetch<any>('/api/posts', { method: 'POST', body: JSON.stringify(postData) }),
+    challenge_id?: number | null;
+    challenge_set?: 'main' | 'conference' | null;
+  }) => apiFetch<Post>('/api/posts', {
+    method: 'POST',
+    body: JSON.stringify(postData),
+  }),
 
-  getUserPosts: (userId: string) => apiFetch<any[]>(`/api/users/${userId}/posts`),
+
+  getUserPosts: (userId: string) => apiFetch<Post[]>(`/api/users/${userId}/posts`),
+
+  getFeed: (userId: string, page: number) =>
+    apiFetch<Post[]>(`/api/feed/${userId}?page=${page}`),
+
 
 
   deletePost: (postId: string, who: { user_id?: string; username?: string }) => {
@@ -198,7 +220,6 @@ export const apiClient = {
     });
   },
 
-  getFeed: (userId: string, page: number) => apiFetch<any[]>(`/api/feed/${userId}?page=${page}`),
 
   // --- COMMENTS ---
   addComment: (postId: string, userId: string, content: string) =>

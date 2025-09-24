@@ -259,14 +259,15 @@ const Index: React.FC = () => {
   const openUpload = () => setIsUploadOpen(true);
 
   // Upload
+  // Upload
   const handleStartUpload = async (file: File) => {
     setIsUploadOpen(false);
-
     if (!user?.id || !challenge) return;
 
     const today = todayKey();
     const keys = storageKeys(variantKey);
 
+    // still block duplicates for *verified* uploads
     if (localStorage.getItem(`${user.id}_${keys.completed(today)}`)) {
       setBanner({ message: 'You have already fulfilled challenge for today!', type: 'error' });
       return;
@@ -275,22 +276,35 @@ const Index: React.FC = () => {
     const title = (challenge.title ?? '').trim() || 'daily-challenge';
 
     try {
+      // 1) upload media to MinIO
       const result = await apiClient.uploadMedia(user.id, file, title);
       const mediaType = file.type.startsWith('image/') ? 'image' : 'video';
 
-     // Index.tsx — inside handleStartUpload, replace the createPost call with:
-     await apiClient.createPost({
-       user_id: user.id,
-       caption: title,
-       media_type: mediaType,
-       media_url: result.mediaUrl,
+      // 2) create the post (server returns { verified: boolean, ... })
+      const post = await apiClient.createPost({
+        user_id: user.id,
+        caption: title,
+        media_type: mediaType,      // 'image' | 'video'
+        media_url: result.mediaUrl, // from /api/media/upload
 
-       // NEW: tag the post properly so visibility rules work
-       challenge_id: challenge.id,                                // you already have `challenge` in scope
-       challenge_set: variantKey === 'conf' ? 'conference' : 'main',
-     });
+        // ✅ send challenge info so it gets inserted
+        challenge_id: challenge?.id ?? null,
+        challenge_set:
+          (challenge?.challenge_set === 'conf' ? 'conference' : challenge?.challenge_set) ??
+          (variantKey === 'conf' ? 'conference' : 'main'),
+      });
 
+      // 3) accept as proof only if verified === true
+      if (!post.verified) {
+        // Not counted. Keep upload button active (no localStorage flag, no streak update).
+        setBanner({
+          message: 'Upload received and sent for manual review. It will not count until verified.',
+          type: 'info',
+        });
+        return;
+      }
 
+      // 4) success path (verified) -> mark completed & bump streak
       localStorage.setItem(`${user.id}_${keys.completed(today)}`, '1');
       setHasUploadedToday(true);
 
@@ -298,14 +312,21 @@ const Index: React.FC = () => {
       await apiClient.updateProfile(user.id, { streak: newStreak });
       setCurrentStreak(newStreak);
 
-    } catch (err: any) {
-      console.error('Upload or moderation failed:', err);
       setBanner({
-        message: 'Upload received and queued for manual review.',
+        message: 'Proof accepted! 🎉',
         type: 'info',
       });
+    } catch (err: any) {
+      console.error('Upload or moderation failed:', err);
+      // Moderation flagged (422) or service error (503) -> not accepted
+      setBanner({
+        message: 'Upload received and sent for manual review. It will not count until verified.',
+        type: 'info',
+      });
+      // crucially: do NOT set localStorage or streak here
     }
   };
+
 
   const handleDevResetUpload = () => {
     const today = todayKey();
