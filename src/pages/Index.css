@@ -309,10 +309,10 @@ html, body, #root {
 }
 
 .index-nav-text {
-  font-size: 1.5rem !important;      /* adjust size to match icons */
-  font-weight: 100 !important;
+  font-size: 1.3rem !important;      /* adjust size to match icons */
+  font-weight: 300 !important;
   color: white;
-  line-height: 1;
+  line-height: 1 !important;
 }
 
 .feed-banner {

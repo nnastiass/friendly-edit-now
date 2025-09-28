@@ -89,6 +89,7 @@ const Profile = () => {
   // --- Local UI state for conference toggle ---
   const [enableDialogOpen, setEnableDialogOpen] = useState(false);
   const [disableConfirmOpen, setDisableConfirmOpen] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false); // <-- ADD for delete confirmation
   const [codeInput, setCodeInput] = useState('');
   const [toggleBusy, setToggleBusy] = useState(false);
   const [showTUSettings, setShowTUSettings] = useState(false);
@@ -200,23 +201,27 @@ const Profile = () => {
     navigate('/auth');
   };
 
-  const handleDeleteAccount = async () => {
-    const isConfirmed = window.confirm(
-      'Are you absolutely sure you want to delete your account? This action is permanent and cannot be undone.'
-    );
-    if (!isConfirmed || !user?.id) return;
+  // This function now just opens the dialog
+    const handleDeleteAccount = () => {
+      setShowDeleteConfirm(true);
+    };
 
-    setIsDeleting(true);
-    try {
-      await apiClient.deleteProfile(user.id);
-      await signOut();
-      navigate('/auth');
-    } catch (error: any) {
-      showBanner(error?.message || 'Could not delete your account. Please try again.', 'error');
-    } finally {
-      setIsDeleting(false);
-    }
-  };
+    // This new function contains the original deletion logic
+    const confirmDeleteAccount = async () => {
+      if (!user?.id) return;
+
+      setIsDeleting(true);
+      try {
+        await apiClient.deleteProfile(user.id);
+        await signOut();
+        navigate('/auth');
+      } catch (error: any) {
+        showBanner(error?.message || 'Could not delete your account. Please try again.', 'error');
+        setShowDeleteConfirm(false); // Close dialog on error
+      } finally {
+        setIsDeleting(false);
+      }
+    };
 
   // Email change
   const handleChangeEmail = async (e: React.FormEvent) => {
@@ -327,25 +332,26 @@ const Profile = () => {
     }
   };
 
-  const handleDisableConference = async () => {
-    if (!user?.id) return;
-    const ok = window.confirm(
-      'IF you switch to normal version, you will need to enter the code again next time. Are you sure?'
-    );
-    if (!ok) return;
+  // This function now just opens the dialog
+    const handleDisableConference = () => {
+      setDisableConfirmOpen(true);
+    };
 
-    try {
-      setToggleBusy(true);
-      const updated = await apiClient.setConferenceParticipation(user.id, false);
-      mergeUserFromServer(updated);
-      setDisableConfirmOpen(false);
-      showBanner('Switched to normal version.', 'info');
-    } catch (e: any) {
-      showBanner(e?.message || 'Failed to switch', 'error');
-    } finally {
-      setToggleBusy(false);
-    }
-  };
+    // This new function contains the original logic
+    const confirmDisableConference = async () => {
+      if (!user?.id) return;
+      try {
+        setToggleBusy(true);
+        const updated = await apiClient.setConferenceParticipation(user.id, false);
+        mergeUserFromServer(updated);
+        setDisableConfirmOpen(false);
+        showBanner('Switched to normal version.', 'info');
+      } catch (e: any) {
+        showBanner(e?.message || 'Failed to switch', 'error');
+      } finally {
+        setToggleBusy(false);
+      }
+    };
 
   const getTitleForView = () => {
     switch (view) {
@@ -755,7 +761,49 @@ const Profile = () => {
           </button>
         </div>
       </div>
+      {/* --- NEW: Confirmation Dialogs --- */}
+
+            {/* Delete Account Confirmation Dialog */}
+            {showDeleteConfirm && (
+              <div className="confirm-dialog-overlay">
+                <div className="confirm-dialog-box">
+                  <h3 className="confirm-dialog-title">Delete Account?</h3>
+                  <p className="confirm-dialog-message">
+                    Are you absolutely sure? This action is permanent and cannot be undone.
+                  </p>
+                  <div className="confirm-dialog-actions">
+                    <Button variant="ghost" onClick={() => setShowDeleteConfirm(false)} disabled={isDeleting}>
+                      Cancel
+                    </Button>
+                    <Button onClick={confirmDeleteAccount} disabled={isDeleting} className="settings-button">
+                      {isDeleting ? 'Deleting...' : 'Yes, delete it'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Disable Conference Confirmation Dialog */}
+            {disableConfirmOpen && (
+              <div className="confirm-dialog-overlay">
+                <div className="confirm-dialog-box">
+                  <h3 className="confirm-dialog-title">Switch Version?</h3>
+                  <p className="confirm-dialog-message">
+                    If you switch to the normal version, you will need to enter the code again next time. Are you sure?
+                  </p>
+                  <div className="confirm-dialog-actions">
+                    <Button variant="ghost" onClick={() => setDisableConfirmOpen(false)} disabled={toggleBusy}>
+                      Cancel
+                    </Button>
+                    <Button onClick={confirmDisableConference} disabled={toggleBusy} className="settings-button">
+                      {toggleBusy ? 'Switching...' : 'Yes, switch'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
     </div>
+
   );
 };
 

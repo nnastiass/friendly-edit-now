@@ -451,10 +451,11 @@ overscroll-behavior-y: contain;
 
 /* --- BANNER NOTIFICATION STYLES --- */
 .index-nav-text {
-  font-size: 1.2rem;      /* adjust size to match icons */
-  font-weight: 50;
+  font-size: 1.2rem !important;      /* adjust size to match icons */
+  font-weight: 300 !important;
   color: white;
-  line-height: 1;
+  line-height: 1 !important;
+  font-family: inherit;
 }
 
 .feed-banner-root {

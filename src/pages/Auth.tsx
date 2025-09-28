@@ -6,8 +6,34 @@ import { Label } from '@/components/ui/label';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '@/lib/api-client';
 import './Auth.css';
+import './Modal.css';
 
 type BannerType = 'error' | 'success' | 'info';
+
+// --- TermsModal Component ---
+// This is now correctly defined as a separate component before Auth.
+const TermsModal = ({ content, onClose }: { content: string; onClose: () => void }) => {
+  useEffect(() => {
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [onClose]);
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <h2 className="modal-title">Terms and Conditions</h2>
+        <div className="modal-body" dangerouslySetInnerHTML={{ __html: content }} />
+        <Button onClick={onClose} className="auth-submit-button modal-close-button">Close</Button>
+      </div>
+    </div>
+  );
+};
+
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -17,17 +43,17 @@ const Auth = () => {
   const [username, setUsername] = useState('');
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  // --- NEW STATE FOR CONFERENCE FEATURE ---
   const [isParticipant, setIsParticipant] = useState(false);
   const [conferenceCode, setConferenceCode] = useState('');
-  const [isCodeVerified, setIsCodeVerified] = useState(false);
-  const [verifyingCode, setVerifyingCode] = useState(false);
 
-  // --- NEW STATE: Top pop-out banner ---
   const [banner, setBanner] = useState<{ message: string; type: BannerType } | null>(null);
   const [bannerVisible, setBannerVisible] = useState(false);
   const bannerTimer = useRef<number | null>(null);
+
+  // --- NEW: State for Modal and Terms Data ---
+  const [termsContent, setTermsContent] = useState('');
+  const [termsVersion, setTermsVersion] = useState('');
+  const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
 
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
@@ -38,25 +64,38 @@ const Auth = () => {
     }
   }, [user, navigate]);
 
+  // --- NEW: useEffect to fetch terms from the database ---
+  useEffect(() => {
+    const fetchTerms = async () => {
+      try {
+        const data = await apiClient.getLatestTerms();
+        setTermsContent(data.content);
+        setTermsVersion(data.version);
+      } catch (error) {
+        console.error("Could not fetch Terms and Conditions:", error);
+        setTermsContent('<p>Could not load Terms and Conditions. Please try again later.</p>');
+        showBanner('Could not load Terms & Conditions.', 'error');
+      }
+    };
+
+    fetchTerms();
+  }, []); // Empty array ensures this runs only once on mount.
+
   // --- Banner helpers ---
   const showBanner = (message: string, type: BannerType = 'info', duration = 3500) => {
     if (bannerTimer.current) {
       window.clearTimeout(bannerTimer.current);
-      bannerTimer.current = null;
     }
     setBanner({ message, type });
-    // allow layout to paint before sliding in
     requestAnimationFrame(() => setBannerVisible(true));
     bannerTimer.current = window.setTimeout(() => {
       setBannerVisible(false);
-      bannerTimer.current = null;
     }, duration);
   };
 
   const closeBanner = () => {
     if (bannerTimer.current) {
       window.clearTimeout(bannerTimer.current);
-      bannerTimer.current = null;
     }
     setBannerVisible(false);
   };
@@ -69,26 +108,6 @@ const Auth = () => {
     };
   }, []);
 
-  // --- Verify the conference code (no success notification per request) ---
-  const handleVerifyCode = async () => {
-    if (!conferenceCode) {
-      showBanner('Please enter a code.', 'error');
-      return;
-    }
-    setVerifyingCode(true);
-    try {
-      await apiClient.verifyConferenceCode(conferenceCode);
-      // Deleted: "Conference code verified!" (no notification shown)
-      setIsCodeVerified(true);
-      
-    } catch (error: any) {
-      showBanner(error?.message || 'Invalid conference code.', 'error');
-      setIsCodeVerified(false);
-    } finally {
-      setVerifyingCode(false);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -97,78 +116,60 @@ const Auth = () => {
       if (isLogin) {
         const { error } = await signIn(email, password);
         if (error) {
-          showBanner(error.message || 'Invalid email or password', 'error');
-        } else {
-          // Deleted: "Successfully signed in!" (no notification shown)
-          navigate('/');
+          throw error;
         }
+        navigate('/');
       } else {
-        // Confirm password validation
+        // Signup Logic
         if (password !== confirmPassword) {
-          showBanner("Passwords don't match.", 'error');
-          setLoading(false);
-          return;
+          throw new Error("Passwords don't match.");
         }
-
-        // Password strength validation
         const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).{8,}$/;
         if (!passwordPattern.test(password)) {
-          showBanner(
-            'Password must be at least 8 characters long and include uppercase, lowercase, and a number.',
-            'error'
-          );
-          setLoading(false);
-          return;
+          throw new Error('Password must be at least 8 characters long and include uppercase, lowercase, and a number.');
         }
-
-        // If the user claims participant, verify code here before signUp
         if (isParticipant) {
           if (!conferenceCode.trim()) {
-            showBanner('Please enter your conference code.', 'error');
-            setLoading(false);
-            return;
+            throw new Error('Please enter your conference code.');
           }
-          try {
-            await apiClient.verifyConferenceCode(conferenceCode.trim());
-            // ok, continue to signUp (no "verified" banner)
-          } catch (err: any) {
-            showBanner(err?.message || 'Invalid conference code.', 'error');
-            setLoading(false);
-            return; // stop submission
-          }
+          await apiClient.verifyConferenceCode(conferenceCode.trim());
         }
 
+        // --- MODIFIED: Pass termsVersion to signUp ---
         const { error } = await signUp(
           email,
           password,
           username,
           agreedToTerms,
-          isParticipant // true only if they ticked and it passed verification above
+          isParticipant,
+          termsVersion // Pass the version of terms they agreed to
         );
 
         if (error) {
-          showBanner(error.message || 'An unexpected error occurred during signup.', 'error');
+          throw error;
         } else {
           showBanner('Account created! Please check your email to verify your account.', 'success');
           setIsLogin(true);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Auth handleSubmit error:', error);
-      showBanner('An unexpected error occurred', 'error');
+      showBanner(error.message || 'An unexpected error occurred', 'error');
     } finally {
       setLoading(false);
     }
   };
 
-  const isSignUpDisabled = loading || !agreedToTerms;
+  const isSignUpDisabled = loading || !agreedToTerms || !termsContent;
 
   return (
     <div
       className="auth-container"
       style={{ background: 'radial-gradient(circle 25% at 50% 20%, #FF0046, #000000)' }}
     >
-      {/* Top Pop-out Banner */}
+      {/* --- NEW: Conditionally render the modal --- */}
+      {isTermsModalOpen && <TermsModal content={termsContent} onClose={() => setIsTermsModalOpen(false)} />}
+
       <div className="notify-root" aria-live="assertive" aria-atomic="true">
         <div
           className={`notify-banner ${bannerVisible ? 'visible' : ''} ${
@@ -177,12 +178,7 @@ const Auth = () => {
           role="alert"
         >
           <span className="notify-text">{banner?.message}</span>
-          <button
-            type="button"
-            className="notify-close"
-            aria-label="Close notification"
-            onClick={closeBanner}
-          >
+          <button type="button" className="notify-close" aria-label="Close notification" onClick={closeBanner}>
             ×
           </button>
         </div>
@@ -192,163 +188,61 @@ const Auth = () => {
         <div className="auth-layout">
           <div className="auth-header">
             <h1 className="auth-app-title">GETOUT</h1>
-            <h2 className="auth-page-title">
-              {isLogin ? 'Welcome back!' : 'Create account'}
-            </h2>
-            <p className="auth-description">
-              {isLogin
-                ? 'Sign in to continue your streak'
-                : 'Join the community and start your journey'}
-            </p>
+            <h2 className="auth-page-title">{isLogin ? 'Welcome back!' : 'Create account'}</h2>
+            <p className="auth-description">{isLogin ? 'Sign in to continue your streak' : 'Join the community and start your journey'}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="auth-form">
             {!isLogin && (
-              <>
                 <div className="auth-field">
                   <Label htmlFor="username" className="auth-label">Username</Label>
-                  <Input
-                    id="username"
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    required
-                    className="auth-input"
-                    placeholder="Choose a username"
-                  />
-                  
+                  <Input id="username" type="text" value={username} onChange={(e) => setUsername(e.target.value)} required className="auth-input" placeholder="Choose a username" />
                 </div>
-              </>
             )}
-
             <div className="auth-field">
               <Label htmlFor="email" className="auth-label">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="auth-input"
-                placeholder="Enter your email"
-              />
+              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="auth-input" placeholder="Enter your email" />
             </div>
-
             <div className="auth-field">
               <Label htmlFor="password" className="auth-label">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="auth-input"
-                placeholder="Enter your password"
-                aria-describedby={!isLogin ? 'password-requirements' : undefined}
-              />
-
+              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="auth-input" placeholder="Enter your password" aria-describedby={!isLogin ? 'password-requirements' : undefined} />
             </div>
-
-
-            {!isLogin && (
-              <div className="auth-field">
-                <Label htmlFor="confirmPassword" className="auth-label">Confirm Password</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  className="auth-input"
-                  placeholder="Re-enter your password"
-                />
-
-                {!isLogin && (
-                                <p id="password-requirements" className="auth-hint">
-                                  Must be at least 8 characters and include uppercase, lowercase, and a number.
-                                </p>
-                              )}
-              </div>
-            )}
-
             {!isLogin && (
               <>
+                <div className="auth-field">
+                  <Label htmlFor="confirmPassword" className="auth-label">Confirm Password</Label>
+                  <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className="auth-input" placeholder="Re-enter your password" />
+                  <p id="password-requirements" className="auth-hint">Must be at least 8 characters and include uppercase, lowercase, and a number.</p>
+                </div>
                 <div className="auth-field-terms">
-                  <input
-                    type="checkbox"
-                    id="terms"
-                    checked={agreedToTerms}
-                    onChange={(e) => setAgreedToTerms(e.target.checked)}
-                    className="auth-checkbox"
-                  />
+                  <input type="checkbox" id="terms" checked={agreedToTerms} onChange={(e) => setAgreedToTerms(e.target.checked)} className="auth-checkbox" />
                   <Label htmlFor="terms" className="auth-label-terms">
                     I agree to the{' '}
-                    <a
-                      href="resources/terms.pdf"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="auth-link"
-                    >
+                    {/* --- MODIFIED: Link is now a button to open the modal --- */}
+                    <button type="button" onClick={() => setIsTermsModalOpen(true)} disabled={!termsContent} className="auth-link">
                       Terms and Conditions
-                    </a>
+                    </button>
                   </Label>
                 </div>
-
                 <div className="auth-field-terms">
-                  <input
-                    type="checkbox"
-                    id="participant"
-                    checked={isParticipant}
-                    onChange={(e) => {
-                      setIsParticipant(e.target.checked);
-                      if (!e.target.checked) {
-                        setIsCodeVerified(false);
-                        setConferenceCode('');
-                      }
-                    }}
-                    className="auth-checkbox"
-                  />
-                  <Label htmlFor="participant" className="auth-label-terms">
-                    I am a Testing United Conference participant
-                  </Label>
+                  <input type="checkbox" id="participant" checked={isParticipant} onChange={(e) => setIsParticipant(e.target.checked)} className="auth-checkbox" />
+                  <Label htmlFor="participant" className="auth-label-terms">I am a Testing United Conference participant</Label>
                 </div>
-
                 {isParticipant && (
-                  <div className="auth-field-code">
-                    <Input
-                      type="text"
-                      value={conferenceCode}
-                      onChange={(e) => setConferenceCode(e.target.value)}
-                      placeholder="Enter conference code"
-                      className="auth-input auth-code-input"
-                    />
+                  <div className="auth-field">
+                    <Input type="text" value={conferenceCode} onChange={(e) => setConferenceCode(e.target.value)} placeholder="Enter conference code" className="auth-input" />
                   </div>
                 )}
               </>
             )}
-
-            <Button
-              type="submit"
-              disabled={isLogin ? loading : isSignUpDisabled}
-              className="auth-submit-button"
-            >
-              {loading
-                ? 'Loading...'
-                : isLogin
-                ? 'Sign In'
-                : 'Create Account'}
+            <Button type="submit" disabled={isLogin ? loading : isSignUpDisabled} className="auth-submit-button">
+              {loading ? 'Loading...' : (isLogin ? 'Sign In' : 'Create Account')}
             </Button>
           </form>
 
           <div className="auth-toggle-container">
-            <button
-              onClick={() => setIsLogin(!isLogin)}
-              className="auth-toggle-button"
-              type="button"
-            >
-              {isLogin
-                ? "Don't have an account? Sign up"
-                : 'Already have an account? Sign in'}
+            <button onClick={() => setIsLogin(!isLogin)} className="auth-toggle-button" type="button">
+              {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
             </button>
           </div>
         </div>

@@ -76,19 +76,24 @@ export const apiClient = {
     }),
 
   signUp: (
-    email: string,
-    password: string,
-    username: string,
-    agreedToTerms: boolean,
-    isConferenceParticipant: boolean
-  ) =>
-    apiFetch<any>('/api/auth/signup', {
-      method: 'POST',
-      body: JSON.stringify({ email, password, username, agreedToTerms, isConferenceParticipant }),
-    }),
+      email: string,
+      password: string,
+      username: string,
+      agreedToTerms: boolean,
+      isConferenceParticipant: boolean,
+      // --- MODIFIED: Add termsVersion ---
+      termsVersion: string
+    ) =>
+      apiFetch<any>('/api/auth/signup', {
+        method: 'POST',
+        // --- MODIFIED: Add termsVersion to body ---
+        body: JSON.stringify({ email, password, username, agreedToTerms, isConferenceParticipant, termsVersion }),
+      }),
 
   verifyEmail: (token: string) => apiFetch<any>(`/api/auth/verify?token=${token}`),
 
+ getLatestTerms: () =>
+    apiFetch<{ version: string; content: string }>('/api/terms/latest'),
   // Forgot / Reset
   forgotPassword: (email: string, devReturnToken?: boolean) =>
       apiFetch<any>('/api/auth/forgot-password', {
