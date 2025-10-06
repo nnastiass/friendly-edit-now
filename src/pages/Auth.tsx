@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Eye, EyeOff } from 'lucide-react'; // <-- 1. Import icons
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '@/lib/api-client';
 import './Auth.css';
@@ -45,6 +46,8 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [isParticipant, setIsParticipant] = useState(false);
   const [conferenceCode, setConferenceCode] = useState('');
+  const [showPassword, setShowPassword] = useState(false); // <-- 2. Add state for visibility
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [banner, setBanner] = useState<{ message: string; type: BannerType } | null>(null);
   const [bannerVisible, setBannerVisible] = useState(false);
@@ -205,15 +208,50 @@ const Auth = () => {
             </div>
             <div className="auth-field">
               <Label htmlFor="password" className="auth-label">Password</Label>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="auth-input" placeholder="Enter your password" aria-describedby={!isLogin ? 'password-requirements' : undefined} />
+              <Input 
+                id="password" 
+                type={showPassword ? 'text' : 'password'} // Toggle type
+                value={password} 
+                onChange={(e) => setPassword(e.target.value)} 
+                required 
+                className="auth-input" 
+                placeholder="Enter your password" 
+                aria-describedby={!isLogin ? 'password-requirements' : undefined} 
+              />
+              <button 
+                type="button" 
+                onClick={() => setShowPassword(!showPassword)} 
+                className="auth-password-toggle-icon"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
             </div>
             {!isLogin && (
               <>
+                {/* --- 3. MODIFIED CONFIRM PASSWORD FIELD --- */}
                 <div className="auth-field">
-                  <Label htmlFor="confirmPassword" className="auth-label">Confirm Password</Label>
-                  <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className="auth-input" placeholder="Re-enter your password" />
-                  <p id="password-requirements" className="auth-hint">Must be at least 8 characters and include uppercase, lowercase, and a number.</p>
-                </div>
+  <Label htmlFor="confirmPassword" className="auth-label">Confirm Password</Label>
+  <Input 
+    id="confirmPassword" 
+    type={showConfirmPassword ? 'text' : 'password'}
+    value={confirmPassword} 
+    onChange={(e) => setConfirmPassword(e.target.value)} 
+    required 
+    className="auth-input" 
+    placeholder="Re-enter your password" 
+  />
+  <button 
+    type="button" 
+    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+    className="auth-password-toggle-icon"
+    aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+  >
+    {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+  </button>
+</div>
+{/* Moved the paragraph here, outside the div */}
+<p id="password-requirements" className="auth-hint">Must be at least 8 characters and include uppercase, lowercase, and a number.</p>
                 <div className="auth-field-terms">
                   <input type="checkbox" id="terms" checked={agreedToTerms} onChange={(e) => setAgreedToTerms(e.target.checked)} className="auth-checkbox" />
                   <Label htmlFor="terms" className="auth-label-terms">
