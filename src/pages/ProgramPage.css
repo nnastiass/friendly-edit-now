@@ -168,8 +168,8 @@
 }
 
 .day-button.active {
-  background-color: #444EC9 !important; /* Blue for active */
-  color: white !important;
+  background-color: #F5B800 !important; /* Darker yellow for active */
+  color: #111827 !important;           /* Black text for better contrast */
 }
 
 .schedule-list {
