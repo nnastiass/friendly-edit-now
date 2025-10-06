@@ -26,9 +26,6 @@ const FriendProfile = () => {
   const [modalPost, setModalPost] = useState<UserPost | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  // --- NEW: State for remove friend action ---
-  const [isRemoving, setIsRemoving] = useState(false);
-
   useEffect(() => {
     if (friendId) {
       fetchProfileAndPosts(friendId);
@@ -74,31 +71,6 @@ const FriendProfile = () => {
     }
   };
 
-  // --- NEW: Handler for removing a friend ---
-  const handleRemoveFriend = async () => {
-    if (!user || !friendId) return;
-
-    const isConfirmed = window.confirm(
-      `Are you sure you want to remove ${profile?.username || 'this user'} as a friend?`
-    );
-
-    if (isConfirmed) {
-      setIsRemoving(true);
-      try {
-        await apiClient.removeFriend(user.id, friendId);
-        // On success, navigate back to the previous page
-        navigate(-1);
-      } catch (error) {
-        console.error("Failed to remove friend:", error);
-        // You could show an error banner here if you have one
-        alert("Could not remove friend. Please try again.");
-      } finally {
-        setIsRemoving(false);
-      }
-    }
-  };
-
-
   if (loading) return (
     <div className="friend-profile-container flex items-center justify-center min-h-screen">
       <Loader2 className="h-8 w-8 text-white animate-spin"/>
@@ -131,26 +103,12 @@ const FriendProfile = () => {
           <p className="friend-profile-username">@{profile.username||'username'}</p>
         </div>
 
-        {/* --- Section for Streak and Remove Friend Button --- */}
         <div className="friend-profile-meta-section">
           <div className="friend-profile-streak-section">
             <span className="friend-profile-streak-number">{profile.streak||0}</span>
             <p className="friend-profile-streak-label">Day Streak</p>
             <div className="friend-profile-streak-line"></div>
           </div>
-
-          {/* --- NEW: Remove Friend Button --- */}
-          {!isOwner && (
-            <Button
-              variant="destructive"
-              className="friend-profile-remove-btn"
-              onClick={handleRemoveFriend}
-              disabled={isRemoving}
-            >
-              {isRemoving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isRemoving ? 'Removing...' : 'Remove Friend'}
-            </Button>
-          )}
         </div>
 
 
