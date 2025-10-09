@@ -14,7 +14,7 @@
 .info-page-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: center;
   padding: 1rem 1.5rem;
   background-color: #444EC9; /* Blue header from design */
   color: white;
@@ -23,7 +23,6 @@
   box-sizing: border-box; /* Ensure padding is included in the height */
   position: relative; /* Added for z-index */
   z-index: 51; /* Ensure header is on top of the menu */
-
 }
 
 /* --- UPDATED MOBILE MENU STYLES --- */
@@ -55,19 +54,58 @@
 
 
 .menu-toggle-button {
- color: white !important;
+  color: white !important;
   display: flex;
   align-items: center;
   justify-content: center;
   height: 44px;
   width: 44px;
-  margin-bottom: -15px;      /* 👈 same offset so it matches logo */
+  margin-bottom: 0;      /* 👈 centered vertically */
+  border-radius: 0 !important;
+  transition: background-color 0.2s ease;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  padding: 0 !important;
+}
+
+.menu-toggle-button:hover,
+.menu-toggle-button:focus,
+.menu-toggle-button:active,
+.menu-toggle-button:focus-visible {
+  background-color: transparent !important;
+  background: transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Override any Button component styles */
+.menu-toggle-button *,
+.menu-toggle-button *::before,
+.menu-toggle-button *::after {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  outline: none !important;
+}
+
+/* Force consistent background from all possible states */
+.menu-toggle-button:not(:hover):not(:focus):not(:active) {
+  background: transparent !important;
+  background-color: transparent !important;
 }
 
 .menu-icon-wrapper {
   position: relative;
   width: 28px; /* Corresponds to h-7 w-7 */
   height: 28px;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
 }
 
 .menu-hamburger-icon,
@@ -78,6 +116,8 @@
   width: 100%;
   height: 100%;
   transition: transform 0.4s ease, opacity 0.4s ease;
+  color: white;
+  stroke-width: 2.5;
 }
 
 .menu-icon-wrapper.open .menu-hamburger-icon {
@@ -86,8 +126,19 @@
 }
 
 .menu-close-icon {
-  transform: rotate(-90deg);
+  transform: rotate(90deg);
   opacity: 0;
+  color: white;
+  stroke-width: 2.5;
+}
+
+.menu-icon-wrapper.open {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
 }
 
 .menu-icon-wrapper.open .menu-close-icon {
@@ -134,7 +185,6 @@
 .info-page-logo {
   height: 40px;
   object-fit: contain;
-  margin-bottom: 2px;      /* 👈 fine-tune vertical offset */
 }
 .hero-image {
   width: 100%;

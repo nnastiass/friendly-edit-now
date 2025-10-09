@@ -99,4 +99,15 @@
   body {
     @apply bg-background;
   }
+
+  /* Prevent landscape orientation on mobile devices */
+  @media screen and (orientation: landscape) and (max-width: 768px) {
+    body {
+      transform: rotate(90deg);
+      transform-origin: center center;
+      width: 100vh;
+      height: 100vw;
+      overflow: hidden;
+    }
+  }
 }

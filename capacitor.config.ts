@@ -11,9 +11,15 @@ const config: CapacitorConfig = {
   android: {
       allowMixedContent: true,
       },
+  ios: {
+    contentInset: 'automatic',
+  },
   plugins: {
     SplashScreen: {
       launchShowDuration: 0,
+    },
+    ScreenOrientation: {
+      orientation: 'portrait',
     },
   },
 };

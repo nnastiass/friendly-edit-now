@@ -296,3 +296,40 @@ body {
 .auth-toggle-button:hover {
     text-decoration: underline;
 }
+
+/* Terms and Conditions styling */
+.auth-label-terms {
+    color: white !important;
+    font-size: 0.9rem !important;
+    font-weight: 400 !important;
+    line-height: 1.4 !important;
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+}
+
+.auth-link {
+    color: #FF0046 !important;
+    background: none !important;
+    border: none !important;
+    cursor: pointer !important;
+    font-size: 0.9rem !important;
+    font-weight: 600 !important;
+    text-decoration: underline !important;
+    text-underline-offset: 2px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    transition: color 0.2s ease !important;
+}
+
+.auth-link:hover {
+    color: #ff3366 !important;
+    text-decoration: underline !important;
+}
+
+.auth-link:disabled {
+    color: #9ca3af !important;
+    cursor: not-allowed !important;
+    text-decoration: none !important;
+}
