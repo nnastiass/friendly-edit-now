@@ -152,15 +152,39 @@ const Auth = () => {
           throw error;
         } else {
           showBanner('Account created! Please check your email to verify your account.', 'success');
+          clearForm(); // Clear form after successful signup
           setIsLogin(true);
         }
       }
     } catch (error: any) {
       console.error('Auth handleSubmit error:', error);
       showBanner(error.message || 'An unexpected error occurred', 'error');
+      
+      // Clear form fields after failed attempt
+      if (isLogin) {
+        clearPassword(); // Clear only password for login
+      } else {
+        clearForm(); // Clear all fields for signup
+      }
     } finally {
       setLoading(false);
     }
+  };
+
+  // Function to clear all form fields
+  const clearForm = () => {
+    setEmail('');
+    setPassword('');
+    setConfirmPassword('');
+    setUsername('');
+    setAgreedToTerms(false);
+    setIsParticipant(false);
+    setConferenceCode('');
+  };
+
+  // Function to clear only password field
+  const clearPassword = () => {
+    setPassword('');
   };
 
   const isSignUpDisabled = loading || !agreedToTerms || !termsContent;

@@ -138,6 +138,14 @@
   align-items: center;
   padding: 2vh 1.5rem;
   gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.profile-buttons-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-left: 1rem;
 }
 
 .profile-friends-count {
@@ -406,10 +414,41 @@
   color: var(--primary-accent);
 }
 
+.profile-notifications-button {
+  position: relative; /* for badge positioning */
+  color: var(--primary-accent) !important;
+  background-color: transparent !important;
+}
+
+.profile-notifications-button svg {
+  stroke-width: 2.5 !important;
+  width: 28px !important;
+  height: 28px !important;
+}
+
 .profile-requests-button {
   position: relative; /* for badge positioning */
   color: var(--primary-accent) !important;
   background-color: transparent !important;
+}
+
+.profile-notifications-badge {
+  position: absolute;
+  top: -8px;           /* tweak if needed */
+  right: -8px;         /* tweak if needed */
+  width: 1.7rem;      /* bigger circle */
+  height: 1.7rem;
+  border-radius: 50%;
+  background: var(--primary-accent);
+  color: #fff;
+  font-size: 0.8rem;   /* scales with the new size */
+  font-weight: 800;
+  display: flex;       /* center the number perfectly */
+  align-items: center;
+  justify-content: center;
+  line-height: 1;      /* avoid baseline shift */
+  border: 2px solid var(--background-dark);
+  pointer-events: none;
 }
 
 .profile-requests-badge {
@@ -431,8 +470,144 @@
   pointer-events: none;
 }
 
+/* Notifications Modal */
+.notifications-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
 
+.notifications-modal {
+  background: var(--background-dark);
+  border: 2px solid white;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 400px;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
 
+.notifications-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #333;
+}
+
+.notifications-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.notifications-header h3 {
+  color: white;
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.notifications-clear {
+  background: var(--primary-accent);
+  border: none;
+  color: white;
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.notifications-clear:hover {
+  background: #ff3366;
+}
+
+.notifications-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  line-height: 1;
+}
+
+.notifications-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem 0;
+}
+
+.notification-item {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #222;
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.notification-item:hover {
+  background-color: #222;
+}
+
+.notification-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.notification-message {
+  color: white;
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.notification-time {
+  color: #999;
+  font-size: 0.8rem;
+}
+
+.notification-empty {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #9ca3af;
+}
+
+.notification-delete {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  font-size: 1.25rem;
+  padding: 0.25rem;
+  margin-left: 0.5rem;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.notification-delete:hover {
+  background-color: #ef4444;
+  color: white;
+}
 
 /* Bottom Navigation */
 .profile-bottom-nav {

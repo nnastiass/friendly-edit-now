@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/lib/api-client';
-import { Home, User, Settings, Plus, Edit, ArrowLeft, UserPlus, Info } from 'lucide-react';
+import { Home, User, Settings, Plus, Edit, ArrowLeft, UserPlus, Info, Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import './Profile.css';
 import './Index.css';
@@ -61,6 +61,9 @@ const Profile = () => {
   const [friends, setFriends] = useState<Friend[]>([]);
   const [friendCount, setFriendCount] = useState(0);
   const [pendingRequests, setPendingRequests] = useState(0);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const [view, setView] = useState<
     'profile' | 'edit' | 'settings' | 'account' | 'changeEmail' | 'changePassword' | 'conference'
@@ -137,6 +140,7 @@ const Profile = () => {
       fetchProfile();
       fetchFriends();
       fetchPendingRequestsCount();
+      fetchNotifications();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
@@ -370,6 +374,82 @@ const Profile = () => {
     return name.split(' ').map(n => n.charAt(0)).join('').toUpperCase();
   };
 
+  const handleNotificationsClick = () => {
+    setShowNotifications(!showNotifications);
+    // Mark all notifications as read when opening for the first time
+    if (!showNotifications && unreadNotifications > 0) {
+      setUnreadNotifications(0);
+      saveNotificationsToStorage(notifications, 0);
+    }
+  };
+
+  const fetchNotifications = async () => {
+    if (!user?.id) return;
+    try {
+      // TODO: Replace with real API call to fetch comment notifications
+      // const notifications = await apiClient.getNotifications(user.id);
+      // setNotifications(notifications);
+      // setUnreadNotifications(notifications.filter(n => !n.read).length);
+      
+      // Load notifications from localStorage to persist them
+      const savedNotifications = localStorage.getItem(`notifications_${user.id}`);
+      const savedUnreadCount = localStorage.getItem(`unread_notifications_${user.id}`);
+      
+      if (savedNotifications) {
+        setNotifications(JSON.parse(savedNotifications));
+      } else {
+        setNotifications([]);
+      }
+      
+      if (savedUnreadCount) {
+        setUnreadNotifications(parseInt(savedUnreadCount));
+      } else {
+        setUnreadNotifications(0);
+      }
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    }
+  };
+
+  // Helper function to save notifications to localStorage
+  const saveNotificationsToStorage = (notifications: any[], unreadCount: number) => {
+    if (!user?.id) return;
+    localStorage.setItem(`notifications_${user.id}`, JSON.stringify(notifications));
+    localStorage.setItem(`unread_notifications_${user.id}`, unreadCount.toString());
+  };
+
+  // Test function to add demo notifications (for testing purposes)
+  const addTestNotification = () => {
+    const testNotification = {
+      id: Date.now(),
+      type: 'comment',
+      message: `Test notification ${notifications.length + 1}`,
+      time: 'now'
+    };
+    const newNotifications = [...notifications, testNotification];
+    const newUnreadCount = unreadNotifications + 1;
+    
+    setNotifications(newNotifications);
+    setUnreadNotifications(newUnreadCount);
+    saveNotificationsToStorage(newNotifications, newUnreadCount);
+  };
+
+  const clearAllNotifications = () => {
+    setNotifications([]);
+    setUnreadNotifications(0);
+    setShowNotifications(false);
+    saveNotificationsToStorage([], 0);
+  };
+
+  const deleteNotification = (notificationId: number) => {
+    const newNotifications = notifications.filter(n => n.id !== notificationId);
+    const newUnreadCount = Math.max(0, unreadNotifications - 1);
+    
+    setNotifications(newNotifications);
+    setUnreadNotifications(newUnreadCount);
+    saveNotificationsToStorage(newNotifications, newUnreadCount);
+  };
+
   if (!user) return null;
 
   return (
@@ -397,6 +477,57 @@ const Profile = () => {
           </button>
         </div>
       </div>
+
+      {/* Notifications Modal */}
+      {showNotifications && (
+        <div className="notifications-overlay" onClick={() => setShowNotifications(false)}>
+          <div className="notifications-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="notifications-header">
+              <h3>Notifications</h3>
+              <div className="notifications-header-actions">
+                {notifications.length > 0 && (
+                  <button 
+                    className="notifications-clear"
+                    onClick={clearAllNotifications}
+                    title="Clear all notifications"
+                  >
+                    Clear All
+                  </button>
+                )}
+                <button 
+                  className="notifications-close"
+                  onClick={() => setShowNotifications(false)}
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            <div className="notifications-list">
+              {notifications.length === 0 ? (
+                <div className="notification-empty">
+                  <p>No notifications yet</p>
+                </div>
+              ) : (
+                notifications.map((notification) => (
+                  <div key={notification.id} className="notification-item">
+                    <div className="notification-content">
+                      <p className="notification-message">{notification.message}</p>
+                      <span className="notification-time">{notification.time}</span>
+                    </div>
+                    <button 
+                      className="notification-delete"
+                      onClick={() => deleteNotification(notification.id)}
+                      title="Delete notification"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="profile-main-content">
         <div className="profile-header-gradient">
@@ -667,19 +798,45 @@ const Profile = () => {
                 Add friends
               </Button>
 
-              <Button
-                variant="ghost"
-                size="icon"
-                className="profile-requests-button"
-                onClick={() => navigate('/friend-requests')}
-              >
-                <UserPlus className="h-6 w-6" />
-                {pendingRequests > 0 && (
-                  <span className="profile-requests-badge">
-                    {pendingRequests > 99 ? '99+' : pendingRequests}
-                  </span>
-                )}
-              </Button>
+              <div className="profile-buttons-group">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="profile-notifications-button"
+                  onClick={handleNotificationsClick}
+                >
+                  <Bell className="h-6 w-6" />
+                  {unreadNotifications > 0 && (
+                    <span className="profile-notifications-badge">
+                      {unreadNotifications > 99 ? '99+' : unreadNotifications}
+                    </span>
+                  )}
+                </Button>
+
+                {/* Test button - remove in production */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={addTestNotification}
+                  style={{ fontSize: '0.7rem', padding: '0.25rem 0.5rem' }}
+                >
+                  + Test
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="profile-requests-button"
+                  onClick={() => navigate('/friend-requests')}
+                >
+                  <UserPlus className="h-6 w-6" />
+                  {pendingRequests > 0 && (
+                    <span className="profile-requests-badge">
+                      {pendingRequests > 99 ? '99+' : pendingRequests}
+                    </span>
+                  )}
+                </Button>
+              </div>
             </div>
 
             <div className="profile-streak-section">
