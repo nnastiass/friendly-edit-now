@@ -1,22 +1,16 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Home, User, Plus, Info, RotateCcw } from 'lucide-react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import { Home, User, Plus, RotateCcw, X } from 'lucide-react';
 import DailyChallenge from '@/components/DailyChallenge';
 import MediaUpload from '@/components/MediaUpload';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '@/lib/api-client';
 import './Index.css';
-import TULogo from '/images/logo/testing united.webp';
-
-// Import helpers
 import {
   type Challenge,
   storageKeys,
   todayKey,
 } from '@/lib/challengeSets';
-
-// FeedBanner (inline, could be separate file)
-import { X } from 'lucide-react';
 
 interface FeedBannerProps {
   message: string;
@@ -34,11 +28,8 @@ const FeedBanner: React.FC<FeedBannerProps> = ({
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    // Delay before showing the banner (optional)
     const showTimer = setTimeout(() => setVisible(true), 1000);
-
-    // Hide banner after duration + initial delay
-    const hideTimer = setTimeout(() => setVisible(false), (duration || 4000) + 1000);
+    const hideTimer = setTimeout(() => setVisible(false), duration + 1000);
 
     return () => {
       clearTimeout(showTimer);
@@ -51,7 +42,7 @@ const FeedBanner: React.FC<FeedBannerProps> = ({
       <div
         className={`feed-banner feed-banner--${type} ${visible ? 'feed-banner--visible' : ''}`}
         onTransitionEnd={() => {
-          if (!visible && onClose) onClose(); // Only call onClose after slide-out
+          if (!visible && onClose) onClose();
         }}
       >
         <span className="feed-banner-text">{message}</span>
@@ -72,10 +63,7 @@ function detectInitialVariant(): 'main' | 'conf' {
       : '');
 
   if (String(envVariant).toLowerCase() === 'conference') return 'conf';
-  if (
-    typeof window !== 'undefined' &&
-    window.location.pathname.startsWith('/conference')
-  )
+  if (typeof window !== 'undefined' && window.location.pathname.startsWith('/conference'))
     return 'conf';
   return 'main';
 }
@@ -85,46 +73,42 @@ const Index: React.FC = () => {
   const navigate = useNavigate();
 
   const [showTUChoice, setShowTUChoice] = useState(false);
-  const tuChoiceKey = useMemo(
-    () => `tuChoiceShown::${String(user?.id ?? 'anon')}`,
-    [user?.id]
-  );
-
-  const [variantKey, setVariantKey] = useState<'main' | 'conf'>(
-    detectInitialVariant()
-  );
-
+  const [variantKey, setVariantKey] = useState<'main' | 'conf'>(detectInitialVariant());
   const [challengeList, setChallengeList] = useState<Challenge[]>([]);
   const [challengesLoading, setChallengesLoading] = useState(true);
   const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [currentStreak, setCurrentStreak] = useState(0);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [hasUploadedToday, setHasUploadedToday] = useState(false);
+  const [banner, setBanner] = useState<{ message: string; type?: 'info' | 'error' } | null>(null);
 
-  // ✅ NEW: banner state
-  const [banner, setBanner] = useState<{
-    message: string;
-    type?: 'info' | 'error';
-  } | null>(null);
+  const tuChoiceKey = useMemo(
+    () => `tuChoiceShown::${String(user?.id ?? 'anon')}`,
+    [user?.id]
+  );
+
+  // Redirect if not logged in
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate('/auth', { replace: true });
+    }
+  }, [user, authLoading, navigate]);
 
   // Fetch challenges
   useEffect(() => {
+    if (!user) return;
     setChallengesLoading(true);
     apiClient
       .getChallenges(variantKey)
-      .then((data) => {
-        setChallengeList(data);
-      })
+      .then((data) => setChallengeList(data))
       .catch((err) => {
         console.error(`Failed to fetch ${variantKey} challenges:`, err);
         setChallengeList([]);
       })
-      .finally(() => {
-        setChallengesLoading(false);
-      });
-  }, [variantKey]);
+      .finally(() => setChallengesLoading(false));
+  }, [variantKey, user]);
 
-  // Pick initial challenge
+  // Pick today's challenge
   useEffect(() => {
     if (!challengeList.length || !user?.id) return;
 
@@ -135,77 +119,48 @@ const Index: React.FC = () => {
 
     if (savedId) {
       const found = challengeList.find((c) => c.id === Number(savedId));
-      if (found) {
-        initialChallenge = found;
-      } else {
-        const idx = new Date().getDate() % challengeList.length;
-        initialChallenge = challengeList[idx];
-      }
+      initialChallenge = found || challengeList[new Date().getDate() % challengeList.length];
     } else {
-      const idx = new Date().getDate() % challengeList.length;
-      initialChallenge = challengeList[idx];
+      initialChallenge = challengeList[new Date().getDate() % challengeList.length];
     }
 
-    localStorage.setItem(
-      `${user.id}_${keys.current(today)}`,
-      String(initialChallenge.id)
-    );
+    localStorage.setItem(`${user.id}_${keys.current(today)}`, String(initialChallenge.id));
     setChallenge(initialChallenge);
-    setHasUploadedToday(
-      !!localStorage.getItem(`${user.id}_${keys.completed(today)}`)
-    );
+    setHasUploadedToday(!!localStorage.getItem(`${user.id}_${keys.completed(today)}`));
   }, [challengeList, variantKey, user?.id]);
 
-  // TU choice for participants
+  // TU choice overlay
   useEffect(() => {
     if (authLoading || !user) return;
-    const isParticipant =
-      !!(user as any)?.isConferenceParticipant ||
-      !!(user as any)?.is_conference_participant;
+    const isParticipant = !!(user as any)?.isConferenceParticipant || !!(user as any)?.is_conference_participant;
     if (isParticipant && !sessionStorage.getItem(tuChoiceKey)) {
       setShowTUChoice(true);
     }
   }, [authLoading, user, tuChoiceKey]);
 
-  // Force conf variant
+  // Force conference variant for participants
   useEffect(() => {
-    if (user) {
-      const isParticipant =
-        !!(user as any)?.isConferenceParticipant ||
-        !!(user as any)?.is_conference_participant;
-      if (isParticipant && variantKey !== 'conf') {
-        setVariantKey('conf');
-      }
-    }
+    if (!user) return;
+    const isParticipant = !!(user as any)?.isConferenceParticipant || !!(user as any)?.is_conference_participant;
+    if (isParticipant && variantKey !== 'conf') setVariantKey('conf');
   }, [user, variantKey]);
 
   // Load streak
   useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/auth');
-      return;
-    }
-    if (user?.id) {
-      apiClient
-        .getProfile(user.id)
-        .then((data) => setCurrentStreak(data?.streak || 0))
-        .catch((err) => {
-          console.error('Error fetching streak:', err);
-        });
-    }
-  }, [user, authLoading, navigate]);
+    if (!user?.id) return;
+    apiClient
+      .getProfile(user.id)
+      .then((data) => setCurrentStreak(data?.streak || 0))
+      .catch((err) => console.error('Error fetching streak:', err));
+  }, [user?.id]);
 
-  // Midnight rollover
-  const advanceToNextDay = React.useCallback(() => {
+  // Advance to next day
+  const advanceToNextDay = useCallback(() => {
     if (!challenge || !challengeList.length) return;
 
     const today = todayKey();
     const keys = storageKeys(variantKey);
-
-    const currentIndex = Math.max(
-      0,
-      challengeList.findIndex((c) => c.id === challenge.id)
-    );
+    const currentIndex = Math.max(0, challengeList.findIndex((c) => c.id === challenge.id));
     const next = challengeList[(currentIndex + 1) % challengeList.length];
 
     if (user?.id) {
@@ -217,19 +172,19 @@ const Index: React.FC = () => {
     setHasUploadedToday(false);
   }, [challenge, challengeList, user?.id, variantKey]);
 
-  const msUntilNextMidnight = () => {
-    const now = new Date();
-    const next = new Date(now);
-    next.setDate(now.getDate() + 1);
-    next.setHours(0, 0, 0, 0);
-    return next.getTime() - now.getTime();
-  };
-
+  // Midnight rollover
   useEffect(() => {
+    const msUntilNextMidnight = () => {
+      const now = new Date();
+      const next = new Date(now);
+      next.setDate(now.getDate() + 1);
+      next.setHours(0, 0, 0, 0);
+      return next.getTime() - now.getTime();
+    };
+
     const params = new URLSearchParams(window.location.search);
     const fast = Number(params.get('fastMidnight'));
-    const ms =
-      !Number.isNaN(fast) && fast > 0 ? fast * 1000 : msUntilNextMidnight();
+    const ms = !Number.isNaN(fast) && fast > 0 ? fast * 1000 : msUntilNextMidnight();
 
     let fired = false;
     const timeoutId = window.setTimeout(() => {
@@ -256,10 +211,9 @@ const Index: React.FC = () => {
     };
   }, [advanceToNextDay]);
 
+  // Upload
   const openUpload = () => setIsUploadOpen(true);
 
-  // Upload
-  // Upload
   const handleStartUpload = async (file: File) => {
     setIsUploadOpen(false);
     if (!user?.id || !challenge) return;
@@ -267,7 +221,6 @@ const Index: React.FC = () => {
     const today = todayKey();
     const keys = storageKeys(variantKey);
 
-    // still block duplicates for *verified* uploads
     if (localStorage.getItem(`${user.id}_${keys.completed(today)}`)) {
       setBanner({ message: 'You have already fulfilled challenge for today!', type: 'error' });
       return;
@@ -276,27 +229,19 @@ const Index: React.FC = () => {
     const title = (challenge.title ?? '').trim() || 'daily-challenge';
 
     try {
-      // 1) upload media to MinIO
       const result = await apiClient.uploadMedia(user.id, file, title);
       const mediaType = file.type.startsWith('image/') ? 'image' : 'video';
 
-      // 2) create the post (server returns { verified: boolean, ... })
       const post = await apiClient.createPost({
         user_id: user.id,
         caption: title,
-        media_type: mediaType,      // 'image' | 'video'
-        media_url: result.mediaUrl, // from /api/media/upload
-
-        // ✅ send challenge info so it gets inserted
-        challenge_id: challenge?.id ?? null,
-        challenge_set:
-          (challenge?.challenge_set === 'conf' ? 'conference' : challenge?.challenge_set) ??
-          (variantKey === 'conf' ? 'conference' : 'main'),
+        media_type: mediaType,
+        media_url: result.mediaUrl,
+        challenge_id: challenge.id,
+        challenge_set: challenge.challenge_set === 'conf' ? 'conference' : variantKey,
       });
 
-      // 3) accept as proof only if verified === true
       if (!post.verified) {
-        // Not counted. Keep upload button active (no localStorage flag, no streak update).
         setBanner({
           message: 'Upload received and sent for manual review. It will not count until verified.',
           type: 'info',
@@ -304,7 +249,6 @@ const Index: React.FC = () => {
         return;
       }
 
-      // 4) success path (verified) -> mark completed & bump streak
       localStorage.setItem(`${user.id}_${keys.completed(today)}`, '1');
       setHasUploadedToday(true);
 
@@ -312,21 +256,15 @@ const Index: React.FC = () => {
       await apiClient.updateProfile(user.id, { streak: newStreak });
       setCurrentStreak(newStreak);
 
-      setBanner({
-        message: 'Proof accepted! 🎉',
-        type: 'info',
-      });
+      setBanner({ message: 'Proof accepted! 🎉', type: 'info' });
     } catch (err: any) {
-      console.error('Upload or moderation failed:', err);
-      // Moderation flagged (422) or service error (503) -> not accepted
+      console.error('Upload failed:', err);
       setBanner({
         message: 'Upload received and sent for manual review. It will not count until verified.',
         type: 'info',
       });
-      // crucially: do NOT set localStorage or streak here
     }
   };
-
 
   const handleDevResetUpload = () => {
     const today = todayKey();
@@ -348,17 +286,16 @@ const Index: React.FC = () => {
     navigate('/info');
   };
 
-  if (authLoading || challengesLoading || !user || !challenge) {
-    return <div className="index-loading"><div className="index-loading-spinner"></div></div>;
+  // Show loader until auth & challenges are ready
+  if (authLoading || !user || challengesLoading || !challenge) {
+    return (
+      <div className="index-loading">
+        <div className="index-loading-spinner"></div>
+      </div>
+    );
   }
 
-  if (import.meta.env.DEV) {
-    (window as any).__triggerMidnight = advanceToNextDay;
-  }
-
-  const isParticipant =
-    !!(user as any)?.isConferenceParticipant ||
-    !!(user as any)?.is_conference_participant;
+  const isParticipant = !!(user as any)?.isConferenceParticipant || !!(user as any)?.is_conference_participant;
 
   return (
     <div className="index-container">
@@ -400,15 +337,15 @@ const Index: React.FC = () => {
               >
                 <Home className="index-nav-icon" />
               </button>
-              {isParticipant && (
-  <button
-    className="index-nav-button index-nav-button-inactive"
-    onClick={() => navigate('/info')}
-  >
-    <span className="index-nav-text">TU</span>
-  </button>
-)}
 
+              {isParticipant && (
+                <button
+                  className="index-nav-button index-nav-button-inactive"
+                  onClick={() => navigate('/info')}
+                >
+                  <span className="index-nav-text">TU</span>
+                </button>
+              )}
 
               <button className="index-nav-button index-nav-button-active">
                 <Plus className="index-nav-icon" />

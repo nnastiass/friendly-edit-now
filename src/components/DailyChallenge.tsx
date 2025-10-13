@@ -1,4 +1,3 @@
-// src/components/DailyChallenge.tsx
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -11,7 +10,7 @@ interface DailyChallengeProps {
   onStartUpload: () => void;
   currentStreak: number;
   hasUploadedToday: boolean;
-  onMidnight?: () => void; // ✅ add this
+  onMidnight?: () => void;
 }
 
 const DailyChallenge: React.FC<DailyChallengeProps> = ({
@@ -19,59 +18,42 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({
   onStartUpload,
   currentStreak,
   hasUploadedToday,
-  onMidnight, // ✅ destructure
+  onMidnight,
 }) => {
   const [timeLeft, setTimeLeft] = React.useState({ hours: '00', minutes: '00', seconds: '00' });
 
-  // countdown display
+  // Countdown + optional midnight callback
   React.useEffect(() => {
-    const updateTimeLeft = () => {
+    const update = () => {
       const now = new Date();
-      const tomorrow = new Date();
+      const tomorrow = new Date(now);
       tomorrow.setDate(now.getDate() + 1);
       tomorrow.setHours(0, 0, 0, 0);
+
       const diff = tomorrow.getTime() - now.getTime();
       const hours = String(Math.floor(diff / (1000 * 60 * 60))).padStart(2, '0');
       const minutes = String(Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))).padStart(2, '0');
       const seconds = String(Math.floor((diff % (1000 * 60)) / 1000)).padStart(2, '0');
       setTimeLeft({ hours, minutes, seconds });
+
+      // fire parent callback if it's exactly midnight
+      if (diff < 1000) {
+        onMidnight?.();
+      }
     };
 
-    updateTimeLeft();
-    const interval = setInterval(updateTimeLeft, 1000);
+    update();
+    const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
-  }, []);
-
-  // fire parent callback at midnight (or fast test)
-  // fire parent callback at midnight (or fast test) — robust version
-  // DailyChallenge.tsx  — keep countdown only
-  React.useEffect(() => {
-    const updateTimeLeft = () => {
-      const now = new Date();
-      const tomorrow = new Date();
-      tomorrow.setDate(now.getDate() + 1);
-      tomorrow.setHours(0, 0, 0, 0);
-      const diff = tomorrow.getTime() - now.getTime();
-      const hours = String(Math.floor(diff / (1000 * 60 * 60))).padStart(2, '0');
-      const minutes = String(Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))).padStart(2, '0');
-      const seconds = String(Math.floor((diff % (1000 * 60)) / 1000)).padStart(2, '0');
-      setTimeLeft({ hours, minutes, seconds });
-    };
-
-    updateTimeLeft();
-    const interval = setInterval(updateTimeLeft, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-
+  }, [onMidnight]);
 
   return (
     <div className="daily-challenge-container">
       <Card className="daily-challenge-card">
         <CardContent className="daily-challenge-content">
           {challenge.emoji && <div className="daily-challenge-emoji" style={{ fontSize: '3em' }}>{challenge.emoji}</div>}
-          <h3 className="daily-challenge-text">{challenge.title}</h3>
-          <p className="daily-challenge-description">{challenge.description}</p>
+          <h3 className="daily-challenge-text">{challenge.title ?? 'Offline Challenge'}</h3>
+          <p className="daily-challenge-description">{challenge.description ?? ''}</p>
 
           <Button
             onClick={onStartUpload}
@@ -83,7 +65,6 @@ const DailyChallenge: React.FC<DailyChallengeProps> = ({
         </CardContent>
       </Card>
 
-      {/* timer UI */}
       <div className="daily-challenge-timer-boxes flex justify-center gap-1 mt-6">
         {['Hours', 'Minutes', 'Seconds'].map((label, i) => {
           const value = i === 0 ? timeLeft.hours : i === 1 ? timeLeft.minutes : timeLeft.seconds;
