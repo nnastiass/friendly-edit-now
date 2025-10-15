@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
-// NOTE: This assumes apiClient has a method for sent requests (e.g., getSentFriendRequests)
 import { apiClient } from '@/lib/api-client';
-import { ArrowLeft, Check, X, Users } from 'lucide-react';
+// --- FIX: Added missing icons UserCheck, UserX, and Clock ---
+import { ArrowLeft, Check, X, Users, UserCheck, UserX, Clock } from 'lucide-react';
 import './FriendRequests.css';
 
 const pastelColors = [
@@ -29,6 +29,23 @@ interface FriendRequest {
 }
 
 type BannerType = 'error' | 'success' | 'info';
+
+const RequestStatusBadge = ({ status }: { status: FriendRequest['status'] }) => {
+  const statusInfo = {
+    accepted: { text: 'Accepted', icon: <UserCheck className="status-icon" />, className: 'status-accepted' },
+    rejected: { text: 'Rejected', icon: <UserX className="status-icon" />, className: 'status-rejected' },
+    pending: { text: 'Pending', icon: <Clock className="status-icon" />, className: 'status-pending' },
+  };
+
+  const currentStatus = statusInfo[status] || statusInfo.pending;
+
+  return (
+    <div className={`request-status-badge ${currentStatus.className}`}>
+      {currentStatus.icon}
+      <span>{currentStatus.text}</span>
+    </div>
+  );
+};
 
 const FriendRequestsPage = () => {
   const { user } = useAuth();
@@ -120,83 +137,86 @@ const FriendRequestsPage = () => {
   const activeRequests = activeTab === 'incoming' ? incomingRequests : sentRequests;
 
   return (
-    <div className="friend-requests-page-container">
-      {/* Banner */}
-      <div className="notify-root" aria-live="assertive" aria-atomic="true">
-        <div className={`notify-banner ${bannerVisible ? 'visible' : ''} ${banner?.type ? `notify-${banner.type}` : ''}`} role="alert">
-          <span className="notify-text">{banner?.message}</span>
-          <button type="button" className="notify-close" aria-label="Close notification" onClick={closeBanner}>
-            ×
-          </button>
+      <div className="friend-requests-page-container">
+        {/* Banner */}
+        <div className="notify-root" aria-live="assertive" aria-atomic="true">
+          <div className={`notify-banner ${bannerVisible ? 'visible' : ''} ${banner?.type ? `notify-${banner.type}` : ''}`} role="alert">
+            <span className="notify-text">{banner?.message}</span>
+            <button type="button" className="notify-close" aria-label="Close notification" onClick={closeBanner}>
+              ×
+            </button>
+          </div>
+        </div>
+
+        {/* Header */}
+       <div className="friend-requests-page-header">
+               {/* --- FIX: Added className to the Button component --- */}
+               <Button
+                 onClick={() => navigate(-1)}
+                 variant="ghost"
+                 size="icon"
+                 className="friend-requests-page-back-button"
+               >
+                 <ArrowLeft />
+               </Button>
+          <h1 className="friend-requests-page-title">Friend Requests</h1>
+        </div>
+
+        {/* Tabs */}
+        <div className="friend-requests-tabs">
+          <button className={`tab-button ${activeTab === 'incoming' ? 'active' : ''}`} onClick={() => setActiveTab('incoming')}>Incoming</button>
+          <button className={`tab-button ${activeTab === 'sent' ? 'active' : ''}`} onClick={() => setActiveTab('sent')}>Sent</button>
+        </div>
+
+        {/* Requests List */}
+        <div className="friend-requests-page-content">
+          {loading ? (
+            <p className="loading-text">Loading requests...</p>
+          ) : activeRequests.length > 0 ? (
+            activeRequests.map(request => {
+              const otherUserId = activeTab === 'incoming' ? request.sender_id : request.receiver_id;
+
+              return (
+                <div key={request.id} className="request-card">
+                  <div className="request-info">
+                    <Avatar className="request-avatar">
+                      <AvatarImage src={request.avatar_url || ''} />
+                      <AvatarFallback className="avatar-fallback" style={{ backgroundColor: generatePastelColor(otherUserId) }}>
+                        {getInitials(request.full_name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="request-name">{request.full_name || 'Unknown'}</p>
+                      <p className="request-username">@{request.username || '...'}</p>
+                    </div>
+                  </div>
+                  {/* Actions for INCOMING requests */}
+                  {activeTab === 'incoming' && (
+                    <div className="request-actions">
+                      <Button size="icon" className="decline-button" onClick={() => handleFriendRequest(request.id, request.sender_id || '', 'rejected')}>
+                        <X />
+                      </Button>
+                      <Button size="icon" className="accept-button" onClick={() => handleFriendRequest(request.id, request.sender_id || '', 'accepted')}>
+                        <Check />
+                      </Button>
+                    </div>
+                  )}
+                  {/* Status badge for SENT requests */}
+                  {activeTab === 'sent' && (
+                      <RequestStatusBadge status={request.status} />
+                  )}
+                </div>
+              );
+            })
+          ) : (
+            <div className="no-requests-card">
+              <Users className="h-12 w-12 mx-auto mb-2" />
+              <p>{activeTab === 'incoming' ? 'No incoming friend requests.' : 'You haven\'t sent any friend requests.'}</p>
+            </div>
+          )}
         </div>
       </div>
+    );
+  };
 
-      {/* Header */}
-      <div className="friend-requests-page-header">
-        <Button onClick={() => navigate(-1)} variant="ghost" size="icon">
-          <ArrowLeft />
-        </Button>
-        <h1 className="friend-requests-page-title">Friend Requests</h1>
-      </div>
-
-      {/* Tabs */}
-      <div className="friend-requests-tabs">
-        <button className={`tab-button ${activeTab === 'incoming' ? 'active' : ''}`} onClick={() => setActiveTab('incoming')}>Incoming</button>
-        <button className={`tab-button ${activeTab === 'pending' ? 'active' : ''}`} onClick={() => setActiveTab('pending')}>Pending Sent</button>
-      </div>
-
-      {/* Requests List */}
-      <div className="friend-requests-page-content">
-        {loading ? (
-          <p className="loading-text">Loading requests...</p>
-        ) : activeRequests.length > 0 ? (
-          activeRequests.map(request => {
-            // --- MODIFIED: Determine the ID of the 'other' user for avatar color/info ---
-            const otherUserId = activeTab === 'incoming' ? request.sender_id : request.receiver_id;
-
-            return (
-              <div key={request.id} className="request-card">
-                <div className="request-info">
-                  <Avatar className="request-avatar">
-                    <AvatarImage src={request.avatar_url || ''} />
-                    <AvatarFallback className="avatar-fallback" style={{ backgroundColor: generatePastelColor(otherUserId) }}>
-                      {getInitials(request.full_name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="request-name">{request.full_name || 'Unknown'}</p>
-                    <p className="request-username">@{request.username || '...'}</p>
-                  </div>
-                </div>
-                {/* Only show actions for INCOMING requests */}
-                {activeTab === 'incoming' && (
-                  <div className="request-actions">
-                    <Button size="icon" className="decline-button" onClick={() => handleFriendRequest(request.id, request.sender_id || '', 'rejected')}>
-                      <X />
-                    </Button>
-                    <Button size="icon" className="accept-button" onClick={() => handleFriendRequest(request.id, request.sender_id || '', 'accepted')}>
-                      <Check />
-                    </Button>
-                  </div>
-                )}
-                {/* For pending (sent) requests, display a status */}
-                {activeTab === 'pending' && (
-                    <div className="request-status-pending">
-                        <span>Pending...</span>
-                    </div>
-                )}
-              </div>
-            );
-          })
-        ) : (
-          <div className="no-requests-card">
-            <Users className="h-12 w-12 mx-auto mb-2" />
-            <p>{activeTab === 'incoming' ? 'No incoming friend requests.' : 'No friend requests sent by you are currently pending.'}</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-export default FriendRequestsPage;
+  export default FriendRequestsPage;

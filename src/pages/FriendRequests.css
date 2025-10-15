@@ -257,3 +257,79 @@
   padding: 2px 6px;
 }
 .notify-close:hover { opacity: 1; }
+
+/* ========================================
+   ... (existing styles) ...
+   ======================================== */
+
+/* --- NEW: Styles for Tabs --- */
+.friend-requests-tabs {
+  display: flex;
+  padding: 0 1.5rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tab-button {
+  flex: 1;
+  padding: 0.75rem 0.5rem;
+  background-color: transparent;
+  border: none;
+  color: var(--text-gray);
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 150ms ease-in-out, border-bottom-color 150ms ease-in-out;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px; /* Overlap the container border */
+}
+
+.tab-button.active {
+  color: var(--text-light);
+  border-bottom-color: var(--primary-accent);
+}
+
+/* --- Styles for the request cards (existing) --- */
+.request-card {
+    background-color: rgba(255, 0, 70, 0.3) !important;
+    border: none !important;
+    border-radius: 1.5rem !important;
+    padding: 1rem !important;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* ... (other existing request card styles) ... */
+
+/* --- NEW: Styles for Status Badge --- */
+.request-status-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.8rem;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-light);
+}
+
+.status-icon {
+  width: 0.9rem;
+  height: 0.9rem;
+  stroke-width: 2.5;
+}
+
+.request-status-badge.status-accepted {
+  background-color: rgba(57, 170, 72, 0.3); /* Green */
+  color: #86efac; /* Light Green Text */
+}
+.request-status-badge.status-rejected {
+  background-color: rgba(255, 0, 70, 0.3); /* Red */
+  color: #fca5a5; /* Light Red Text */
+}
+.request-status-badge.status-pending {
+  background-color: rgba(161, 161, 170, 0.2); /* Gray */
+  color: var(--text-gray);
+}
+
