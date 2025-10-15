@@ -333,3 +333,10 @@ body {
     cursor: not-allowed !important;
     text-decoration: none !important;
 }
+
+/* Add this new rule for the forgot password link container */
+.auth-forgot-password-link {
+  width: 100%;
+  text-align: center;
+  margin-top: 0.5rem; /* Optional: adds a little space above the main button */
+}
