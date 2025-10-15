@@ -386,21 +386,16 @@ const Profile = () => {
   const fetchNotifications = async () => {
     if (!user?.id) return;
     try {
-      // TODO: Replace with real API call to fetch comment notifications
-      // const notifications = await apiClient.getNotifications(user.id);
-      // setNotifications(notifications);
-      // setUnreadNotifications(notifications.filter(n => !n.read).length);
-      
       // Load notifications from localStorage to persist them
       const savedNotifications = localStorage.getItem(`notifications_${user.id}`);
       const savedUnreadCount = localStorage.getItem(`unread_notifications_${user.id}`);
-      
+
       if (savedNotifications) {
         setNotifications(JSON.parse(savedNotifications));
       } else {
         setNotifications([]);
       }
-      
+
       if (savedUnreadCount) {
         setUnreadNotifications(parseInt(savedUnreadCount));
       } else {
@@ -418,22 +413,6 @@ const Profile = () => {
     localStorage.setItem(`unread_notifications_${user.id}`, unreadCount.toString());
   };
 
-  // Test function to add demo notifications (for testing purposes)
-  const addTestNotification = () => {
-    const testNotification = {
-      id: Date.now(),
-      type: 'comment',
-      message: `Test notification ${notifications.length + 1}`,
-      time: 'now'
-    };
-    const newNotifications = [...notifications, testNotification];
-    const newUnreadCount = unreadNotifications + 1;
-    
-    setNotifications(newNotifications);
-    setUnreadNotifications(newUnreadCount);
-    saveNotificationsToStorage(newNotifications, newUnreadCount);
-  };
-
   const clearAllNotifications = () => {
     setNotifications([]);
     setUnreadNotifications(0);
@@ -444,7 +423,7 @@ const Profile = () => {
   const deleteNotification = (notificationId: number) => {
     const newNotifications = notifications.filter(n => n.id !== notificationId);
     const newUnreadCount = Math.max(0, unreadNotifications - 1);
-    
+
     setNotifications(newNotifications);
     setUnreadNotifications(newUnreadCount);
     saveNotificationsToStorage(newNotifications, newUnreadCount);
@@ -486,7 +465,7 @@ const Profile = () => {
               <h3>Notifications</h3>
               <div className="notifications-header-actions">
                 {notifications.length > 0 && (
-                  <button 
+                  <button
                     className="notifications-clear"
                     onClick={clearAllNotifications}
                     title="Clear all notifications"
@@ -494,7 +473,7 @@ const Profile = () => {
                     Clear All
                   </button>
                 )}
-                <button 
+                <button
                   className="notifications-close"
                   onClick={() => setShowNotifications(false)}
                 >
@@ -514,7 +493,7 @@ const Profile = () => {
                       <p className="notification-message">{notification.message}</p>
                       <span className="notification-time">{notification.time}</span>
                     </div>
-                    <button 
+                    <button
                       className="notification-delete"
                       onClick={() => deleteNotification(notification.id)}
                       title="Delete notification"
@@ -788,15 +767,18 @@ const Profile = () => {
 
         {view === 'profile' && (
           <>
-            <div className="profile-actions-section">
-              <button className="profile-friends-count" onClick={() => navigate('/friends')}>
-                <span className="count-number">{friendCount}</span>
-                <span className="count-label">Friends</span>
-              </button>
+           <div className="profile-actions-section">
+             {/* Wrap the Friends button in a div */}
+             <div className="profile-actions-left">
+               <button className="profile-friends-count" onClick={() => navigate('/friends')}>
+                 <span className="count-number">{friendCount}</span>
+                 <span className="count-label">Friends</span>
+               </button>
+             </div>
 
-              <Button className="profile-add-friends-btn" onClick={() => navigate('/add-friends')}>
-                Add friends
-              </Button>
+             <Button className="profile-add-friends-btn" onClick={() => navigate('/add-friends')}>
+               Add friends
+             </Button>
 
               <div className="profile-buttons-group">
                 <Button
@@ -811,16 +793,6 @@ const Profile = () => {
                       {unreadNotifications > 99 ? '99+' : unreadNotifications}
                     </span>
                   )}
-                </Button>
-
-                {/* Test button - remove in production */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={addTestNotification}
-                  style={{ fontSize: '0.7rem', padding: '0.25rem 0.5rem' }}
-                >
-                  + Test
                 </Button>
 
                 <Button

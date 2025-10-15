@@ -78,6 +78,7 @@
   min-height: 10vh;
 }
 
+/* --- REVERTED: Original header button styles --- */
 .profile-settings-button,
 .profile-edit-button,
 .profile-back-button {
@@ -99,7 +100,8 @@
 .profile-settings-button svg,
 .profile-edit-button svg,
 .profile-back-button svg,
-.profile-requests-button svg {
+.profile-requests-button svg,
+.profile-notifications-button svg {
 
   height: 3vh !important;
   width: 3vh !important;
@@ -107,6 +109,7 @@
 
 .profile-back-button svg { stroke-width: 3 !important; margin-top:2rem;}
 .profile-requests-button svg { stroke-width: 2.5 !important; }
+.profile-notifications-button svg { stroke-width: 2.5 !important; }
 
 .profile-avatar {
   width: 12vh;
@@ -131,14 +134,33 @@
   font-size: 1.8vh;
 }
 
-/* Friends Actions */
+/* --- REVERTED: Friends Actions --- */
 .profile-actions-section {
   display: flex;
-  justify-content: center;
+  justify-content: space-between; /* This is the key change */
   align-items: center;
   padding: 2vh 1.5rem;
-  gap: 2rem;
-  flex-wrap: wrap;
+  width: 100%;
+}
+
+/* This targets the new left group and the existing right group */
+.profile-actions-left,
+.profile-buttons-group {
+  flex: 1; /* Makes the containers grow to fill available space */
+  display: flex;
+  align-items: center;
+}
+
+/* Align the items within each group */
+/* Align the items within each group */
+.profile-actions-left {
+  justify-content: flex-end; /* Pushes friends count TOWARDS the center */
+  margin-right: 1rem;
+}
+.profile-buttons-group {
+  justify-content: flex-start; /* Pushes icon buttons TOWARDS the center */
+  margin-left: 0;
+  gap: 1rem;
 }
 
 .profile-buttons-group {
@@ -215,26 +237,22 @@
 
 }
 
-/* --- THIS IS THE NEW, UPDATED CODE --- */
 .profile-subpage-back-button {
   position: absolute;
-  top: 1.25rem;      /* Position from the top edge of the header */
-  left: 2rem;        /* Position from the left edge */
+  top: 1.25rem;
+  left: 2rem;
   color: var(--primary-accent) !important;
   background: transparent !important;
-  /* We removed top:50% and transform to match your new style */
 }
 
 .profile-subpage-back-button svg {
-  width: 3vh !important;       /* CHANGED: Made the icon bigger */
-  height: 3vh !important;      /* CHANGED: Made the icon bigger */
-  stroke-width: 3 !important;  /* CHANGED: Made the icon thicker */
+  width: 3vh !important;
+  height: 3vh !important;
+  stroke-width: 3 !important;
 }
 
-/* --- THIS IS THE OLD CODE --- */
-/* --- THIS IS THE NEW, UPDATED CODE --- */
 .profile-subpage-title {
-  font-size: 1.2rem;   /* CHANGED: Increased font size */
+  font-size: 1.2rem;
   font-weight: 600;
 }
 /* ensure content doesn't hide under fixed bottom bar */
