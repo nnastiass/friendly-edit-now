@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
+// NOTE: This assumes apiClient has a method for sent requests (e.g., getSentFriendRequests)
 import { apiClient } from '@/lib/api-client';
 import { ArrowLeft, Check, X, Users } from 'lucide-react';
 import './FriendRequests.css';
@@ -11,7 +12,7 @@ const pastelColors = [
   '#FFADAD', '#FFD6A5', '#FDFFB6', '#CAFFBF', '#9BF6FF', '#A0C4FF', '#BDB2FF', '#FFC6FF'
 ];
 
-const generatePastelColor = (id: string) => {
+const generatePastelColor = (id: string | null) => {
   if (!id) return pastelColors[0];
   const hash = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   return pastelColors[hash % pastelColors.length];
@@ -19,8 +20,8 @@ const generatePastelColor = (id: string) => {
 
 interface FriendRequest {
   id: string;
-  sender_id: string;
-  recipient_id: string;
+  sender_id: string | null; // For incoming: the user who sent the request
+  receiver_id: string | null; // For sent: the user who received the request
   status: 'pending' | 'accepted' | 'rejected';
   username: string | null;
   full_name: string | null;
@@ -32,9 +33,11 @@ type BannerType = 'error' | 'success' | 'info';
 const FriendRequestsPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [requests, setRequests] = useState<FriendRequest[]>([]);
+  // --- NEW: Separate state for Incoming and Sent Requests ---
+  const [incomingRequests, setIncomingRequests] = useState<FriendRequest[]>([]);
+  const [sentRequests, setSentRequests] = useState<FriendRequest[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'incoming' | 'pending'>('incoming');
+  const [activeTab, setActiveTab] = useState<'incoming' | 'pending'>('incoming'); // 'pending' for requests sent by me
 
   const [banner, setBanner] = useState<{ message: string; type: BannerType } | null>(null);
   const [bannerVisible, setBannerVisible] = useState(false);
@@ -66,13 +69,24 @@ const FriendRequestsPage = () => {
     if (user) fetchFriendRequests();
   }, [user]);
 
+  // --- MODIFIED: Fetch both incoming and sent requests ---
   const fetchFriendRequests = async () => {
     if (!user?.id) return;
     setLoading(true);
     try {
-      const requestsData: FriendRequest[] = await apiClient.getFriendRequests(user.id);
-      console.log('Friend Requests API Response:', requestsData);
-      setRequests(requestsData);
+      // 1. Fetch Incoming Requests (from /api/friend-requests/:userId)
+      const incomingData: FriendRequest[] = await apiClient.getFriendRequests(user.id);
+
+      // 2. Fetch Sent/Pending Requests (from /api/friend-requests/sent/:userId)
+      const sentData: FriendRequest[] = await apiClient.getSentFriendRequests(user.id);
+
+      console.log('Incoming Requests API Response:', incomingData);
+      console.log('Sent Requests API Response:', sentData);
+
+      // The backend API already filters for status = 'pending'
+      setIncomingRequests(incomingData);
+      setSentRequests(sentData);
+
     } catch (error) {
       console.error('Failed to load friend requests:', error);
       showBanner('Failed to load friend requests.', 'error');
@@ -85,14 +99,15 @@ const FriendRequestsPage = () => {
     if (!user?.id) return;
 
     // Optimistic UI update
-    setRequests(prev => prev.filter(req => req.id !== requestId));
+    setIncomingRequests(prev => prev.filter(req => req.id !== requestId));
+    showBanner(`Request ${action}.`, 'info');
 
     try {
       await apiClient.respondToFriendRequest(requestId, action);
     } catch (error) {
       console.error('Failed to process request:', error);
       showBanner('Failed to process request.', 'error');
-      fetchFriendRequests(); // revert UI
+      fetchFriendRequests(); // revert UI by re-fetching
     }
   };
 
@@ -101,9 +116,8 @@ const FriendRequestsPage = () => {
     return name.split(' ').map(n => n.charAt(0)).join('').toUpperCase();
   };
 
-  // --- Filter requests by tab ---
-  const incomingRequests = requests.filter(r => r.recipient_id === user?.id && r.status === 'pending');
-  const pendingRequests = requests.filter(r => r.sender_id === user?.id && r.status === 'pending');
+  // --- NEW: Use activeRequests to select list based on tab ---
+  const activeRequests = activeTab === 'incoming' ? incomingRequests : sentRequests;
 
   return (
     <div className="friend-requests-page-container">
@@ -128,44 +142,56 @@ const FriendRequestsPage = () => {
       {/* Tabs */}
       <div className="friend-requests-tabs">
         <button className={`tab-button ${activeTab === 'incoming' ? 'active' : ''}`} onClick={() => setActiveTab('incoming')}>Incoming</button>
-        <button className={`tab-button ${activeTab === 'pending' ? 'active' : ''}`} onClick={() => setActiveTab('pending')}>Pending</button>
+        <button className={`tab-button ${activeTab === 'pending' ? 'active' : ''}`} onClick={() => setActiveTab('pending')}>Pending Sent</button>
       </div>
 
       {/* Requests List */}
       <div className="friend-requests-page-content">
         {loading ? (
           <p className="loading-text">Loading requests...</p>
-        ) : (activeTab === 'incoming' ? incomingRequests : pendingRequests).length > 0 ? (
-          (activeTab === 'incoming' ? incomingRequests : pendingRequests).map(request => (
-            <div key={request.id} className="request-card">
-              <div className="request-info">
-                <Avatar className="request-avatar">
-                  <AvatarImage src={request.avatar_url || ''} />
-                  <AvatarFallback className="avatar-fallback" style={{ backgroundColor: generatePastelColor(request.sender_id) }}>
-                    {getInitials(request.full_name)}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="request-name">{request.full_name || 'Unknown'}</p>
-                  <p className="request-username">@{request.username || '...'}</p>
+        ) : activeRequests.length > 0 ? (
+          activeRequests.map(request => {
+            // --- MODIFIED: Determine the ID of the 'other' user for avatar color/info ---
+            const otherUserId = activeTab === 'incoming' ? request.sender_id : request.receiver_id;
+
+            return (
+              <div key={request.id} className="request-card">
+                <div className="request-info">
+                  <Avatar className="request-avatar">
+                    <AvatarImage src={request.avatar_url || ''} />
+                    <AvatarFallback className="avatar-fallback" style={{ backgroundColor: generatePastelColor(otherUserId) }}>
+                      {getInitials(request.full_name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="request-name">{request.full_name || 'Unknown'}</p>
+                    <p className="request-username">@{request.username || '...'}</p>
+                  </div>
                 </div>
+                {/* Only show actions for INCOMING requests */}
+                {activeTab === 'incoming' && (
+                  <div className="request-actions">
+                    <Button size="icon" className="decline-button" onClick={() => handleFriendRequest(request.id, request.sender_id || '', 'rejected')}>
+                      <X />
+                    </Button>
+                    <Button size="icon" className="accept-button" onClick={() => handleFriendRequest(request.id, request.sender_id || '', 'accepted')}>
+                      <Check />
+                    </Button>
+                  </div>
+                )}
+                {/* For pending (sent) requests, display a status */}
+                {activeTab === 'pending' && (
+                    <div className="request-status-pending">
+                        <span>Pending...</span>
+                    </div>
+                )}
               </div>
-              {activeTab === 'incoming' && (
-                <div className="request-actions">
-                  <Button size="icon" className="decline-button" onClick={() => handleFriendRequest(request.id, request.sender_id, 'rejected')}>
-                    <X />
-                  </Button>
-                  <Button size="icon" className="accept-button" onClick={() => handleFriendRequest(request.id, request.sender_id, 'accepted')}>
-                    <Check />
-                  </Button>
-                </div>
-              )}
-            </div>
-          ))
+            );
+          })
         ) : (
           <div className="no-requests-card">
             <Users className="h-12 w-12 mx-auto mb-2" />
-            <p>{activeTab === 'incoming' ? 'No incoming requests' : 'No pending requests'}</p>
+            <p>{activeTab === 'incoming' ? 'No incoming friend requests.' : 'No friend requests sent by you are currently pending.'}</p>
           </div>
         )}
       </div>
