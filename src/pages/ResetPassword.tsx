@@ -1,93 +1,109 @@
-// src/pages/ResetPassword.tsx
-import React, { useMemo, useState } from 'react';
+// Create a new file, e.g., src/pages/ResetPassword.tsx
+
+import React, { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { apiClient } from '@/lib/api-client';
-import './Index.css';
+import './Auth.css'; // Reuse your auth styles
 
-export default function ResetPassword() {
-  const [sp] = useSearchParams();
-  const token = useMemo(() => sp.get('token') || '', [sp]);
-  const [newPassword, setNewPassword] = useState('');
-  const [confirm, setConfirm] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [ok, setOk] = useState<string | null>(null);
+const ResetPassword = () => {
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const [token, setToken] = useState<string | null>(null);
 
-  const submit = async (e: React.FormEvent) => {
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const tokenFromUrl = searchParams.get('token');
+    if (tokenFromUrl) {
+      setToken(tokenFromUrl);
+    } else {
+      setError('No reset token found. The link may be invalid.');
+    }
+  }, [searchParams]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setOk(null);
-
-    if (!token) {
-      setError('Reset link is missing or invalid.');
+    if (newPassword !== confirmPassword) {
+      setError("Passwords don't match.");
       return;
     }
-    if (newPassword !== confirm) {
-      setError('New passwords do not match.');
-      return;
-    }
+    setError('');
+    setMessage('');
+    setLoading(true);
 
-    setBusy(true);
     try {
-      await apiClient.resetPassword(token, newPassword, confirm);
-      setOk('Password reset successfully. You can now sign in.');
-      setTimeout(() => navigate('/auth'), 900);
-    } catch (e: any) {
-      setError(e?.message || 'Unable to reset password. The link may be invalid or expired.');
+      const response = await fetch('http://localhost:3000/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, newPassword, confirmPassword }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'An error occurred.');
+      }
+
+      setMessage('Password reset successfully! You can now log in.');
+      setTimeout(() => navigate('/auth'), 3000); // Redirect to login after 3 seconds
+
+    } catch (err: any) {
+      setError(err.message || 'Failed to reset password. The token might be invalid or expired.');
     } finally {
-      setBusy(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div className="profile-container edit-mode">
-      <div className="profile-subpage-header">
-        <button className="profile-subpage-back-button" onClick={() => navigate('/auth')}>←</button>
-        <h1 className="profile-subpage-title">Set New Password</h1>
-      </div>
-
-      <div className="profile-edit-section">
-        <form onSubmit={submit} className="settings-form" noValidate>
-          <div className="edit-form-group">
-            <Label htmlFor="newPassword">New Password</Label>
-            <Input
-              id="newPassword"
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="Enter your new password"
-              required
-              className="profile-edit-input"
-            />
+    <div className="auth-container" style={{ background: 'radial-gradient(circle 25% at 50% 20%, #FF0046, #000000)' }}>
+      <div className="auth-mobile-frame">
+        <div className="auth-layout">
+          <div className="auth-header">
+            <h1 className="auth-app-title">GETOUT</h1>
+            <h2 className="auth-page-title">Set a New Password</h2>
           </div>
 
+          {message && <p className="auth-success-message">{message}</p>}
+          {error && <p className="auth-error-message">{error}</p>}
 
-
-          <div className="edit-form-group">
-            <Label htmlFor="confirm">Confirm New Password</Label>
-            <Input
-              id="confirm"
-              type="password"
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              placeholder="Repeat the new password"
-              required
-              className="profile-edit-input"
-            />
-          </div>
-<p className="auth-hint">At least 8 characters, include uppercase, lowercase, and a number.</p>
-          <Button type="submit" disabled={busy} className="profile-save-button">
-            {busy ? 'Saving...' : 'Save New Password'}
-          </Button>
-
-          {error && <p className="auth-hint" style={{ color: 'tomato', marginTop: 12 }}>{error}</p>}
-          {ok && <p className="auth-hint" style={{ color: 'lightgreen', marginTop: 12 }}>{ok}</p>}
-        </form>
+          {!message && ( // Hide form on success
+            <form onSubmit={handleSubmit} className="auth-form">
+              <div className="auth-field">
+                <Label htmlFor="newPassword">New Password</Label>
+                <Input
+                  id="newPassword"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                  className="auth-input"
+                />
+              </div>
+              <div className="auth-field">
+                <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  className="auth-input"
+                />
+              </div>
+              <Button type="submit" disabled={!token || loading} className="auth-submit-button">
+                {loading ? 'Resetting...' : 'Reset Password'}
+              </Button>
+            </form>
+          )}
+        </div>
       </div>
     </div>
   );
-}
+};
+
+export default ResetPassword;
