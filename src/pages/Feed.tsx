@@ -22,9 +22,6 @@ interface BannerNotification {
   type: 'error' | 'info';
 }
 
-// --- PAGED SCROLLING (one post per gesture) ---
-
-
 // --- pastel helpers (unchanged) ---
 const pastelColors = [
   '#FFADAD', '#FFD6A5', '#FDFFB6', '#CAFFBF', '#9BF6FF', '#A0C4FF', '#BDB2FF', '#FFC6FF'
@@ -113,6 +110,28 @@ const Feed = () => {
   const pullStartY = useRef(0);
   const REFRESH_THRESHOLD = 80;
 
+  const bannerTimerRef = useRef<number | null>(null);
+
+  // --- Hold-to-Delete States ---
+  const pressTimerRef = useRef<number | null>(null);
+  const [confirmDeleteCommentId, setConfirmDeleteCommentId] = useState<string | null>(null);
+  // --- END Hold-to-Delete States ---
+
+  const showBanner = useCallback((message: string, type: 'error' | 'info' = 'info') => {
+      // Clear any existing timer
+      if (bannerTimerRef.current !== null) {
+          window.clearTimeout(bannerTimerRef.current);
+      }
+
+      setBanner({ message, type });
+
+      // Set new timer to hide the banner after 5 seconds
+      bannerTimerRef.current = window.setTimeout(() => {
+          setBanner(null);
+          bannerTimerRef.current = null;
+      }, 5000);
+  }, []);
+
   useEffect(() => {
     const el = feedRef.current;
     if (!el) return;
@@ -129,15 +148,14 @@ const Feed = () => {
     });
   }, [posts.length]);
 
-  // Effect to automatically hide the banner after 5 seconds
+  // Effect to automatically hide the banner after 5 seconds (cleanup)
   useEffect(() => {
-    if (banner) {
-      const timer = setTimeout(() => {
-        setBanner(null);
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [banner]);
+    return () => {
+        if (bannerTimerRef.current !== null) {
+            window.clearTimeout(bannerTimerRef.current);
+        }
+    };
+  }, []);
 
   const animateAndClose = () => {
     if (isClosing) return;
@@ -178,8 +196,8 @@ const Feed = () => {
   };
 
   useEffect(() => {
-    document.body.style.overflow = isCommentsOpen ? 'hidden' : '';
-  }, [isCommentsOpen]);
+    document.body.style.overflow = isCommentsOpen || confirmDeleteCommentId ? 'hidden' : '';
+  }, [isCommentsOpen, confirmDeleteCommentId]); // Watch both modal states
 
   const fetchPosts = useCallback(async (currentPage: number) => {
     if (!user) return;
@@ -313,7 +331,7 @@ const Feed = () => {
     if (next !== currentIndex) {
       snapTo(next);
     }
-  }, [currentIndex, posts.length, hasMore, isLoading, isRefreshing, snapTo]);
+  }, [currentIndex, posts.length, snapTo]);
 
 
   const pagePrev = useCallback(() => {
@@ -516,7 +534,68 @@ useEffect(() => {
     setIsCommentsOpen(false);
     setCurrentComments([]);
     setCommentInput('');
+    setConfirmDeleteCommentId(null); // Reset the confirmation modal state
+    if (pressTimerRef.current) {
+        window.clearTimeout(pressTimerRef.current);
+        pressTimerRef.current = null;
+    }
   };
+
+  // --- Hold-to-Delete Handlers (Modified for Modal) ---
+
+  const handlePressStart = (commentId: string) => {
+    if (!user) return;
+
+    // Clear any existing timer
+    if (pressTimerRef.current) {
+        window.clearTimeout(pressTimerRef.current);
+    }
+
+    // Set a new timer to open the full-screen confirmation modal after 500ms
+    pressTimerRef.current = window.setTimeout(() => {
+        setConfirmDeleteCommentId(commentId);
+        pressTimerRef.current = null;
+    }, 500);
+  };
+
+  const handlePressEnd = () => {
+    if (pressTimerRef.current) {
+        // If the timer is still running, clear it (it was a short tap)
+        window.clearTimeout(pressTimerRef.current);
+        pressTimerRef.current = null;
+    }
+  };
+
+  // --- Handle Comment Deletion (Called from the full-screen modal) ---
+  const executeDeleteComment = async (commentId: string) => {
+    const commentToDelete = currentComments.find(c => c.id === commentId);
+
+    if (!user || !commentToDelete || commentToDelete.userId !== user.id) return;
+
+    try {
+      // The API client method requires user ID for authorization check on the server
+      await apiClient.deleteComment(commentId, user.id);
+
+      // Optimistic UI update
+      setCurrentComments((prev) => prev.filter((c) => c.id !== commentId));
+
+      showBanner('Comment deleted successfully.', 'info');
+      setConfirmDeleteCommentId(null); // Close the modal
+
+      // Clear press timer just in case
+      if (pressTimerRef.current) {
+          window.clearTimeout(pressTimerRef.current);
+          pressTimerRef.current = null;
+      }
+
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 'Failed to delete comment.';
+      showBanner(errorMessage, 'error');
+      setConfirmDeleteCommentId(null); // Close the modal even on error
+    }
+  };
+  // --- END Handle Comment Deletion ---
+
 
   const handleAddComment = async () => {
     if (!commentInput.trim() || !user) return;
@@ -526,7 +605,7 @@ useEffect(() => {
       const newCommentData = await apiClient.addComment(activePost.id, user.id, commentInput);
 
       if (newCommentData.message) {
-        setBanner({ type: 'info', message: newCommentData.message });
+        showBanner(newCommentData.message, 'info');
         setCommentInput('');
       } else {
         const newComment: Comment = {
@@ -541,7 +620,7 @@ useEffect(() => {
       }
     } catch (err: any) {
         const errorMessage = err.response?.data?.message || 'Too many comment requests. Try again later';
-        setBanner({ type: 'error', message: errorMessage });
+        showBanner(errorMessage, 'error');
     }
   };
 
@@ -565,9 +644,13 @@ useEffect(() => {
     }
   };
 
+  // Find the comment object currently being confirmed for deletion
+  const commentToConfirm = currentComments.find(c => c.id === confirmDeleteCommentId);
+
+
   return (
     <div className="feed-container">
-      {/* ✅ ADDED: Banner Notification JSX */}
+      {/* Banner Notification JSX */}
       <div className="feed-banner-root">
         <div
           className={`feed-banner ${banner ? `feed-banner--visible feed-banner--${banner.type}` : ''}`}
@@ -635,6 +718,33 @@ useEffect(() => {
         </div>
       </div>
 
+      {/* ---------------------------------------------------------------------------------- */}
+      {/* 🛑 DELETE CONFIRMATION MODAL MOVED HERE: Always renders to ensure it's on top 🛑 */}
+      {/* ---------------------------------------------------------------------------------- */}
+      {commentToConfirm && (
+        <div className="delete-modal-backdrop" onClick={() => setConfirmDeleteCommentId(null)}>
+          <div className="delete-modal-content" onClick={(e) => e.stopPropagation()}>
+            <p className="delete-modal-text">Delete this comment?</p>
+            <p className="delete-modal-comment-preview">"{commentToConfirm.content.substring(0, 50)}..."</p>
+            <button
+              className="delete-modal-button"
+              onClick={() => executeDeleteComment(confirmDeleteCommentId)}
+            >
+              DELETE
+            </button>
+            <button
+              className="delete-modal-cancel-button"
+              onClick={() => setConfirmDeleteCommentId(null)}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ---------------------------------------------------------------------------------- */}
+      {/* COMMENTS MODAL REMAINS HERE: Its z-index is lower than the delete-modal-backdrop  */}
+      {/* ---------------------------------------------------------------------------------- */}
       {isCommentsOpen && (
         <div className="feed-comments-backdrop" onClick={animateAndClose}>
           <div ref={sheetRef} className="feed-comments-modal" onClick={(e) => e.stopPropagation()} onTransitionEnd={handleTransitionEnd} style={{ transform: `translateY(${sheetOffset}px)`, transition: isDragging ? 'none' : 'transform 260ms ease', touchAction: 'none', }} tabIndex={-1} onKeyDown={(e) => e.key === 'Escape' && animateAndClose()} >
@@ -644,7 +754,14 @@ useEffect(() => {
             <h3 className="feed-comments-title">Comments</h3>
             <div className="feed-comments-list">
               {currentComments.map((c) => (
-                <div key={c.id} className="feed-comment">
+                <div
+                    key={c.id}
+                    className="feed-comment"
+                    // Hold handlers that trigger the full-screen modal
+                    onPointerDown={user && c.userId === user.id ? () => handlePressStart(c.id) : undefined}
+                    onPointerUp={user && c.userId === user.id ? handlePressEnd : undefined}
+                    onPointerLeave={user && c.userId === user.id ? handlePressEnd : undefined}
+                >
                   {c.avatarUrl ? ( <img src={c.avatarUrl} alt={`${c.username}'s avatar`} className="feed-comment-avatar" /> ) : ( <div className="feed-comment-avatar-placeholder" style={{ backgroundColor: generatePastelColor(c.userId) }} > {getInitials(c.username)} </div> )}
                   <div className="feed-comment-body">
                     <span className="feed-comment-username">@{c.username}</span>

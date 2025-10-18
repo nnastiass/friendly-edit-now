@@ -1,7 +1,7 @@
 // src/lib/api-client.ts
 
 // *** IMPORTANT: REPLACE WITH YOUR ACTUAL API BASE URL ***
-export const API_BASE_URL = 'http://192.168.0.102:3000';
+export const API_BASE_URL = 'http://192.168.0.139:3000';
 
 export interface Post {
   id: string;
@@ -254,4 +254,27 @@ export const apiClient = {
 
     return uploadFile<any>('/api/media/upload', formData);
   },
+
+
+
+  // DELETE /api/comments/:commentId
+      deleteComment: async (commentId: string, userId: string) => {
+              const response = await fetch(`${API_BASE_URL}/api/comments/${commentId}`, {
+                  method: 'DELETE',
+                  headers: {
+                      'Content-Type': 'application/json',
+                      // Assuming you use a header for the user ID, or the Auth token handles it
+                      'x-user-id': userId, // IMPORTANT: Ensure the authenticated user ID is passed
+                      // ... Auth token ...
+                  },
+              });
+
+              // The status 404/403/204 logic follows
+              if (!response.ok) {
+                   const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+                   throw new Error(errorData.message || `Failed to delete comment with status ${response.status}.`);
+              }
+
+              return response.status === 204 ? {} : response.json();
+          },
 };
