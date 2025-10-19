@@ -3,12 +3,12 @@
 /* Keep your existing .feed-post-fullscreen block as-is, but add: */
 @supports (height: 100dvh) {
   .feed-post-fullscreen {
-    height: 100dvh; /* fixes initial mobile viewport offset without changing later layout */
+    height: calc(100dvh - 60px); /* Use the remaining height */
   }
 }
 @supports (height: 100svh) {
   .feed-post-fullscreen {
-    height: 100svh; /* fallback for older Safari */
+    height: calc(100svh - 60px); /* Use the remaining height */
   }
 }
 
@@ -53,7 +53,7 @@ overscroll-behavior-y: contain;
 
 .feed-post-fullscreen {
   width: 100%;
-  height: 100vh;
+  height: calc(100vh - 60px); /* This is the fallback */
   scroll-snap-align: start;
   scroll-snap-stop: always; /* ← move this here */
   position: relative;

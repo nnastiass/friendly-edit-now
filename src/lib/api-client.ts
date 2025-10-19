@@ -1,7 +1,7 @@
 // src/lib/api-client.ts
 
 // *** IMPORTANT: REPLACE WITH YOUR ACTUAL API BASE URL ***
-export const API_BASE_URL = 'http://192.168.0.139:3000';
+export const API_BASE_URL = 'http://192.168.1.8:3000';
 
 export interface Post {
   id: string;

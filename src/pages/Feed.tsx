@@ -136,7 +136,6 @@ const Feed = () => {
     const el = feedRef.current;
     if (!el) return;
     el.style.scrollPaddingTop = '60px';
-    el.style.paddingTop = '0px';
   }, []);
 
   useEffect(() => {

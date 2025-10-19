@@ -52,20 +52,22 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
     // 1. Mobile Platform: Use Capacitor Camera Plugin
     if (platform === 'android' || platform === 'ios') {
         try {
-            const photo = await Camera.getPhoto({
+            // FIX: Use pickImages() to allow photos AND videos
+            const result = await Camera.pickImages({
                 quality: 90,
-                resultType: CameraResultType.Uri,
-                source: CameraSource.Photos,
-                saveToGallery: false,
-                media: 'prompt'
+                limit: 1 // Since your UI only handles one file
             });
 
-            if (photo.webPath) {
-                const format = photo.format || 'jpeg';
-                const fileExtension = format === 'mp4' ? 'mp4' : format;
-                const fileName = `upload_${new Date().getTime()}.${fileExtension}`;
+            // pickImages returns an array, so get the first item
+            const media = result.photos[0];
 
-                const file = await convertBlobUrlToFile(photo.webPath, fileName);
+            if (media && media.webPath) {
+                // Get the format from the webPath extension if possible
+                const fileExtension = media.webPath.split('.').pop()?.toLowerCase() || 'jpeg';
+                const format = (fileExtension === 'mov' || fileExtension === 'mp4') ? fileExtension : 'jpeg';
+                const fileName = `upload_${new Date().getTime()}.${format}`;
+
+                const file = await convertBlobUrlToFile(media.webPath, fileName);
 
                 setGalleryFiles([file]);
                 setSelectedFile(file);
