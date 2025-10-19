@@ -4,28 +4,84 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogOverlay } from 
 import { toast } from 'sonner';
 import '@/components/MediaUpload.css';
 
+// -----------------------------------------------------
+// --- CAPACITOR IMPORTS (Only import the plugin) ---
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+// We are explicitly NOT importing isPlatform to avoid the build/runtime errors.
+// -----------------------------------------------------
+
 interface MediaUploadProps {
   isOpen: boolean;
   onClose: () => void;
   challengeTitle: string;
-  // NEW: A callback to hand off the selected file to the parent component
   onFileSelectForUpload: (file: File) => void;
 }
+
+// -----------------------------------------------------
+// --- FIX: Custom Helper to Safely Get Platform String ---
+const getPlatformType = (): 'web' | 'android' | 'ios' => {
+  // Check global Capacitor object, which is injected into the WebView on mobile.
+  if (typeof window !== 'undefined' && (window as any).Capacitor?.getPlatform) {
+    return (window as any).Capacitor.getPlatform() as 'web' | 'android' | 'ios';
+  }
+  return 'web';
+};
+// -----------------------------------------------------
 
 const MediaUpload: React.FC<MediaUploadProps> = ({
   isOpen,
   onClose,
   challengeTitle,
-  onFileSelectForUpload, // Use the new prop
+  onFileSelectForUpload,
 }) => {
   const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const openGallery = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.accept = 'image/*,video/*';
-      fileInputRef.current.click();
+  // Helper function to convert the temporary blob path to a File object
+  const convertBlobUrlToFile = async (webPath: string, fileName: string): Promise<File> => {
+      const blob = await fetch(webPath).then(r => r.blob());
+      const mimeType = blob.type || (fileName.endsWith('.mp4') ? 'video/mp4' : 'image/jpeg');
+      return new File([blob], fileName, { type: mimeType });
+  };
+
+
+  const openGallery = async () => {
+    const platform = getPlatformType();
+
+    // 1. Mobile Platform: Use Capacitor Camera Plugin
+    if (platform === 'android' || platform === 'ios') {
+        try {
+            const photo = await Camera.getPhoto({
+                quality: 90,
+                resultType: CameraResultType.Uri,
+                source: CameraSource.Photos,
+                saveToGallery: false,
+                media: 'prompt'
+            });
+
+            if (photo.webPath) {
+                const format = photo.format || 'jpeg';
+                const fileExtension = format === 'mp4' ? 'mp4' : format;
+                const fileName = `upload_${new Date().getTime()}.${fileExtension}`;
+
+                const file = await convertBlobUrlToFile(photo.webPath, fileName);
+
+                setGalleryFiles([file]);
+                setSelectedFile(file);
+            }
+        } catch (e: any) {
+            // User likely cancelled or permission was denied
+            if (!e.message?.includes('cancelled')) {
+                 toast.error('Chyba: Nepodarilo sa otvoriť galériu. Skús znova.');
+            }
+            console.error(e);
+        }
+    }
+    // 2. Web/Fallback: Use standard HTML file input
+    else if (fileInputRef.current) {
+        fileInputRef.current.accept = 'image/*,video/*';
+        fileInputRef.current.click();
     }
   };
 
@@ -35,18 +91,13 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
     setSelectedFile(files[0] || null);
   };
 
-  // MODIFIED: This function no longer performs the upload.
-  // It just validates the file and passes it to the parent.
   const handleConfirmUpload = () => {
     if (!selectedFile) {
       toast.error('Vyber súbor pre nahratie');
       return;
     }
-    
-    // Pass the selected file to the parent component.
+
     onFileSelectForUpload(selectedFile);
-    
-    // Close the dialog immediately.
     handleClose();
   };
 
@@ -136,7 +187,7 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
 
         <div className="flex gap-2 p-4">
           <Button
-            onClick={handleConfirmUpload} // MODIFIED function name
+            onClick={handleConfirmUpload}
             className="flex-1"
             style={{
               backgroundColor: '#ff0046',
