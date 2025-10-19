@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Home, User, Plus, ArrowLeft } from 'lucide-react';
-import UserSearch from '@/components/UserSearch'; // UserSearch has been updated
+import UserSearch from '@/components/UserSearch'; // UserSearch has been updated.
 import './AddFriends.css';
 
 const AddFriends = () => {
