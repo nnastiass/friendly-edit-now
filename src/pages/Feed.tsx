@@ -85,6 +85,7 @@ const Feed = () => {
   const [currentComments, setCurrentComments] = useState<Comment[]>([]);
   const [commentInput, setCommentInput] = useState('');
   const [banner, setBanner] = useState<BannerNotification | null>(null);
+  const [commentsPollingInterval, setCommentsPollingInterval] = useState<NodeJS.Timeout | null>(null);
 
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -514,19 +515,9 @@ useEffect(() => {
     setIsCommentsOpen(true);
     setSheetOffset(window.innerHeight);
     requestAnimationFrame(() => setSheetOffset(0));
-    try {
-      const commentsData = await apiClient.getComments(postId);
-      const transformedComments = commentsData.map((c: any) => ({
-        id: c.id,
-        userId: c.user_id,
-        username: c.username,
-        content: c.content,
-        avatarUrl: c.avatar_url,
-      }));
-      setCurrentComments(transformedComments);
-    } catch {
-      setCurrentComments([]);
-    }
+    
+    // Start polling for real-time comments
+    startCommentsPolling(postId);
   };
 
   const closeComments = () => {
@@ -538,6 +529,9 @@ useEffect(() => {
         window.clearTimeout(pressTimerRef.current);
         pressTimerRef.current = null;
     }
+    
+    // Stop polling when comments are closed
+    stopCommentsPolling();
   };
 
   // --- Hold-to-Delete Handlers (Modified for Modal) ---
@@ -596,6 +590,44 @@ useEffect(() => {
   // --- END Handle Comment Deletion ---
 
 
+  // --- Load Comments Function ---
+  const loadComments = async (postId: string) => {
+    try {
+      const commentsData = await apiClient.getComments(postId);
+      const transformedComments = commentsData.map((c: any) => ({
+        id: c.id,
+        userId: c.user_id,
+        username: c.username,
+        content: c.content,
+        avatarUrl: c.avatar_url,
+      }));
+      setCurrentComments(transformedComments);
+    } catch (err) {
+      console.error('Failed to load comments:', err);
+    }
+  };
+
+  // --- Start Comments Polling ---
+  const startCommentsPolling = (postId: string) => {
+    // Load comments immediately
+    loadComments(postId);
+    
+    // Set up polling every 3 seconds
+    const interval = setInterval(() => {
+      loadComments(postId);
+    }, 3000);
+    
+    setCommentsPollingInterval(interval);
+  };
+
+  // --- Stop Comments Polling ---
+  const stopCommentsPolling = () => {
+    if (commentsPollingInterval) {
+      clearInterval(commentsPollingInterval);
+      setCommentsPollingInterval(null);
+    }
+  };
+
   const handleAddComment = async () => {
     if (!commentInput.trim() || !user) return;
     try {
@@ -646,6 +678,12 @@ useEffect(() => {
   // Find the comment object currently being confirmed for deletion
   const commentToConfirm = currentComments.find(c => c.id === confirmDeleteCommentId);
 
+  // Cleanup polling on component unmount
+  useEffect(() => {
+    return () => {
+      stopCommentsPolling();
+    };
+  }, []);
 
   return (
     <div className="feed-container">

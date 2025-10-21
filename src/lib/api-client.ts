@@ -235,6 +235,14 @@ export const apiClient = {
 
   getComments: (postId: string) => apiFetch<any[]>(`/api/posts/${postId}/comments`),
 
+  // --- NOTIFICATIONS ---
+  getNotifications: (userId: string) => apiFetch<any[]>(`/api/notifications/${userId}`),
+  
+  markNotificationAsRead: (notificationId: string) => 
+    apiFetch<any>(`/api/notifications/${notificationId}/read`, {
+      method: 'PUT',
+    }),
+
   // --- APPROVALS ---
   addApproval: (postId: string, userId: string, status: string) =>
     apiFetch<any>('/api/approvals', {
