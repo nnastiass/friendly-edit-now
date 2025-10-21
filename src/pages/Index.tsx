@@ -84,6 +84,7 @@ const Index: React.FC = () => {
   const [hasUploadedToday, setHasUploadedToday] = useState(false);
   const [banner, setBanner] = useState<{ message: string; type?: 'info' | 'error' } | null>(null);
     const [pendingRequests, setPendingRequests] = useState(0);
+    const [unreadNotifications, setUnreadNotifications] = useState(0);
   const tuChoiceKey = useMemo(
     () => `tuChoiceShown::${String(user?.id ?? 'anon')}`,
     [user?.id]
@@ -150,17 +151,28 @@ const Index: React.FC = () => {
   // Load streak
  useEffect(() => {
      if (!user?.id) return;
+
+     // Fetch streak
      apiClient
        .getProfile(user.id)
        .then((data) => setCurrentStreak(data?.streak || 0))
        .catch((err) => console.error('Error fetching streak:', err));
 
-     // --- ADD THIS API CALL ---
+     // Fetch friend requests
      apiClient
        .getFriendRequests(user.id)
        .then((reqs) => setPendingRequests(Array.isArray(reqs) ? reqs.length : 0))
        .catch((e) => console.error('Index: Failed to fetch pending requests', e));
-     // --- END ADD ---
+
+     // --- ADD THIS FETCH ---
+     // Fetch notifications
+     apiClient
+       .getNotifications(user.id)
+       .then((notifs) => {
+         const unreadCount = Array.isArray(notifs) ? notifs.filter((n) => !n.is_read).length : 0;
+         setUnreadNotifications(unreadCount);
+       })
+       .catch((e) => console.error('Index: Failed to fetch notifications', e));
   }, [user?.id]);
 
   // Advance to next day
@@ -364,8 +376,10 @@ const Index: React.FC = () => {
                               onClick={() => navigate('/profile')}
                             >
                               <User className="index-nav-icon" />
-                              {/* Add this line: */}
-                              {pendingRequests > 0 && <span className="index-nav-badge"></span>}
+                              {/* Update this condition: */}
+                              {(pendingRequests > 0 || unreadNotifications > 0) && (
+                                <span className="index-nav-badge"></span>
+                              )}
                             </button>
             </div>
           </div>

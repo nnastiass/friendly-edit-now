@@ -86,6 +86,7 @@ const Feed = () => {
   const [commentInput, setCommentInput] = useState('');
   const [banner, setBanner] = useState<BannerNotification | null>(null);
   const [pendingRequests, setPendingRequests] = useState(0);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -202,10 +203,22 @@ const Feed = () => {
 
   useEffect(() => {
       if (user?.id) {
+        // Fetch friend requests
         apiClient
           .getFriendRequests(user.id)
           .then((reqs) => setPendingRequests(Array.isArray(reqs) ? reqs.length : 0))
           .catch((e) => console.error('Feed: Failed to fetch pending requests', e));
+
+        // --- ADD THIS FETCH ---
+        // Fetch notifications
+        apiClient
+          .getNotifications(user.id)
+          .then((notifs) => {
+            const unreadCount = Array.isArray(notifs) ? notifs.filter((n) => !n.is_read).length : 0;
+            setUnreadNotifications(unreadCount);
+          })
+          .catch((e) => console.error('Feed: Failed to fetch notifications', e));
+        // --- END OF ADD ---
       }
     }, [user?.id]);
 
@@ -802,8 +815,10 @@ useEffect(() => {
           <button className="index-nav-button index-nav-button-inactive" onClick={() => navigate('/')}> <Plus className="index-nav-icon" /> </button>
           <button className="index-nav-button index-nav-button-inactive" onClick={() => navigate('/profile')}>
                       <User className="index-nav-icon" />
-                      {/* Add this line: */}
-                      {pendingRequests > 0 && <span className="index-nav-badge"></span>}
+                      {/* Update this condition: */}
+                      {(pendingRequests > 0 || unreadNotifications > 0) && (
+                        <span className="index-nav-badge"></span>
+                      )}
                     </button>
         </div>
       </div>
