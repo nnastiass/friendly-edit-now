@@ -167,7 +167,7 @@ const SpeakersPage = () => {
             className="info-page-nav-button info-page-nav-button-active"
             onClick={() => navigate('/info')}
           >
-            <Info className="info-page-nav-icon" />
+            <span className="index-nav-text">TU</span>
           </button>
           <button
             className="info-page-nav-button info-page-nav-button-inactive"

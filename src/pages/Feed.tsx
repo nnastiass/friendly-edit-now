@@ -88,6 +88,7 @@ const Feed = () => {
   const [currentComments, setCurrentComments] = useState<Comment[]>([]);
   const [commentInput, setCommentInput] = useState('');
   const [banner, setBanner] = useState<BannerNotification | null>(null);
+  const [pendingRequests, setPendingRequests] = useState(0);
 
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -139,6 +140,7 @@ const Feed = () => {
     }
   }, [banner]);
 
+
   const animateAndClose = () => {
     if (isClosing) return;
     setIsClosing(true);
@@ -180,6 +182,15 @@ const Feed = () => {
   useEffect(() => {
     document.body.style.overflow = isCommentsOpen ? 'hidden' : '';
   }, [isCommentsOpen]);
+
+  useEffect(() => {
+      if (user?.id) {
+        apiClient
+          .getFriendRequests(user.id)
+          .then((reqs) => setPendingRequests(Array.isArray(reqs) ? reqs.length : 0))
+          .catch((e) => console.error('Feed: Failed to fetch pending requests', e));
+      }
+    }, [user?.id]);
 
   const fetchPosts = useCallback(async (currentPage: number) => {
     if (!user) return;
@@ -673,7 +684,11 @@ useEffect(() => {
   </button>
 )}
           <button className="index-nav-button index-nav-button-inactive" onClick={() => navigate('/')}> <Plus className="index-nav-icon" /> </button>
-          <button className="index-nav-button index-nav-button-inactive" onClick={() => navigate('/profile')}> <User className="index-nav-icon" /> </button>
+          <button className="index-nav-button index-nav-button-inactive" onClick={() => navigate('/profile')}>
+                      <User className="index-nav-icon" />
+                      {/* Add this line: */}
+                      {pendingRequests > 0 && <span className="index-nav-badge"></span>}
+                    </button>
         </div>
       </div>
     </div>

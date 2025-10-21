@@ -26,6 +26,8 @@ const FeedBanner: React.FC<FeedBannerProps> = ({
   onClose,
 }) => {
   const [visible, setVisible] = useState(false);
+  // --- ADD THIS STATE ---
+
 
   useEffect(() => {
     const showTimer = setTimeout(() => setVisible(true), 1000);
@@ -81,7 +83,7 @@ const Index: React.FC = () => {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [hasUploadedToday, setHasUploadedToday] = useState(false);
   const [banner, setBanner] = useState<{ message: string; type?: 'info' | 'error' } | null>(null);
-
+    const [pendingRequests, setPendingRequests] = useState(0);
   const tuChoiceKey = useMemo(
     () => `tuChoiceShown::${String(user?.id ?? 'anon')}`,
     [user?.id]
@@ -146,12 +148,19 @@ const Index: React.FC = () => {
   }, [user, variantKey]);
 
   // Load streak
-  useEffect(() => {
-    if (!user?.id) return;
-    apiClient
-      .getProfile(user.id)
-      .then((data) => setCurrentStreak(data?.streak || 0))
-      .catch((err) => console.error('Error fetching streak:', err));
+ useEffect(() => {
+     if (!user?.id) return;
+     apiClient
+       .getProfile(user.id)
+       .then((data) => setCurrentStreak(data?.streak || 0))
+       .catch((err) => console.error('Error fetching streak:', err));
+
+     // --- ADD THIS API CALL ---
+     apiClient
+       .getFriendRequests(user.id)
+       .then((reqs) => setPendingRequests(Array.isArray(reqs) ? reqs.length : 0))
+       .catch((e) => console.error('Index: Failed to fetch pending requests', e));
+     // --- END ADD ---
   }, [user?.id]);
 
   // Advance to next day
@@ -351,11 +360,13 @@ const Index: React.FC = () => {
                 <Plus className="index-nav-icon" />
               </button>
               <button
-                className="index-nav-button index-nav-button-inactive"
-                onClick={() => navigate('/profile')}
-              >
-                <User className="index-nav-icon" />
-              </button>
+                              className="index-nav-button index-nav-button-inactive"
+                              onClick={() => navigate('/profile')}
+                            >
+                              <User className="index-nav-icon" />
+                              {/* Add this line: */}
+                              {pendingRequests > 0 && <span className="index-nav-badge"></span>}
+                            </button>
             </div>
           </div>
         </div>

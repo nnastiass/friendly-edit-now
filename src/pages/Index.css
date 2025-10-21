@@ -369,3 +369,19 @@ html, body, #root {
 .feed-banner-close:hover { 
   opacity: 1; 
 }
+
+/* Add this to your Index.css file */
+.index-nav-button {
+  position: relative; /* This is needed to position the badge */
+}
+
+.index-nav-badge {
+  position: absolute;
+  top: 10px;  /* Adjust this value to position the dot vertically */
+  right: 24px; /* Adjust this value to position the dot horizontally */
+  width: 10px;
+  height: 10px;
+  background-color: #FF0046; /* Notification red */
+  border-radius: 50%;
+  border: 1.5px solid #000; /* Optional: border to match the dark theme */
+}

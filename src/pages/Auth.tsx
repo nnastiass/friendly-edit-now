@@ -163,9 +163,28 @@ const Auth = () => {
           setIsLogin(true);
         }
       }
-    } catch (error: any) {
+} catch (error: any) {
       console.error('Auth handleSubmit error:', error);
-      showBanner(error.message || 'An unexpected error occurred', 'error');
+
+      // --- THIS IS THE LINE YOU ARE MISSING ---
+      let displayMessage = error.message || 'An unexpected error occurred';
+
+      // Check for specific sign-up errors
+      if (!isLogin && error.message) {
+        const lowerCaseMessage = error.message.toLowerCase();
+
+        // Check for email-related errors
+        if (lowerCaseMessage.includes('user already registered') || lowerCaseMessage.includes('email already in use')) {
+          displayMessage = 'This email address is already in use. Please try another one.';
+
+        // Check for username-related errors (this is the one you're hitting)
+        } else if (lowerCaseMessage.includes('username') && (lowerCaseMessage.includes('duplicate key') || lowerCaseMessage.includes('already taken'))) {
+          displayMessage = 'This username is already taken. Please choose another one.';
+        }
+      }
+
+      // This line (your line 176) will now work because displayMessage is defined
+      showBanner(displayMessage, 'error');
       if (isLogin) {
         clearPassword();
       } else {

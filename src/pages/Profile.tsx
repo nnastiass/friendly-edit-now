@@ -65,6 +65,7 @@ const Profile = () => {
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
 
+
   const [view, setView] = useState<
     'profile' | 'edit' | 'settings' | 'account' | 'changeEmail' | 'changePassword' | 'conference'
   >('profile');
