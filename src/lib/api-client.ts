@@ -1,7 +1,7 @@
 // src/lib/api-client.ts
 
 // *** IMPORTANT: REPLACE WITH YOUR ACTUAL API BASE URL ***
-export const API_BASE_URL = 'http://192.168.1.8:3000';
+export const API_BASE_URL = 'http://192.168.0.102:3000';
 
 export interface Post {
   id: string;
@@ -76,31 +76,29 @@ export const apiClient = {
     }),
 
   signUp: (
-      email: string,
-      password: string,
-      username: string,
-      agreedToTerms: boolean,
-      isConferenceParticipant: boolean,
-      // --- MODIFIED: Add termsVersion ---
-      termsVersion: string
-    ) =>
-      apiFetch<any>('/api/auth/signup', {
-        method: 'POST',
-        // --- MODIFIED: Add termsVersion to body ---
-        body: JSON.stringify({ email, password, username, agreedToTerms, isConferenceParticipant, termsVersion }),
-      }),
+    email: string,
+    password: string,
+    username: string,
+    agreedToTerms: boolean,
+    isConferenceParticipant: boolean,
+    termsVersion: string
+  ) =>
+    apiFetch<any>('/api/auth/signup', {
+      method: 'POST',
+      body: JSON.stringify({ email, password, username, agreedToTerms, isConferenceParticipant, termsVersion }),
+    }),
 
   verifyEmail: (token: string) => apiFetch<any>(`/api/auth/verify?token=${token}`),
 
- getLatestTerms: () =>
+  getLatestTerms: () =>
     apiFetch<{ version: string; content: string }>('/api/terms/latest'),
-  // Forgot / Reset
+
   forgotPassword: (email: string, devReturnToken?: boolean) =>
-      apiFetch<any>('/api/auth/forgot-password', {
-        method: 'POST',
-        headers: devReturnToken ? { 'x-dev-return-token': '1' } : undefined,
-        body: JSON.stringify({ email }),
-      }),
+    apiFetch<any>('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: devReturnToken ? { 'x-dev-return-token': '1' } : undefined,
+      body: JSON.stringify({ email }),
+    }),
 
   resetPassword: (token: string, newPassword: string, confirmPassword: string) =>
     apiFetch<any>('/api/auth/reset-password', {
@@ -118,7 +116,6 @@ export const apiClient = {
 
   deleteProfile: (userId: string) => apiFetch<void>(`/api/profiles/${userId}`, { method: 'DELETE' }),
 
-  // 👇 Flexible: accepts either a payload object or 3 strings
   changePassword: (
     userId: string,
     a:
@@ -188,6 +185,7 @@ export const apiClient = {
   // --- LEADERBOARD ---
   getLeaderboard: (userId: string) => apiFetch<any[]>(`/api/leaderboard/${userId}`),
 
+  // --- CHALLENGES ---
   getChallenges: (set: 'main' | 'conf') =>
     apiFetch<any[]>(`/api/challenges?set=${set}`),
 
@@ -204,18 +202,13 @@ export const apiClient = {
     body: JSON.stringify(postData),
   }),
 
-
   getUserPosts: (userId: string) => apiFetch<Post[]>(`/api/users/${userId}/posts`),
 
   getFeed: (userId: string, page: number) =>
     apiFetch<Post[]>(`/api/feed/${userId}?page=${page}`),
 
-
-
   deletePost: (postId: string, who: { user_id?: string; username?: string }) => {
-    // The endpoint should only contain the post ID
     const endpoint = `/api/posts/${postId}`;
-
     return apiFetch<void>(endpoint, {
       method: 'DELETE',
       headers: {
@@ -224,7 +217,6 @@ export const apiClient = {
       },
     });
   },
-
 
   // --- COMMENTS ---
   addComment: (postId: string, userId: string, content: string) =>
@@ -235,6 +227,43 @@ export const apiClient = {
 
   getComments: (postId: string) => apiFetch<any[]>(`/api/posts/${postId}/comments`),
 
+  deleteComment: async (commentId: string, userId: string) => {
+    const response = await fetch(`${API_BASE_URL}/api/comments/${commentId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': userId,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+      throw new Error(errorData.message || `Failed to delete comment with status ${response.status}.`);
+    }
+
+    return response.status === 204 ? {} : response.json();
+  },
+
+  // --- NOTIFICATIONS ---
+  getNotifications: (userId: string) =>
+    apiFetch<any[]>(`/api/notifications/${userId}`),
+
+  markNotificationsRead: (userId: string) =>
+    apiFetch<void>('/api/notifications/mark-read', {
+      method: 'POST',
+      body: JSON.stringify({ userId }),
+    }),
+
+  deleteAllNotifications: (userId: string) =>
+    apiFetch<void>(`/api/notifications/${userId}`, {
+      method: 'DELETE',
+    }),
+
+  deleteNotification: (notificationId: number) =>
+    apiFetch<void>(`/api/notifications/single/${notificationId}`, {
+      method: 'DELETE',
+    }),
+
   // --- APPROVALS ---
   addApproval: (postId: string, userId: string, status: string) =>
     apiFetch<any>('/api/approvals', {
@@ -244,7 +273,7 @@ export const apiClient = {
 
   getApprovals: (postId: string) => apiFetch<any>(`/api/posts/${postId}/approvals`),
 
-  // --- MEDIA UPLOAD (FIXED) ---
+  // --- MEDIA UPLOAD ---
   uploadMedia: (userId: string, file: File, challengeTitle: string) => {
     const formData = new FormData();
     formData.append('file', file);
@@ -254,27 +283,4 @@ export const apiClient = {
 
     return uploadFile<any>('/api/media/upload', formData);
   },
-
-
-
-  // DELETE /api/comments/:commentId
-      deleteComment: async (commentId: string, userId: string) => {
-              const response = await fetch(`${API_BASE_URL}/api/comments/${commentId}`, {
-                  method: 'DELETE',
-                  headers: {
-                      'Content-Type': 'application/json',
-                      // Assuming you use a header for the user ID, or the Auth token handles it
-                      'x-user-id': userId, // IMPORTANT: Ensure the authenticated user ID is passed
-                      // ... Auth token ...
-                  },
-              });
-
-              // The status 404/403/204 logic follows
-              if (!response.ok) {
-                   const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-                   throw new Error(errorData.message || `Failed to delete comment with status ${response.status}.`);
-              }
-
-              return response.status === 204 ? {} : response.json();
-          },
 };

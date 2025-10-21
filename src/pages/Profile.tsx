@@ -375,60 +375,98 @@ const Profile = () => {
     return name.split(' ').map(n => n.charAt(0)).join('').toUpperCase();
   };
 
-  const handleNotificationsClick = () => {
-    setShowNotifications(!showNotifications);
-    // Mark all notifications as read when opening for the first time
-    if (!showNotifications && unreadNotifications > 0) {
-      setUnreadNotifications(0);
-      saveNotificationsToStorage(notifications, 0);
-    }
-  };
+  const handleNotificationsClick = async () => {
+      if (!user?.id) return;
+      const opening = !showNotifications;
+      setShowNotifications(opening);
+
+      // If opening and there are unread notifications
+      if (opening && unreadNotifications > 0) {
+        try {
+          // Mark as read on the server
+          await apiClient.markNotificationsRead(user.id);
+
+          // Update local state
+          setUnreadNotifications(0);
+          setNotifications(prev =>
+            prev.map(n => ({ ...n, is_read: true }))
+          );
+        } catch (error) {
+          console.error('Failed to mark notifications as read', error);
+        }
+      }
+    };
 
   const fetchNotifications = async () => {
-    if (!user?.id) return;
-    try {
-      // Load notifications from localStorage to persist them
-      const savedNotifications = localStorage.getItem(`notifications_${user.id}`);
-      const savedUnreadCount = localStorage.getItem(`unread_notifications_${user.id}`);
+      if (!user?.id) return;
+      try {
+        const serverNotifications = await apiClient.getNotifications(user.id);
 
-      if (savedNotifications) {
-        setNotifications(JSON.parse(savedNotifications));
-      } else {
-        setNotifications([]);
-      }
+        // Format them for the UI
+        const formattedNotifications = serverNotifications.map((n: any) => ({
+          id: n.id,
+          message: n.message,
+          time: timeAgo(n.created_at), // You'll need to add a timeAgo function
+          is_read: n.is_read,
+        }));
 
-      if (savedUnreadCount) {
-        setUnreadNotifications(parseInt(savedUnreadCount));
-      } else {
-        setUnreadNotifications(0);
+        const unreadCount = serverNotifications.filter((n: any) => !n.is_read).length;
+
+        setNotifications(formattedNotifications);
+        setUnreadNotifications(unreadCount);
+
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+        showBanner('Could not load notifications.', 'error');
       }
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-    }
-  };
+    };
 
   // Helper function to save notifications to localStorage
-  const saveNotificationsToStorage = (notifications: any[], unreadCount: number) => {
-    if (!user?.id) return;
-    localStorage.setItem(`notifications_${user.id}`, JSON.stringify(notifications));
-    localStorage.setItem(`unread_notifications_${user.id}`, unreadCount.toString());
-  };
 
-  const clearAllNotifications = () => {
-    setNotifications([]);
-    setUnreadNotifications(0);
-    setShowNotifications(false);
-    saveNotificationsToStorage([], 0);
-  };
 
-  const deleteNotification = (notificationId: number) => {
-    const newNotifications = notifications.filter(n => n.id !== notificationId);
-    const newUnreadCount = Math.max(0, unreadNotifications - 1);
+  const clearAllNotifications = async () => {
+      if (!user?.id) return;
+      try {
+        await apiClient.deleteAllNotifications(user.id);
+        setNotifications([]);
+        setUnreadNotifications(0);
+        setShowNotifications(false);
+      } catch (error) {
+        console.error('Failed to clear notifications', error);
+        showBanner('Could not clear notifications.', 'error');
+      }
+    };
 
-    setNotifications(newNotifications);
-    setUnreadNotifications(newUnreadCount);
-    saveNotificationsToStorage(newNotifications, newUnreadCount);
-  };
+  const deleteNotification = async (notificationId: number) => {
+      try {
+        await apiClient.deleteNotification(notificationId);
+
+        // Remove from local state
+        setNotifications(prev =>
+          prev.filter(n => n.id !== notificationId)
+        );
+
+        // We don't need to adjust unread count here,
+        // as it's assumed read when the modal is open.
+        // If you want to be precise, you could recalculate.
+
+      } catch (error) {
+        console.error('Failed to delete notification', error);
+        showBanner('Could not delete notification.', 'error');
+      }
+    };
+
+function timeAgo(input: string | Date) {
+    const ms = Date.now() - new Date(input).getTime();
+    const s = Math.floor(ms / 1000);
+    const m = Math.floor(s / 60);
+    const h = Math.floor(m / 60);
+    const d = Math.floor(h / 24);
+    if (d > 0) return `${d}d`;
+    if (h > 0) return `${h}h`;
+    if (m > 0) return `${m}m`;
+    return `${s}s`;
+  }
 
   if (!user) return null;
 
