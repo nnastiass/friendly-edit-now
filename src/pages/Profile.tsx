@@ -387,23 +387,22 @@ const Profile = () => {
   const fetchNotifications = async () => {
     if (!user?.id) return;
     try {
-      // Load notifications from localStorage to persist them
+      const notificationsData = await apiClient.getNotifications(user.id);
+      setNotifications(notificationsData);
+      
+      // Count unread notifications
+      const unreadCount = notificationsData.filter(n => !n.is_read).length;
+      setUnreadNotifications(unreadCount);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      // Fallback to localStorage if API fails
       const savedNotifications = localStorage.getItem(`notifications_${user.id}`);
       const savedUnreadCount = localStorage.getItem(`unread_notifications_${user.id}`);
 
       if (savedNotifications) {
         setNotifications(JSON.parse(savedNotifications));
-      } else {
-        setNotifications([]);
+        setUnreadNotifications(parseInt(savedUnreadCount || '0', 10));
       }
-
-      if (savedUnreadCount) {
-        setUnreadNotifications(parseInt(savedUnreadCount));
-      } else {
-        setUnreadNotifications(0);
-      }
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
     }
   };
 
@@ -412,6 +411,23 @@ const Profile = () => {
     if (!user?.id) return;
     localStorage.setItem(`notifications_${user.id}`, JSON.stringify(notifications));
     localStorage.setItem(`unread_notifications_${user.id}`, unreadCount.toString());
+  };
+
+  // Mark notification as read
+  const markNotificationAsRead = async (notificationId: string) => {
+    try {
+      await apiClient.markNotificationAsRead(notificationId);
+      
+      // Update local state
+      setNotifications(prev => 
+        prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n)
+      );
+      
+      // Update unread count
+      setUnreadNotifications(prev => Math.max(0, prev - 1));
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
   };
 
   const clearAllNotifications = () => {
