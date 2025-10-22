@@ -5,9 +5,8 @@ import { toast } from 'sonner';
 import '@/components/MediaUpload.css';
 
 // -----------------------------------------------------
-// --- CAPACITOR IMPORTS (Only import the plugin) ---
-import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
-// We are explicitly NOT importing isPlatform to avoid the build/runtime errors.
+// --- CAPACITOR IMPORTS (None needed for this approach) ---
+// We rely solely on standard HTML/JS APIs for file handling.
 // -----------------------------------------------------
 
 interface MediaUploadProps {
@@ -18,9 +17,9 @@ interface MediaUploadProps {
 }
 
 // -----------------------------------------------------
-// --- FIX: Custom Helper to Safely Get Platform String ---
+// --- Custom Helper to Safely Get Platform String ---
+// Keep the platform check for consistency, though not strictly required here.
 const getPlatformType = (): 'web' | 'android' | 'ios' => {
-  // Check global Capacitor object, which is injected into the WebView on mobile.
   if (typeof window !== 'undefined' && (window as any).Capacitor?.getPlatform) {
     return (window as any).Capacitor.getPlatform() as 'web' | 'android' | 'ios';
   }
@@ -38,59 +37,27 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Helper function to convert the temporary blob path to a File object
-  const convertBlobUrlToFile = async (webPath: string, fileName: string): Promise<File> => {
-      const blob = await fetch(webPath).then(r => r.blob());
-      const mimeType = blob.type || (fileName.endsWith('.mp4') ? 'video/mp4' : 'image/jpeg');
-      return new File([blob], fileName, { type: mimeType });
-  };
-
+  // Helper functions are no longer needed as the File Input handles the object creation
 
   const openGallery = async () => {
-    const platform = getPlatformType();
-
-    // 1. Mobile Platform: Use Capacitor Camera Plugin
-    if (platform === 'android' || platform === 'ios') {
-        try {
-            // FIX: Use pickImages() to allow photos AND videos
-            const result = await Camera.pickImages({
-                quality: 90,
-                limit: 1 // Since your UI only handles one file
-            });
-
-            // pickImages returns an array, so get the first item
-            const media = result.photos[0];
-
-            if (media && media.webPath) {
-                // Get the format from the webPath extension if possible
-                const fileExtension = media.webPath.split('.').pop()?.toLowerCase() || 'jpeg';
-                const format = (fileExtension === 'mov' || fileExtension === 'mp4') ? fileExtension : 'jpeg';
-                const fileName = `upload_${new Date().getTime()}.${format}`;
-
-                const file = await convertBlobUrlToFile(media.webPath, fileName);
-
-                setGalleryFiles([file]);
-                setSelectedFile(file);
-            }
-        } catch (e: any) {
-            // User likely cancelled or permission was denied
-            if (!e.message?.includes('cancelled')) {
-                 toast.error('Chyba: Nepodarilo sa otvoriť galériu. Skús znova.');
-            }
-            console.error(e);
-        }
-    }
-    // 2. Web/Fallback: Use standard HTML file input
-    else if (fileInputRef.current) {
+    // 🚨 The definitive fix: Force a click on the hidden HTML file input.
+    // On native platforms (Android/iOS), this triggers the OS's native file picker/chooser,
+    // which reliably supports both 'image/*' and 'video/*' based on the 'accept' attribute.
+    if (fileInputRef.current) {
         fileInputRef.current.accept = 'image/*,video/*';
         fileInputRef.current.click();
     }
+    // Note: No more plugin code is required here.
   };
 
   const handleFilesSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
     setGalleryFiles(files);
     setSelectedFile(files[0] || null);
+    // Crucial: Clear the input value so the same file can be picked again later
+    if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+    }
   };
 
   const handleConfirmUpload = () => {
@@ -178,12 +145,17 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
           )}
         </div>
 
+        {/* THIS IS THE HIDDEN INPUT ELEMENT.
+          It handles the actual OS file selection on both web and native.
+        */}
         <input
           type="file"
-          multiple
+          // We will manage single file selection, though the input supports multiple
+          multiple={false}
           ref={fileInputRef}
           className="hidden"
           onChange={handleFilesSelected}
+          // The accept attribute tells the OS picker to show images AND videos
           accept="image/*,video/*"
         />
 
