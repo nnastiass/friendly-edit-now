@@ -250,42 +250,54 @@ const Index: React.FC = () => {
     const title = (challenge.title ?? '').trim() || 'daily-challenge';
 
     try {
-      const result = await apiClient.uploadMedia(user.id, file, title);
-      const mediaType = file.type.startsWith('image/') ? 'image' : 'video';
+          const result = await apiClient.uploadMedia(user.id, file, title);
+          const mediaType = file.type.startsWith('image/') ? 'image' : 'video';
 
-      const post = await apiClient.createPost({
-        user_id: user.id,
-        caption: title,
-        media_type: mediaType,
-        media_url: result.mediaUrl,
-        challenge_id: challenge.id,
-        challenge_set: challenge.challenge_set === 'conf' ? 'conference' : variantKey,
-      });
+          const post = await apiClient.createPost({
+            user_id: user.id,
+            caption: title,
+            media_type: mediaType,
+            media_url: result.mediaUrl,
+            challenge_id: challenge.id,
+            challenge_set: challenge.challenge_set === 'conf' ? 'conference' : variantKey,
+          });
 
-      if (!post.verified) {
-        setBanner({
-          message: 'Upload received and sent for manual review. It will not count until verified.',
-          type: 'info',
-        });
-        return;
-      }
+          // --- Case 1: PENDING MODERATION ---
+          // This is the logic you want.
+          if (!post.verified) {
+            setBanner({
+              message: 'Upload received and sent for manual review. It will not count until verified.',
+              type: 'info',
+            });
+            // We 'return' here, so 'setHasUploadedToday' is NOT called.
+            // The button will not change, and you can upload again.
+            return;
+          }
 
-      localStorage.setItem(`${user.id}_${keys.completed(today)}`, '1');
-      setHasUploadedToday(true);
+          // --- Case 2: VERIFIED SUCCESS ---
+          // This code only runs if post.verified is TRUE
+          localStorage.setItem(`${user.id}_${keys.completed(today)}`, '1');
+          setHasUploadedToday(true); // <-- This changes the button
 
-      const newStreak = currentStreak + 1;
-      await apiClient.updateProfile(user.id, { streak: newStreak });
-      setCurrentStreak(newStreak);
+          const newStreak = currentStreak + 1;
+          await apiClient.updateProfile(user.id, { streak: newStreak });
+          setCurrentStreak(newStreak);
+          setBanner({ message: 'Proof accepted! 🎉', type: 'info' });
 
-      setBanner({ message: 'Proof accepted! 🎉', type: 'info' });
-    } catch (err: any) {
-      console.error('Upload failed:', err);
-      setBanner({
-        message: 'Upload received and sent for manual review. It will not count until verified.',
-        type: 'info',
-      });
-    }
-  };
+        } catch (err: any) {
+          // --- Case 3: FAILED UPLOAD ---
+          console.error('Upload failed:', err);
+          // Show a real error message
+          setBanner({
+            message: 'Upload failed: Could not create post. Please try again.',
+            type: 'error',
+          });
+          // 'setHasUploadedToday' was not called, so the button
+          // will not change, and you can upload again.
+        }
+        // ✅ --- END: This is the new, correct logic --- ✅
+      };
+
 
   const handleDevResetUpload = () => {
     const today = todayKey();
